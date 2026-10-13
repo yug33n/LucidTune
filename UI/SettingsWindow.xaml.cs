@@ -3,23 +3,49 @@ using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Media.Animation;
 using LucidTune.Config;
 using LucidTune.Services;
 
 namespace LucidTune.UI
 {
+    public static class ScrollViewerExtensions
+    {
+        public static readonly DependencyProperty AnimatedVerticalOffsetProperty =
+            DependencyProperty.RegisterAttached(
+                "AnimatedVerticalOffset",
+                typeof(double),
+                typeof(ScrollViewerExtensions),
+                new PropertyMetadata(0.0, OnAnimatedVerticalOffsetChanged));
+
+        public static double GetAnimatedVerticalOffset(DependencyObject target) =>
+            (double)target.GetValue(AnimatedVerticalOffsetProperty);
+
+        public static void SetAnimatedVerticalOffset(DependencyObject target, double value) =>
+            target.SetValue(AnimatedVerticalOffsetProperty, value);
+
+        private static void OnAnimatedVerticalOffsetChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            if (d is ScrollViewer sv)
+            {
+                sv.ScrollToVerticalOffset((double)e.NewValue);
+            }
+        }
+    }
+
     public partial class SettingsWindow : Window
     {
         private readonly MainWindow _mainWindow;
         private readonly ConfigManager _configManager;
         private bool _isInitializing = true;
+        private double _targetVerticalOffset;
 
-        private static readonly string[] ModifiersList = ["Alt", "Ctrl", "Shift", "Ctrl+Alt", "Win"];
-        private static readonly List<string> CommonKeys = [];
+        private static readonly string[] ModifiersList = ["Alt", "Ctrl", "Shift", "Ctrl+Alt", "Win", "None"];
+        private static readonly List<string> CommonKeys = ["None", "Space", "Right", "Left", "Up", "Down", "M", "P", "L", "J", "Tab", "Enter"];
 
         static SettingsWindow()
         {
-            CommonKeys.AddRange(["Space", "Right", "Left", "Up", "Down", "M", "P", "L", "J", "Tab", "Enter"]);
             for (char c = 'A'; c <= 'Z'; c++)
             {
                 string s = c.ToString();
@@ -46,6 +72,7 @@ namespace LucidTune.UI
             {
                 _mainWindow.OverlayVisibilityChanged -= OnOverlayVisibilityChanged;
                 _mainWindow.ApplyWidgetOpacity(_configManager.CurrentConfig.WidgetOpacity);
+                _mainWindow.ApplyCompactMode(_configManager.CurrentConfig.CompactMode);
             };
             UpdateOverlayStatus(_mainWindow.IsOverlayVisible);
         }
@@ -103,6 +130,8 @@ namespace LucidTune.UI
             OpacitySlider.Value = opacityPercent;
             OpacityValueText.Text = $"{opacityPercent}%";
 
+            CompactModeCheckBox.IsChecked = cfg.CompactMode;
+
             UpdateAllPreviews();
         }
 
@@ -129,6 +158,41 @@ namespace LucidTune.UI
             if (box.Items.Count > 0) box.SelectedIndex = 0;
         }
 
+        private void OnContentScrollViewerPreviewMouseWheel(object sender, MouseWheelEventArgs e)
+        {
+            if (ContentScrollViewer == null) return;
+            e.Handled = true;
+
+            // Dampened smooth scrolling step (36px per notch)
+            double deltaLines = (double)e.Delta / Mouse.MouseWheelDeltaForOneLine;
+            double scrollStep = -deltaLines * 36.0;
+
+            double currentTarget = _targetVerticalOffset;
+            if (Math.Abs(ContentScrollViewer.VerticalOffset - currentTarget) > 120)
+            {
+                currentTarget = ContentScrollViewer.VerticalOffset;
+            }
+
+            _targetVerticalOffset = Math.Clamp(currentTarget + scrollStep, 0, ContentScrollViewer.ScrollableHeight);
+
+            var animation = new DoubleAnimation
+            {
+                To = _targetVerticalOffset,
+                Duration = TimeSpan.FromMilliseconds(220),
+                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+            };
+
+            ContentScrollViewer.BeginAnimation(ScrollViewerExtensions.AnimatedVerticalOffsetProperty, animation);
+        }
+
+        private void OnContentScrollViewerScrollChanged(object sender, ScrollChangedEventArgs e)
+        {
+            if (ContentScrollViewer != null && e.VerticalChange != 0 && Math.Abs(ContentScrollViewer.VerticalOffset - _targetVerticalOffset) > 120)
+            {
+                _targetVerticalOffset = ContentScrollViewer.VerticalOffset;
+            }
+        }
+
         private void OnMediaHotkeysToggle(object sender, RoutedEventArgs e)
         {
             if (_isInitializing) return;
@@ -143,18 +207,74 @@ namespace LucidTune.UI
             UpdateAllPreviews();
         }
 
+        private void OnClearToggleClick(object sender, RoutedEventArgs e)
+        {
+            SelectBoxItem(ToggleModifierBox, "None", "None");
+            SelectBoxItem(ToggleKeyBox, "None", "None");
+            UpdateAllPreviews();
+        }
+
+        private void OnClearPlayPauseClick(object sender, RoutedEventArgs e)
+        {
+            SelectBoxItem(PlayPauseModifierBox, "None", "None");
+            SelectBoxItem(PlayPauseKeyBox, "None", "None");
+            UpdateAllPreviews();
+        }
+
+        private void OnClearNextClick(object sender, RoutedEventArgs e)
+        {
+            SelectBoxItem(NextModifierBox, "None", "None");
+            SelectBoxItem(NextKeyBox, "None", "None");
+            UpdateAllPreviews();
+        }
+
+        private void OnClearPrevClick(object sender, RoutedEventArgs e)
+        {
+            SelectBoxItem(PrevModifierBox, "None", "None");
+            SelectBoxItem(PrevKeyBox, "None", "None");
+            UpdateAllPreviews();
+        }
+
         private void UpdateAllPreviews()
         {
-            if (PreviewToggleText == null || PreviewPlayPauseText == null || 
-                PreviewNextText == null || PreviewPrevText == null)
-            {
-                return;
-            }
+            UpdatePreview(PreviewToggleText, BadgeToggle, ToggleModifierBox, ToggleKeyBox);
+            UpdatePreview(PreviewPlayPauseText, BadgePlayPause, PlayPauseModifierBox, PlayPauseKeyBox);
+            UpdatePreview(PreviewNextText, BadgeNext, NextModifierBox, NextKeyBox);
+            UpdatePreview(PreviewPrevText, BadgePrev, PrevModifierBox, PrevKeyBox);
+        }
 
-            PreviewToggleText.Text = $"{ToggleModifierBox?.SelectedItem} + {ToggleKeyBox?.SelectedItem}";
-            PreviewPlayPauseText.Text = $"{PlayPauseModifierBox?.SelectedItem} + {PlayPauseKeyBox?.SelectedItem}";
-            PreviewNextText.Text = $"{NextModifierBox?.SelectedItem} + {NextKeyBox?.SelectedItem}";
-            PreviewPrevText.Text = $"{PrevModifierBox?.SelectedItem} + {PrevKeyBox?.SelectedItem}";
+        private static void UpdatePreview(TextBlock? textBlock, Border? badgeBorder, ComboBox? modBox, ComboBox? keyBox)
+        {
+            if (textBlock == null || badgeBorder == null) return;
+
+            string mod = modBox?.SelectedItem?.ToString() ?? "None";
+            string key = keyBox?.SelectedItem?.ToString() ?? "None";
+
+            if (string.IsNullOrWhiteSpace(key) || key.Equals("None", StringComparison.OrdinalIgnoreCase))
+            {
+                textBlock.Text = "Не назначено";
+                textBlock.Foreground = new SolidColorBrush(Color.FromRgb(0x8E, 0x8E, 0x98));
+                badgeBorder.Background = new SolidColorBrush(Color.FromRgb(0x22, 0x22, 0x2C));
+            }
+            else if (string.IsNullOrWhiteSpace(mod) || mod.Equals("None", StringComparison.OrdinalIgnoreCase))
+            {
+                textBlock.Text = key;
+                textBlock.Foreground = new SolidColorBrush(Color.FromRgb(0x4E, 0x75, 0xFF));
+                badgeBorder.Background = new SolidColorBrush(Color.FromRgb(0x2A, 0x2A, 0x38));
+            }
+            else
+            {
+                textBlock.Text = $"{mod} + {key}";
+                textBlock.Foreground = new SolidColorBrush(Color.FromRgb(0x4E, 0x75, 0xFF));
+                badgeBorder.Background = new SolidColorBrush(Color.FromRgb(0x2A, 0x2A, 0x38));
+            }
+        }
+
+        private void OnCompactModeChanged(object sender, RoutedEventArgs e)
+        {
+            if (_isInitializing) return;
+            bool isCompact = CompactModeCheckBox.IsChecked == true;
+            _mainWindow.ApplyCompactMode(isCompact);
         }
 
         private void OnTitleBarMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -234,6 +354,9 @@ namespace LucidTune.UI
             cfg.WidgetOpacity = OpacitySlider.Value / 100.0;
             _mainWindow.ApplyWidgetOpacity(cfg.WidgetOpacity);
 
+            cfg.CompactMode = CompactModeCheckBox.IsChecked == true;
+            _mainWindow.ApplyCompactMode(cfg.CompactMode);
+
             _configManager.Save(cfg);
 
             AutoStartupService.SetAutoStart(autoStart);
@@ -253,6 +376,7 @@ namespace LucidTune.UI
         private void OnCloseClick(object sender, RoutedEventArgs e)
         {
             _mainWindow.ApplyWidgetOpacity(_configManager.CurrentConfig.WidgetOpacity);
+            _mainWindow.ApplyCompactMode(_configManager.CurrentConfig.CompactMode);
             Close();
         }
     }

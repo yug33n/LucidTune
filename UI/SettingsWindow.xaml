@@ -350,6 +350,46 @@
                 </Setter.Value>
             </Setter>
         </Style>
+
+        <!-- Mini Clear Hotkey Button Style -->
+        <Style x:Key="MiniClearButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="#22222E"/>
+            <Setter Property="Foreground" Value="#8E8E98"/>
+            <Setter Property="BorderBrush" Value="#1FFFFFFF"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="Padding" Value="7,2"/>
+            <Setter Property="Height" Value="22"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bd"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="4"
+                                Padding="{TemplateBinding Padding}"
+                                SnapsToDevicePixels="True">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#322228"/>
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="#50FF6B6B"/>
+                                <Setter Property="Foreground" Value="#FF7B7B"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#24181C"/>
+                                <Setter Property="Foreground" Value="#FF5555"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </Window.Resources>
 
     <!-- Outer Shadow Layer -->
@@ -410,7 +450,12 @@
                 </Border>
 
                 <!-- Content Area -->
-                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="18,14">
+                <ScrollViewer x:Name="ContentScrollViewer"
+                              Grid.Row="1"
+                              VerticalScrollBarVisibility="Auto"
+                              Padding="18,14"
+                              PreviewMouseWheel="OnContentScrollViewerPreviewMouseWheel"
+                              ScrollChanged="OnContentScrollViewerScrollChanged">
                     <StackPanel>
                         <!-- Status Banner -->
                         <Border Background="#1B1B24" CornerRadius="10" Padding="12,10" Margin="0,0,0,14" BorderBrush="#18FFFFFF" BorderThickness="1">
@@ -472,6 +517,19 @@
                                             ValueChanged="OnOpacitySliderValueChanged"/>
                                     <TextBlock Grid.Column="2" Text="100%" FontSize="11" Foreground="#6C6C78" VerticalAlignment="Center" Margin="8,0,0,0"/>
                                 </Grid>
+
+                                <Rectangle Height="1" Fill="#12FFFFFF" Margin="0,12,0,10"/>
+
+                                <!-- Compact Mode Checkbox -->
+                                <CheckBox x:Name="CompactModeCheckBox"
+                                          Style="{StaticResource DarkCheckBoxStyle}"
+                                          Checked="OnCompactModeChanged"
+                                          Unchecked="OnCompactModeChanged">
+                                    <StackPanel Margin="6,0,0,0">
+                                        <TextBlock Text="Компактный виджет (без обложки трека)" FontSize="12.5" FontWeight="Medium" Foreground="#FFFFFF"/>
+                                        <TextBlock Text="Скрывает изображение альбома, делая оверлей меньше и компактнее." FontSize="11" Foreground="#8E8E98" Margin="0,2,0,0"/>
+                                    </StackPanel>
+                                </CheckBox>
                             </StackPanel>
                         </Border>
 
@@ -495,9 +553,14 @@
 
                                         <StackPanel Grid.Row="0" Grid.ColumnSpan="2" Orientation="Horizontal" Margin="0,0,0,6">
                                             <TextBlock Text="Показать / скрыть оверлей: " FontSize="12" FontWeight="Medium" Foreground="#E0E0E8" VerticalAlignment="Center"/>
-                                            <Border Background="#2A2A38" CornerRadius="4" Padding="6,2" Margin="6,0,0,0">
+                                            <Border x:Name="BadgeToggle" Background="#2A2A38" CornerRadius="4" Padding="6,2" Margin="6,0,0,0">
                                                 <TextBlock x:Name="PreviewToggleText" Text="Alt + M" FontSize="11" FontWeight="SemiBold" Foreground="#4E75FF"/>
                                             </Border>
+                                            <Button Style="{StaticResource MiniClearButtonStyle}"
+                                                    Content="Очистить"
+                                                    Margin="8,0,0,0"
+                                                    ToolTip="Очистить горячую клавишу"
+                                                    Click="OnClearToggleClick"/>
                                         </StackPanel>
 
                                         <ComboBox x:Name="ToggleModifierBox" Grid.Row="1" Grid.Column="0" Margin="0,0,6,0" SelectionChanged="OnHotkeyInputsChanged"/>
@@ -528,9 +591,14 @@
 
                                             <StackPanel Grid.Row="0" Grid.ColumnSpan="2" Orientation="Horizontal" Margin="0,0,0,6">
                                                 <TextBlock Text="Пауза / Воспроизведение: " FontSize="12" FontWeight="Medium" Foreground="#E0E0E8" VerticalAlignment="Center"/>
-                                                <Border Background="#2A2A38" CornerRadius="4" Padding="6,2" Margin="6,0,0,0">
+                                                <Border x:Name="BadgePlayPause" Background="#2A2A38" CornerRadius="4" Padding="6,2" Margin="6,0,0,0">
                                                     <TextBlock x:Name="PreviewPlayPauseText" Text="Alt + Space" FontSize="11" FontWeight="SemiBold" Foreground="#4E75FF"/>
                                                 </Border>
+                                                <Button Style="{StaticResource MiniClearButtonStyle}"
+                                                        Content="Очистить"
+                                                        Margin="8,0,0,0"
+                                                        ToolTip="Очистить горячую клавишу"
+                                                        Click="OnClearPlayPauseClick"/>
                                             </StackPanel>
 
                                             <ComboBox x:Name="PlayPauseModifierBox" Grid.Row="1" Grid.Column="0" Margin="0,0,6,0" SelectionChanged="OnHotkeyInputsChanged"/>
@@ -552,9 +620,14 @@
 
                                             <StackPanel Grid.Row="0" Grid.ColumnSpan="2" Orientation="Horizontal" Margin="0,0,0,6">
                                                 <TextBlock Text="Следующий трек: " FontSize="12" FontWeight="Medium" Foreground="#E0E0E8" VerticalAlignment="Center"/>
-                                                <Border Background="#2A2A38" CornerRadius="4" Padding="6,2" Margin="6,0,0,0">
+                                                <Border x:Name="BadgeNext" Background="#2A2A38" CornerRadius="4" Padding="6,2" Margin="6,0,0,0">
                                                     <TextBlock x:Name="PreviewNextText" Text="Alt + Right" FontSize="11" FontWeight="SemiBold" Foreground="#4E75FF"/>
                                                 </Border>
+                                                <Button Style="{StaticResource MiniClearButtonStyle}"
+                                                        Content="Очистить"
+                                                        Margin="8,0,0,0"
+                                                        ToolTip="Очистить горячую клавишу"
+                                                        Click="OnClearNextClick"/>
                                             </StackPanel>
 
                                             <ComboBox x:Name="NextModifierBox" Grid.Row="1" Grid.Column="0" Margin="0,0,6,0" SelectionChanged="OnHotkeyInputsChanged"/>
@@ -576,9 +649,14 @@
 
                                             <StackPanel Grid.Row="0" Grid.ColumnSpan="2" Orientation="Horizontal" Margin="0,0,0,6">
                                                 <TextBlock Text="Предыдущий трек: " FontSize="12" FontWeight="Medium" Foreground="#E0E0E8" VerticalAlignment="Center"/>
-                                                <Border Background="#2A2A38" CornerRadius="4" Padding="6,2" Margin="6,0,0,0">
+                                                <Border x:Name="BadgePrev" Background="#2A2A38" CornerRadius="4" Padding="6,2" Margin="6,0,0,0">
                                                     <TextBlock x:Name="PreviewPrevText" Text="Alt + Left" FontSize="11" FontWeight="SemiBold" Foreground="#4E75FF"/>
                                                 </Border>
+                                                <Button Style="{StaticResource MiniClearButtonStyle}"
+                                                        Content="Очистить"
+                                                        Margin="8,0,0,0"
+                                                        ToolTip="Очистить горячую клавишу"
+                                                        Click="OnClearPrevClick"/>
                                             </StackPanel>
 
                                             <ComboBox x:Name="PrevModifierBox" Grid.Row="1" Grid.Column="0" Margin="0,0,6,0" SelectionChanged="OnHotkeyInputsChanged"/>

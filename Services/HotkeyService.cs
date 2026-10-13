@@ -93,7 +93,10 @@ namespace LucidTune.Services
         private static uint ParseModifiers(string modifierStr)
         {
             uint result = 0;
-            if (string.IsNullOrWhiteSpace(modifierStr)) return MOD_ALT;
+            if (string.IsNullOrWhiteSpace(modifierStr) || modifierStr.Equals("None", StringComparison.OrdinalIgnoreCase))
+            {
+                return 0;
+            }
 
             var parts = modifierStr.Split('+', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
             foreach (var part in parts)
@@ -104,19 +107,22 @@ namespace LucidTune.Services
                 else if (part.Equals("Win", StringComparison.OrdinalIgnoreCase) || part.Equals("Windows", StringComparison.OrdinalIgnoreCase)) result |= MOD_WIN;
             }
 
-            return result == 0 ? MOD_ALT : result;
+            return result;
         }
 
         private static uint ParseVirtualKey(string keyStr)
         {
-            if (string.IsNullOrWhiteSpace(keyStr)) return (uint)KeyInterop.VirtualKeyFromKey(Key.M);
+            if (string.IsNullOrWhiteSpace(keyStr) || keyStr.Equals("None", StringComparison.OrdinalIgnoreCase))
+            {
+                return 0;
+            }
 
-            if (Enum.TryParse<Key>(keyStr, true, out var key))
+            if (Enum.TryParse<Key>(keyStr, true, out var key) && key != Key.None)
             {
                 return (uint)KeyInterop.VirtualKeyFromKey(key);
             }
 
-            return (uint)KeyInterop.VirtualKeyFromKey(Key.M);
+            return 0;
         }
 
         private IntPtr HwndHook(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)

@@ -225,7 +225,7 @@
                     <Grid VerticalAlignment="Center">
                         <Grid.ColumnDefinitions>
                             <!-- Left: Album Art (12px margin + 50px art) -->
-                            <ColumnDefinition Width="62"/>
+                            <ColumnDefinition x:Name="ArtColumn" Width="62"/>
                             <!-- Center: Track title, artist, progress bar -->
                             <ColumnDefinition Width="*"/>
                             <!-- Right: Control buttons -->
@@ -233,7 +233,7 @@
                         </Grid.ColumnDefinitions>
 
                         <!-- Album Art Block -->
-                        <Grid Grid.Column="0" Margin="12,0,0,0" Width="50" Height="50" HorizontalAlignment="Left">
+                        <Grid x:Name="ArtBlock" Grid.Column="0" Margin="12,0,0,0" Width="50" Height="50" HorizontalAlignment="Left">
                             <Border x:Name="ArtContainer"
                                     Width="50" Height="50"
                                     CornerRadius="10"
@@ -258,7 +258,7 @@
                         </Grid>
 
                         <!-- Text Block and Progress -->
-                        <Grid Grid.Column="1" Margin="10,0,8,0" VerticalAlignment="Center">
+                        <Grid x:Name="TrackInfoGrid" Grid.Column="1" Margin="10,0,8,0" VerticalAlignment="Center">
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>

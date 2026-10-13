@@ -56,6 +56,7 @@ namespace LucidTune
         {
             ApplySavedPosition();
             ApplyWidgetOpacity(_configManager.CurrentConfig.WidgetOpacity);
+            ApplyCompactMode(_configManager.CurrentConfig.CompactMode);
 
             var hwnd = new WindowInteropHelper(this).Handle;
             _hotkeyService.Initialize(hwnd);
@@ -85,6 +86,24 @@ namespace LucidTune
         public void ApplyWidgetOpacity(double opacity)
         {
             Opacity = Math.Clamp(opacity, 0.2, 1.0);
+        }
+
+        public void ApplyCompactMode(bool isCompact)
+        {
+            if (isCompact)
+            {
+                ArtColumn.Width = new GridLength(0);
+                ArtBlock.Visibility = Visibility.Collapsed;
+                TrackInfoGrid.Margin = new Thickness(14, 0, 8, 0);
+                IslandContainer.Width = 248;
+            }
+            else
+            {
+                ArtColumn.Width = new GridLength(62);
+                ArtBlock.Visibility = Visibility.Visible;
+                TrackInfoGrid.Margin = new Thickness(10, 0, 8, 0);
+                IslandContainer.Width = 310;
+            }
         }
 
         public void ToggleVisibility()
