@@ -152,6 +152,21 @@ namespace LucidTune.UI
             };
             hotkeyItem.Click += (s, e) => _hotkeySettingsAction();
 
+            var autoHideItem = new MenuItem
+            {
+                Header = "Скрывать в полноэкранных играх",
+                IsCheckable = true,
+                IsChecked = _configManager.CurrentConfig.AutoHideInFullscreen,
+                Foreground = Brushes.White
+            };
+            autoHideItem.Click += (s, e) =>
+            {
+                var cfg = _configManager.CurrentConfig;
+                cfg.AutoHideInFullscreen = !cfg.AutoHideInFullscreen;
+                autoHideItem.IsChecked = cfg.AutoHideInFullscreen;
+                _configManager.Save(cfg);
+            };
+
             var autoStartItem = new MenuItem
             {
                 Header = "Автозагрузка",
@@ -183,6 +198,7 @@ namespace LucidTune.UI
             menu.Items.Add(toggleItem);
             menu.Items.Add(hotkeyItem);
             menu.Items.Add(new Separator { Background = new SolidColorBrush(Color.FromArgb(0x20, 0xFF, 0xFF, 0xFF)) });
+            menu.Items.Add(autoHideItem);
             menu.Items.Add(autoStartItem);
             menu.Items.Add(new Separator { Background = new SolidColorBrush(Color.FromArgb(0x20, 0xFF, 0xFF, 0xFF)) });
             menu.Items.Add(exitItem);

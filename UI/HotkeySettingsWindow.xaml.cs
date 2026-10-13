@@ -63,6 +63,8 @@ namespace LucidTune.UI
             {
                 KeyComboBox.SelectedIndex = 12; // Default to 'M'
             }
+
+            AutoHideCheckBox.IsChecked = cfg.AutoHideInFullscreen;
         }
 
         private void OnSaveClick(object sender, RoutedEventArgs e)
@@ -73,6 +75,7 @@ namespace LucidTune.UI
             var cfg = _configManager.CurrentConfig;
             cfg.HotkeyModifiers = modifier;
             cfg.HotkeyKey = key;
+            cfg.AutoHideInFullscreen = AutoHideCheckBox.IsChecked == true;
             _configManager.Save(cfg);
 
             HotkeyChanged?.Invoke(modifier, key);

@@ -15,12 +15,14 @@ namespace LucidTune
         private readonly SmtcMediaService _mediaService;
         private readonly ConfigManager _configManager;
         private readonly HotkeyService _hotkeyService;
+        private readonly FullscreenDetectorService _fullscreenService;
         private readonly Geometry _playGeometry;
         private readonly Geometry _pauseGeometry;
 
         private TrayIconManager? _trayManager;
         private double _currentProgress;
         private bool _isWindowVisible = true;
+        private bool _hiddenByFullscreen;
 
         public MainWindow()
         {
@@ -32,10 +34,12 @@ namespace LucidTune
             _configManager = new ConfigManager();
             _mediaService = new SmtcMediaService();
             _hotkeyService = new HotkeyService();
+            _fullscreenService = new FullscreenDetectorService();
 
             _mediaService.TrackInfoChanged += OnTrackInfoChanged;
             _mediaService.ProgressUpdated += OnProgressUpdated;
             _hotkeyService.HotkeyPressed += OnHotkeyPressed;
+            _fullscreenService.FullscreenStateChanged += OnFullscreenStateChanged;
 
             Loaded += OnMainWindowLoaded;
             Closing += OnMainWindowClosing;
@@ -49,6 +53,8 @@ namespace LucidTune
             var hwnd = new WindowInteropHelper(this).Handle;
             _hotkeyService.Initialize(hwnd);
             _hotkeyService.Register(_configManager.CurrentConfig.HotkeyModifiers, _configManager.CurrentConfig.HotkeyKey);
+
+            _fullscreenService.Start(hwnd);
 
             _trayManager = new TrayIconManager(_configManager, ToggleVisibility, OpenHotkeySettings);
             _trayManager.Initialize(hwnd);
@@ -65,6 +71,7 @@ namespace LucidTune
 
         public void ToggleVisibility()
         {
+            _hiddenByFullscreen = false;
             if (_isWindowVisible)
             {
                 Hide();
@@ -77,6 +84,34 @@ namespace LucidTune
                 Activate();
                 _isWindowVisible = true;
             }
+        }
+
+        private void OnFullscreenStateChanged(bool isFullscreen)
+        {
+            if (!_configManager.CurrentConfig.AutoHideInFullscreen) return;
+
+            Dispatcher.Invoke(() =>
+            {
+                if (isFullscreen)
+                {
+                    if (_isWindowVisible)
+                    {
+                        _hiddenByFullscreen = true;
+                        Hide();
+                        _isWindowVisible = false;
+                    }
+                }
+                else
+                {
+                    if (_hiddenByFullscreen)
+                    {
+                        _hiddenByFullscreen = false;
+                        Show();
+                        Topmost = true;
+                        _isWindowVisible = true;
+                    }
+                }
+            });
         }
 
         private void OpenHotkeySettings()
@@ -178,6 +213,7 @@ namespace LucidTune
         {
             SaveCurrentPosition();
             _hotkeyService.Dispose();
+            _fullscreenService.Dispose();
             _trayManager?.Dispose();
             _mediaService.Dispose();
         }
