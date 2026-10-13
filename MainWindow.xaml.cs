@@ -191,6 +191,12 @@ namespace LucidTune
             }
         }
 
+        private void OnCloseButtonClick(object sender, RoutedEventArgs e)
+        {
+            e.Handled = true;
+            ToggleVisibility();
+        }
+
         private async void OnPlayPauseButtonClick(object sender, RoutedEventArgs e)
         {
             e.Handled = true;
