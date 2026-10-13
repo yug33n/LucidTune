@@ -51,6 +51,7 @@ namespace LucidTune.UI
                 _mainWindow.OverlayVisibilityChanged -= OnOverlayVisibilityChanged;
                 _mainWindow.ApplyWidgetOpacity(_configManager.CurrentConfig.WidgetOpacity);
                 _mainWindow.ApplyCompactMode(_configManager.CurrentConfig.CompactMode);
+                ThemeManager.ApplyTheme(_configManager.CurrentConfig.Theme);
             };
             UpdateOverlayStatus(_mainWindow.IsOverlayVisible);
         }
@@ -82,6 +83,8 @@ namespace LucidTune.UI
         {
             var cfg = _configManager.CurrentConfig;
 
+            SelectThemeItem(cfg.Theme);
+
             SelectBoxItem(ToggleModifierBox, cfg.HotkeyModifiers, "Alt");
             SelectBoxItem(ToggleKeyBox, cfg.HotkeyKey, "M");
 
@@ -111,6 +114,29 @@ namespace LucidTune.UI
             CompactModeCheckBox.IsChecked = cfg.CompactMode;
 
             UpdateAllPreviews();
+        }
+
+        private void SelectThemeItem(string theme)
+        {
+            foreach (ComboBoxItem item in ThemeComboBox.Items)
+            {
+                if (string.Equals(item.Tag?.ToString(), theme, StringComparison.OrdinalIgnoreCase))
+                {
+                    ThemeComboBox.SelectedItem = item;
+                    return;
+                }
+            }
+            if (ThemeComboBox.Items.Count > 0)
+            {
+                ThemeComboBox.SelectedIndex = 0;
+            }
+        }
+
+        private void OnThemeSelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (_isInitializing || ThemeComboBox.SelectedItem is not ComboBoxItem item) return;
+            string theme = item.Tag?.ToString() ?? ThemeManager.DarkTheme;
+            ThemeManager.ApplyTheme(theme);
         }
 
         private static void SelectBoxItem(ComboBox box, string value, string defaultValue)
@@ -361,6 +387,9 @@ namespace LucidTune.UI
             cfg.CompactMode = CompactModeCheckBox.IsChecked == true;
             _mainWindow.ApplyCompactMode(cfg.CompactMode);
 
+            cfg.Theme = (ThemeComboBox.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? ThemeManager.DarkTheme;
+            ThemeManager.ApplyTheme(cfg.Theme);
+
             _configManager.Save(cfg);
 
             AutoStartupService.SetAutoStart(autoStart);
@@ -381,6 +410,7 @@ namespace LucidTune.UI
         {
             _mainWindow.ApplyWidgetOpacity(_configManager.CurrentConfig.WidgetOpacity);
             _mainWindow.ApplyCompactMode(_configManager.CurrentConfig.CompactMode);
+            ThemeManager.ApplyTheme(_configManager.CurrentConfig.Theme);
             Close();
         }
     }

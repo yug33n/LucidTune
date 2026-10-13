@@ -19,16 +19,16 @@
                 <Setter.Value>
                     <ControlTemplate TargetType="{x:Type Thumb}">
                         <Border x:Name="ThumbBorder"
-                                Background="#3A3A4D"
+                                Background="{DynamicResource SettingsScrollBarThumbBrush}"
                                 CornerRadius="3"
                                 Margin="1,0"
                                 SnapsToDevicePixels="True"/>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="ThumbBorder" Property="Background" Value="#555570"/>
+                                <Setter TargetName="ThumbBorder" Property="Opacity" Value="0.8"/>
                             </Trigger>
                             <Trigger Property="IsDragging" Value="True">
-                                <Setter TargetName="ThumbBorder" Property="Background" Value="#6F6F90"/>
+                                <Setter TargetName="ThumbBorder" Property="Opacity" Value="0.6"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -143,7 +143,7 @@
                 <Setter.Value>
                     <ControlTemplate TargetType="{x:Type Slider}">
                         <Grid VerticalAlignment="Center">
-                            <Border Height="5" CornerRadius="2.5" Background="#262634" VerticalAlignment="Center"/>
+                            <Border Height="5" CornerRadius="2.5" Background="{DynamicResource SettingsSliderTrackBrush}" VerticalAlignment="Center"/>
                             <Track x:Name="PART_Track">
                                 <Track.Thumb>
                                     <Thumb Style="{StaticResource DarkSliderThumb}" VerticalAlignment="Center"/>
@@ -188,7 +188,7 @@
         <Style x:Key="WindowCloseButtonStyle" TargetType="Button">
             <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
             <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Foreground" Value="#888894"/>
+            <Setter Property="Foreground" Value="{DynamicResource SettingsTextSecondaryBrush}"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Width" Value="28"/>
@@ -215,7 +215,7 @@
 
         <!-- Custom CheckBox Style -->
         <Style x:Key="DarkCheckBoxStyle" TargetType="CheckBox">
-            <Setter Property="Foreground" Value="#E0E0E6"/>
+            <Setter Property="Foreground" Value="{DynamicResource SettingsTextPrimaryBrush}"/>
             <Setter Property="FontSize" Value="12.5"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Margin" Value="0,4,0,8"/>
@@ -225,7 +225,7 @@
         <Style TargetType="ComboBoxItem">
             <Setter Property="SnapsToDevicePixels" Value="True"/>
             <Setter Property="OverridesDefaultStyle" Value="True"/>
-            <Setter Property="Foreground" Value="#DCDCE6"/>
+            <Setter Property="Foreground" Value="{DynamicResource SettingsTextPrimaryBrush}"/>
             <Setter Property="FontSize" Value="12"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Template">
@@ -241,12 +241,12 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="ItemBorder" Property="Background" Value="#2D2D3D"/>
-                                <Setter Property="Foreground" Value="#FFFFFF"/>
+                                <Setter TargetName="ItemBorder" Property="Background" Value="{DynamicResource SettingsButtonSecondaryBackgroundBrush}"/>
+                                <Setter Property="Foreground" Value="{DynamicResource SettingsTextPrimaryBrush}"/>
                             </Trigger>
                             <Trigger Property="IsSelected" Value="True">
-                                <Setter TargetName="ItemBorder" Property="Background" Value="#38384E"/>
-                                <Setter Property="Foreground" Value="#6B8EFF"/>
+                                <Setter TargetName="ItemBorder" Property="Background" Value="{DynamicResource SettingsBadgeBackgroundBrush}"/>
+                                <Setter Property="Foreground" Value="{DynamicResource SettingsBadgeTextBrush}"/>
                                 <Setter Property="FontWeight" Value="SemiBold"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
@@ -259,8 +259,8 @@
         <ControlTemplate x:Key="ComboBoxToggleButton" TargetType="ToggleButton">
             <Border x:Name="Border"
                     CornerRadius="7"
-                    Background="#202028"
-                    BorderBrush="#2EFFFFFF"
+                    Background="{DynamicResource SettingsInputBackgroundBrush}"
+                    BorderBrush="{DynamicResource SettingsInputBorderBrush}"
                     BorderThickness="1"
                     SnapsToDevicePixels="True">
                 <Grid>
@@ -273,7 +273,7 @@
                           HorizontalAlignment="Center"
                           VerticalAlignment="Center"
                           Data="M1,2 L5,6 L9,2"
-                          Stroke="#8E8E98"
+                          Stroke="{DynamicResource SettingsTextSecondaryBrush}"
                           StrokeThickness="1.5"
                           StrokeStartLineCap="Round"
                           StrokeEndLineCap="Round"
@@ -283,7 +283,7 @@
             <ControlTemplate.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
                     <Setter TargetName="Border" Property="BorderBrush" Value="#4E75FF"/>
-                    <Setter TargetName="Arrow" Property="Stroke" Value="#FFFFFF"/>
+                    <Setter TargetName="Arrow" Property="Stroke" Value="{DynamicResource SettingsTextPrimaryBrush}"/>
                 </Trigger>
                 <Trigger Property="IsChecked" Value="True">
                     <Setter TargetName="Border" Property="BorderBrush" Value="#4E75FF"/>
@@ -299,7 +299,7 @@
             <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled"/>
             <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto"/>
             <Setter Property="ScrollViewer.CanContentScroll" Value="True"/>
-            <Setter Property="Foreground" Value="#FFFFFF"/>
+            <Setter Property="Foreground" Value="{DynamicResource SettingsTextPrimaryBrush}"/>
             <Setter Property="FontSize" Value="12"/>
             <Setter Property="Height" Value="30"/>
             <Setter Property="MaxDropDownHeight" Value="240"/>
@@ -332,12 +332,12 @@
                                       MaxHeight="{TemplateBinding MaxDropDownHeight}">
                                     <Border x:Name="DropDownBorder"
                                             Margin="0,4,0,8"
-                                            Background="#181820"
-                                            BorderBrush="#33FFFFFF"
+                                            Background="{DynamicResource SettingsCardBackgroundBrush}"
+                                            BorderBrush="{DynamicResource SettingsBorderBrush}"
                                             BorderThickness="1"
                                             CornerRadius="8">
                                         <Border.Effect>
-                                            <DropShadowEffect BlurRadius="18" ShadowDepth="4" Opacity="0.6" Color="#000000"/>
+                                            <DropShadowEffect BlurRadius="18" ShadowDepth="4" Opacity="0.4" Color="#000000"/>
                                         </Border.Effect>
                                         <ScrollViewer Margin="3" SnapsToDevicePixels="True">
                                             <ItemsPresenter KeyboardNavigation.DirectionalNavigation="Contained" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"/>
@@ -353,9 +353,9 @@
 
         <!-- Mini Clear Hotkey Button Style -->
         <Style x:Key="MiniClearButtonStyle" TargetType="Button">
-            <Setter Property="Background" Value="#22222E"/>
-            <Setter Property="Foreground" Value="#8E8E98"/>
-            <Setter Property="BorderBrush" Value="#1FFFFFFF"/>
+            <Setter Property="Background" Value="{DynamicResource SettingsButtonSecondaryBackgroundBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource SettingsTextSecondaryBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource SettingsSubCardBorderBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="FontSize" Value="11"/>
             <Setter Property="FontWeight" Value="Medium"/>
@@ -394,9 +394,12 @@
 
     <!-- Outer Shadow Layer -->
     <Grid Margin="15">
-        <Border CornerRadius="16" Background="#14141A" BorderBrush="#26FFFFFF" BorderThickness="1">
+        <Border CornerRadius="16"
+                Background="{DynamicResource SettingsWindowBackgroundBrush}"
+                BorderBrush="{DynamicResource SettingsWindowBorderBrush}"
+                BorderThickness="1">
             <Border.Effect>
-                <DropShadowEffect BlurRadius="25" ShadowDepth="4" Opacity="0.5" Color="#000000"/>
+                <DropShadowEffect BlurRadius="25" ShadowDepth="4" Opacity="0.4" Color="#000000"/>
             </Border.Effect>
 
             <Grid>
@@ -411,9 +414,9 @@
 
                 <!-- Header / Titlebar (Draggable) -->
                 <Border Grid.Row="0"
-                        Background="#191922"
+                        Background="{DynamicResource SettingsHeaderBackgroundBrush}"
                         CornerRadius="16,16,0,0"
-                        BorderBrush="#15FFFFFF"
+                        BorderBrush="{DynamicResource SettingsBorderBrush}"
                         BorderThickness="0,0,0,1"
                         MouseLeftButtonDown="OnTitleBarMouseLeftButtonDown">
                     <Grid Margin="16,0,12,0">
@@ -427,11 +430,11 @@
                             <TextBlock Text="LucidTune"
                                        FontSize="15"
                                        FontWeight="SemiBold"
-                                       Foreground="#FFFFFF"
+                                       Foreground="{DynamicResource SettingsTextPrimaryBrush}"
                                        VerticalAlignment="Center"/>
 
-                            <Border Background="#25FFFFFF" CornerRadius="4" Padding="6,2" Margin="10,0,0,0" VerticalAlignment="Center">
-                                <TextBlock Text="Settings" FontSize="11" Foreground="#A0A0AB"/>
+                            <Border Background="{DynamicResource SettingsBadgeBackgroundBrush}" CornerRadius="4" Padding="6,2" Margin="10,0,0,0" VerticalAlignment="Center">
+                                <TextBlock Text="Settings" FontSize="11" Foreground="{DynamicResource SettingsBadgeTextBrush}"/>
                             </Border>
                         </StackPanel>
 
@@ -458,7 +461,7 @@
                               ScrollChanged="OnContentScrollViewerScrollChanged">
                     <StackPanel>
                         <!-- Status Banner -->
-                        <Border Background="#1B1B24" CornerRadius="10" Padding="12,10" Margin="0,0,0,14" BorderBrush="#18FFFFFF" BorderThickness="1">
+                        <Border Background="{DynamicResource SettingsCardBackgroundBrush}" CornerRadius="10" Padding="12,10" Margin="0,0,0,14" BorderBrush="{DynamicResource SettingsBorderBrush}" BorderThickness="1">
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
@@ -466,15 +469,15 @@
                                 </Grid.ColumnDefinitions>
 
                                 <StackPanel Grid.Column="0" Margin="0,0,12,0" VerticalAlignment="Center">
-                                    <TextBlock x:Name="OverlayStatusTitleText" Text="Оверлей рабочего стола активен" FontWeight="SemiBold" FontSize="13" Foreground="#FFFFFF"/>
-                                    <TextBlock x:Name="OverlayStatusDescText" Text="Готов к перехвату медиа (Spotify, браузеры, Telegram)" FontSize="11.5" Foreground="#8E8E98" Margin="0,2,0,0" TextWrapping="Wrap"/>
+                                    <TextBlock x:Name="OverlayStatusTitleText" Text="Оверлей рабочего стола активен" FontWeight="SemiBold" FontSize="13" Foreground="{DynamicResource SettingsTextPrimaryBrush}"/>
+                                    <TextBlock x:Name="OverlayStatusDescText" Text="Готов к перехвату медиа (Spotify, браузеры, Telegram)" FontSize="11.5" Foreground="{DynamicResource SettingsTextSecondaryBrush}" Margin="0,2,0,0" TextWrapping="Wrap"/>
                                 </StackPanel>
 
                                 <Button x:Name="ToggleOverlayButton"
                                         Grid.Column="1"
                                         Style="{StaticResource ActionButtonStyle}"
-                                        Background="#282836"
-                                        Foreground="#E0E0E6"
+                                        Background="{DynamicResource SettingsButtonSecondaryBackgroundBrush}"
+                                        Foreground="{DynamicResource SettingsButtonSecondaryTextBrush}"
                                         Padding="14,0"
                                         Height="28"
                                         Content="Скрыть"
@@ -483,19 +486,40 @@
                         </Border>
 
                         <!-- Appearance Section -->
-                        <Border Background="#191922" CornerRadius="10" Padding="14,12" Margin="0,0,0,14" BorderBrush="#18FFFFFF" BorderThickness="1">
+                        <Border Background="{DynamicResource SettingsCardBackgroundBrush}" CornerRadius="10" Padding="14,12" Margin="0,0,0,14" BorderBrush="{DynamicResource SettingsBorderBrush}" BorderThickness="1">
                             <StackPanel>
+                                <!-- Theme Selection -->
+                                <Grid Margin="0,0,0,10">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="130"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,10,0">
+                                        <TextBlock Text="Тема оформления" FontWeight="SemiBold" FontSize="13" Foreground="{DynamicResource SettingsTextPrimaryBrush}"/>
+                                        <TextBlock Text="Переключение между тёмным и светлым стилем." FontSize="11.5" Foreground="{DynamicResource SettingsTextSecondaryBrush}" Margin="0,2,0,0"/>
+                                    </StackPanel>
+                                    <ComboBox x:Name="ThemeComboBox"
+                                              Grid.Column="1"
+                                              Height="30"
+                                              SelectionChanged="OnThemeSelectionChanged">
+                                        <ComboBoxItem Content="Тёмная" Tag="Dark"/>
+                                        <ComboBoxItem Content="Светлая" Tag="Light"/>
+                                    </ComboBox>
+                                </Grid>
+
+                                <Rectangle Height="1" Fill="{DynamicResource SettingsSeparatorBrush}" Margin="0,2,0,10"/>
+
                                 <Grid Margin="0,0,0,10">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Grid.Column="0">
-                                        <TextBlock Text="Прозрачность виджета" FontWeight="SemiBold" FontSize="13" Foreground="#FFFFFF"/>
-                                        <TextBlock Text="Настройка видимости оверлея поверх других окон." FontSize="11.5" Foreground="#8E8E98" Margin="0,2,0,0"/>
+                                        <TextBlock Text="Прозрачность виджета" FontWeight="SemiBold" FontSize="13" Foreground="{DynamicResource SettingsTextPrimaryBrush}"/>
+                                        <TextBlock Text="Настройка видимости оверлея поверх других окон." FontSize="11.5" Foreground="{DynamicResource SettingsTextSecondaryBrush}" Margin="0,2,0,0"/>
                                     </StackPanel>
-                                    <Border Grid.Column="1" Background="#282838" CornerRadius="6" Padding="8,4" VerticalAlignment="Center">
-                                        <TextBlock x:Name="OpacityValueText" Text="100%" FontSize="12" FontWeight="SemiBold" Foreground="#4E75FF"/>
+                                    <Border Grid.Column="1" Background="{DynamicResource SettingsBadgeBackgroundBrush}" CornerRadius="6" Padding="8,4" VerticalAlignment="Center">
+                                        <TextBlock x:Name="OpacityValueText" Text="100%" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource SettingsBadgeTextBrush}"/>
                                     </Border>
                                 </Grid>
 
@@ -505,7 +529,7 @@
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="20%" FontSize="11" Foreground="#6C6C78" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                    <TextBlock Grid.Column="0" Text="20%" FontSize="11" Foreground="{DynamicResource SettingsTextMutedBrush}" VerticalAlignment="Center" Margin="0,0,8,0"/>
                                     <Slider x:Name="OpacitySlider"
                                             Grid.Column="1"
                                             Style="{StaticResource DarkSliderStyle}"
@@ -515,10 +539,10 @@
                                             SmallChange="1"
                                             LargeChange="5"
                                             ValueChanged="OnOpacitySliderValueChanged"/>
-                                    <TextBlock Grid.Column="2" Text="100%" FontSize="11" Foreground="#6C6C78" VerticalAlignment="Center" Margin="8,0,0,0"/>
+                                    <TextBlock Grid.Column="2" Text="100%" FontSize="11" Foreground="{DynamicResource SettingsTextMutedBrush}" VerticalAlignment="Center" Margin="8,0,0,0"/>
                                 </Grid>
 
-                                <Rectangle Height="1" Fill="#12FFFFFF" Margin="0,12,0,10"/>
+                                <Rectangle Height="1" Fill="{DynamicResource SettingsSeparatorBrush}" Margin="0,12,0,10"/>
 
                                 <!-- Compact Mode Checkbox -->
                                 <CheckBox x:Name="CompactModeCheckBox"
@@ -526,21 +550,21 @@
                                           Checked="OnCompactModeChanged"
                                           Unchecked="OnCompactModeChanged">
                                     <StackPanel Margin="6,0,0,0">
-                                        <TextBlock Text="Компактный виджет" FontSize="12.5" FontWeight="Medium" Foreground="#FFFFFF"/>
-                                        <TextBlock Text="Скрывает изображение альбома, делая оверлей меньше и компактнее." FontSize="11" Foreground="#8E8E98" Margin="0,2,0,0"/>
+                                        <TextBlock Text="Компактный виджет" FontSize="12.5" FontWeight="Medium" Foreground="{DynamicResource SettingsTextPrimaryBrush}"/>
+                                        <TextBlock Text="Скрывает изображение альбома, делая оверлей меньше и компактнее." FontSize="11" Foreground="{DynamicResource SettingsTextSecondaryBrush}" Margin="0,2,0,0"/>
                                     </StackPanel>
                                 </CheckBox>
                             </StackPanel>
                         </Border>
 
                         <!-- Hotkeys Section -->
-                        <Border Background="#191922" CornerRadius="10" Padding="14,12" Margin="0,0,0,14" BorderBrush="#18FFFFFF" BorderThickness="1">
+                        <Border Background="{DynamicResource SettingsCardBackgroundBrush}" CornerRadius="10" Padding="14,12" Margin="0,0,0,14" BorderBrush="{DynamicResource SettingsBorderBrush}" BorderThickness="1">
                             <StackPanel>
-                                <TextBlock Text="Глобальные горячие клавиши" FontWeight="SemiBold" FontSize="13" Foreground="#FFFFFF"/>
-                                <TextBlock Text="Управление оверлеем и воспроизведением поверх всех окон и игр." FontSize="11.5" Foreground="#8E8E98" Margin="0,2,0,10"/>
+                                <TextBlock Text="Глобальные горячие клавиши" FontWeight="SemiBold" FontSize="13" Foreground="{DynamicResource SettingsTextPrimaryBrush}"/>
+                                <TextBlock Text="Управление оверлеем и воспроизведением поверх всех окон и игр." FontSize="11.5" Foreground="{DynamicResource SettingsTextSecondaryBrush}" Margin="0,2,0,10"/>
 
                                 <!-- 1. Toggle Overlay Hotkey -->
-                                <Border Background="#14141C" CornerRadius="8" Padding="10,8" Margin="0,0,0,8" BorderBrush="#12FFFFFF" BorderThickness="1">
+                                <Border Background="{DynamicResource SettingsSubCardBackgroundBrush}" CornerRadius="8" Padding="10,8" Margin="0,0,0,8" BorderBrush="{DynamicResource SettingsSubCardBorderBrush}" BorderThickness="1">
                                     <Grid>
                                         <Grid.RowDefinitions>
                                             <RowDefinition Height="Auto"/>
@@ -558,9 +582,9 @@
                                                     ToolTip="Очистить горячую клавишу"
                                                     Click="OnClearToggleClick"/>
                                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                                <TextBlock Text="Показать / скрыть оверлей: " FontSize="12" FontWeight="Medium" Foreground="#E0E0E8" VerticalAlignment="Center"/>
-                                                <Border x:Name="BadgeToggle" Background="#2A2A38" CornerRadius="4" Padding="6,2" Margin="6,0,0,0">
-                                                    <TextBlock x:Name="PreviewToggleText" Text="Alt + M" FontSize="11" FontWeight="SemiBold" Foreground="#4E75FF"/>
+                                                <TextBlock Text="Показать / скрыть оверлей: " FontSize="12" FontWeight="Medium" Foreground="{DynamicResource SettingsTextPrimaryBrush}" VerticalAlignment="Center"/>
+                                                <Border x:Name="BadgeToggle" Background="{DynamicResource SettingsBadgeBackgroundBrush}" CornerRadius="4" Padding="6,2" Margin="6,0,0,0">
+                                                    <TextBlock x:Name="PreviewToggleText" Text="Alt + M" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource SettingsBadgeTextBrush}"/>
                                                 </Border>
                                             </StackPanel>
                                         </DockPanel>
@@ -580,7 +604,7 @@
 
                                 <StackPanel x:Name="MediaHotkeysPanel">
                                     <!-- 2. Play / Pause Hotkey -->
-                                    <Border Background="#14141C" CornerRadius="8" Padding="10,8" Margin="0,0,0,8" BorderBrush="#12FFFFFF" BorderThickness="1">
+                                    <Border Background="{DynamicResource SettingsSubCardBackgroundBrush}" CornerRadius="8" Padding="10,8" Margin="0,0,0,8" BorderBrush="{DynamicResource SettingsSubCardBorderBrush}" BorderThickness="1">
                                         <Grid>
                                             <Grid.RowDefinitions>
                                                 <RowDefinition Height="Auto"/>
@@ -598,9 +622,9 @@
                                                         ToolTip="Очистить горячую клавишу"
                                                         Click="OnClearPlayPauseClick"/>
                                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                                    <TextBlock Text="Пауза / Воспроизведение: " FontSize="12" FontWeight="Medium" Foreground="#E0E0E8" VerticalAlignment="Center"/>
-                                                    <Border x:Name="BadgePlayPause" Background="#2A2A38" CornerRadius="4" Padding="6,2" Margin="6,0,0,0">
-                                                        <TextBlock x:Name="PreviewPlayPauseText" Text="Alt + Space" FontSize="11" FontWeight="SemiBold" Foreground="#4E75FF"/>
+                                                    <TextBlock Text="Пауза / Воспроизведение: " FontSize="12" FontWeight="Medium" Foreground="{DynamicResource SettingsTextPrimaryBrush}" VerticalAlignment="Center"/>
+                                                    <Border x:Name="BadgePlayPause" Background="{DynamicResource SettingsBadgeBackgroundBrush}" CornerRadius="4" Padding="6,2" Margin="6,0,0,0">
+                                                        <TextBlock x:Name="PreviewPlayPauseText" Text="Alt + Space" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource SettingsBadgeTextBrush}"/>
                                                     </Border>
                                                 </StackPanel>
                                             </DockPanel>
@@ -611,7 +635,7 @@
                                     </Border>
 
                                     <!-- 3. Next Track Hotkey -->
-                                    <Border Background="#14141C" CornerRadius="8" Padding="10,8" Margin="0,0,0,8" BorderBrush="#12FFFFFF" BorderThickness="1">
+                                    <Border Background="{DynamicResource SettingsSubCardBackgroundBrush}" CornerRadius="8" Padding="10,8" Margin="0,0,0,8" BorderBrush="{DynamicResource SettingsSubCardBorderBrush}" BorderThickness="1">
                                         <Grid>
                                             <Grid.RowDefinitions>
                                                 <RowDefinition Height="Auto"/>
@@ -629,9 +653,9 @@
                                                         ToolTip="Очистить горячую клавишу"
                                                         Click="OnClearNextClick"/>
                                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                                    <TextBlock Text="Следующий трек: " FontSize="12" FontWeight="Medium" Foreground="#E0E0E8" VerticalAlignment="Center"/>
-                                                    <Border x:Name="BadgeNext" Background="#2A2A38" CornerRadius="4" Padding="6,2" Margin="6,0,0,0">
-                                                        <TextBlock x:Name="PreviewNextText" Text="Alt + Right" FontSize="11" FontWeight="SemiBold" Foreground="#4E75FF"/>
+                                                    <TextBlock Text="Следующий трек: " FontSize="12" FontWeight="Medium" Foreground="{DynamicResource SettingsTextPrimaryBrush}" VerticalAlignment="Center"/>
+                                                    <Border x:Name="BadgeNext" Background="{DynamicResource SettingsBadgeBackgroundBrush}" CornerRadius="4" Padding="6,2" Margin="6,0,0,0">
+                                                        <TextBlock x:Name="PreviewNextText" Text="Alt + Right" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource SettingsBadgeTextBrush}"/>
                                                     </Border>
                                                 </StackPanel>
                                             </DockPanel>
@@ -642,7 +666,7 @@
                                     </Border>
 
                                     <!-- 4. Previous Track Hotkey -->
-                                    <Border Background="#14141C" CornerRadius="8" Padding="10,8" Margin="0,0,0,4" BorderBrush="#12FFFFFF" BorderThickness="1">
+                                    <Border Background="{DynamicResource SettingsSubCardBackgroundBrush}" CornerRadius="8" Padding="10,8" Margin="0,0,0,4" BorderBrush="{DynamicResource SettingsSubCardBorderBrush}" BorderThickness="1">
                                         <Grid>
                                             <Grid.RowDefinitions>
                                                 <RowDefinition Height="Auto"/>
@@ -660,9 +684,9 @@
                                                         ToolTip="Очистить горячую клавишу"
                                                         Click="OnClearPrevClick"/>
                                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                                    <TextBlock Text="Предыдущий трек: " FontSize="12" FontWeight="Medium" Foreground="#E0E0E8" VerticalAlignment="Center"/>
-                                                    <Border x:Name="BadgePrev" Background="#2A2A38" CornerRadius="4" Padding="6,2" Margin="6,0,0,0">
-                                                        <TextBlock x:Name="PreviewPrevText" Text="Alt + Left" FontSize="11" FontWeight="SemiBold" Foreground="#4E75FF"/>
+                                                    <TextBlock Text="Предыдущий трек: " FontSize="12" FontWeight="Medium" Foreground="{DynamicResource SettingsTextPrimaryBrush}" VerticalAlignment="Center"/>
+                                                    <Border x:Name="BadgePrev" Background="{DynamicResource SettingsBadgeBackgroundBrush}" CornerRadius="4" Padding="6,2" Margin="6,0,0,0">
+                                                        <TextBlock x:Name="PreviewPrevText" Text="Alt + Left" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource SettingsBadgeTextBrush}"/>
                                                     </Border>
                                                 </StackPanel>
                                             </DockPanel>
@@ -676,9 +700,9 @@
                         </Border>
 
                         <!-- System and Behavior Section -->
-                        <Border Background="#191922" CornerRadius="10" Padding="14,12" Margin="0,0,0,14" BorderBrush="#18FFFFFF" BorderThickness="1">
+                        <Border Background="{DynamicResource SettingsCardBackgroundBrush}" CornerRadius="10" Padding="14,12" Margin="0,0,0,14" BorderBrush="{DynamicResource SettingsBorderBrush}" BorderThickness="1">
                             <StackPanel>
-                                <TextBlock Text="Параметры работы" FontWeight="SemiBold" FontSize="13" Foreground="#FFFFFF" Margin="0,0,0,8"/>
+                                <TextBlock Text="Параметры работы" FontWeight="SemiBold" FontSize="13" Foreground="{DynamicResource SettingsTextPrimaryBrush}" Margin="0,0,0,8"/>
 
                                 <CheckBox x:Name="AutoStartCheckBox"
                                           Style="{StaticResource DarkCheckBoxStyle}"
@@ -695,7 +719,7 @@
                         </Border>
 
                         <!-- Positioning and Reset Section -->
-                        <Border Background="#191922" CornerRadius="10" Padding="14,12" BorderBrush="#18FFFFFF" BorderThickness="1">
+                        <Border Background="{DynamicResource SettingsCardBackgroundBrush}" CornerRadius="10" Padding="14,12" BorderBrush="{DynamicResource SettingsBorderBrush}" BorderThickness="1">
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
@@ -703,15 +727,15 @@
                                 </Grid.ColumnDefinitions>
 
                                 <StackPanel Grid.Column="0" Margin="0,0,12,0" VerticalAlignment="Center">
-                                    <TextBlock Text="Позиция на экране" FontWeight="SemiBold" FontSize="13" Foreground="#FFFFFF"/>
+                                    <TextBlock Text="Позиция на экране" FontWeight="SemiBold" FontSize="13" Foreground="{DynamicResource SettingsTextPrimaryBrush}"/>
                                     <TextBlock Text="Перемещайте виджет мышью за любое свободное место."
-                                               FontSize="11.5" Foreground="#8E8E98" Margin="0,2,0,0" TextWrapping="Wrap"/>
+                                               FontSize="11.5" Foreground="{DynamicResource SettingsTextSecondaryBrush}" Margin="0,2,0,0" TextWrapping="Wrap"/>
                                 </StackPanel>
 
                                 <Button Grid.Column="1"
                                         Style="{StaticResource ActionButtonStyle}"
-                                        Background="#282836"
-                                        Foreground="#E0E0E6"
+                                        Background="{DynamicResource SettingsButtonSecondaryBackgroundBrush}"
+                                        Foreground="{DynamicResource SettingsButtonSecondaryTextBrush}"
                                         Padding="12,0"
                                         Height="28"
                                         Content="Сбросить в центр"
@@ -723,15 +747,15 @@
 
                 <!-- Footer (Save / Close) -->
                 <Border Grid.Row="2"
-                        Background="#191922"
+                        Background="{DynamicResource SettingsHeaderBackgroundBrush}"
                         CornerRadius="0,0,16,16"
-                        BorderBrush="#15FFFFFF"
+                        BorderBrush="{DynamicResource SettingsBorderBrush}"
                         BorderThickness="0,1,0,0">
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,18,0">
                         <Button Style="{StaticResource ActionButtonStyle}"
                                 Width="85"
-                                Background="#2A2A36"
-                                Foreground="#C0C0C8"
+                                Background="{DynamicResource SettingsButtonSecondaryBackgroundBrush}"
+                                Foreground="{DynamicResource SettingsButtonSecondaryTextBrush}"
                                 Content="Закрыть"
                                 Margin="0,0,10,0"
                                 Click="OnCloseClick"/>

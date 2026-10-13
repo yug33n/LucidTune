@@ -28,7 +28,7 @@
         <Style x:Key="NavButtonStyle" TargetType="Button">
             <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
             <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Foreground" Value="#A0A0AB"/>
+            <Setter Property="Foreground" Value="{DynamicResource WidgetNavButtonBrush}"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Width" Value="24"/>
@@ -42,22 +42,7 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Trigger.EnterActions>
-                                    <BeginStoryboard>
-                                        <Storyboard>
-                                            <ColorAnimation Storyboard.TargetProperty="(Button.Foreground).(SolidColorBrush.Color)"
-                                                            To="#FFFFFF" Duration="0:0:0.12"/>
-                                        </Storyboard>
-                                    </BeginStoryboard>
-                                </Trigger.EnterActions>
-                                <Trigger.ExitActions>
-                                    <BeginStoryboard>
-                                        <Storyboard>
-                                            <ColorAnimation Storyboard.TargetProperty="(Button.Foreground).(SolidColorBrush.Color)"
-                                                            To="#A0A0AB" Duration="0:0:0.12"/>
-                                        </Storyboard>
-                                    </BeginStoryboard>
-                                </Trigger.ExitActions>
+                                <Setter Property="Foreground" Value="{DynamicResource WidgetNavHoverBrush}"/>
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
                                 <Setter Property="Opacity" Value="0.25"/>
@@ -68,7 +53,7 @@
             </Setter>
         </Style>
 
-        <!-- Circular Play/Pause Button Style with Smooth 120ms Hover -->
+        <!-- Circular Play/Pause Button Style with Smooth Hover -->
         <Style x:Key="PlayPauseButtonStyle" TargetType="Button">
             <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
             <Setter Property="Cursor" Value="Hand"/>
@@ -80,33 +65,19 @@
                         <Border x:Name="ButtonCircle"
                                 Width="28" Height="28"
                                 CornerRadius="14"
-                                Background="#2A2A32"
+                                Background="{DynamicResource WidgetPlayButtonCircleBrush}"
                                 SnapsToDevicePixels="True">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Trigger.EnterActions>
-                                    <BeginStoryboard>
-                                        <Storyboard>
-                                            <ColorAnimation Storyboard.TargetName="ButtonCircle"
-                                                            Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)"
-                                                            To="#3A3A45" Duration="0:0:0.12"/>
-                                        </Storyboard>
-                                    </BeginStoryboard>
-                                </Trigger.EnterActions>
-                                <Trigger.ExitActions>
-                                    <BeginStoryboard>
-                                        <Storyboard>
-                                            <ColorAnimation Storyboard.TargetName="ButtonCircle"
-                                                            Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)"
-                                                            To="#2A2A32" Duration="0:0:0.12"/>
-                                        </Storyboard>
-                                    </BeginStoryboard>
-                                </Trigger.ExitActions>
+                                <Setter TargetName="ButtonCircle" Property="Opacity" Value="0.85"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="ButtonCircle" Property="Opacity" Value="0.7"/>
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
-                                <Setter TargetName="ButtonCircle" Property="Opacity" Value="0.3"/>
+                                <Setter TargetName="ButtonCircle" Property="Opacity" Value="0.25"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -118,7 +89,7 @@
         <Style x:Key="MinimizeButtonStyle" TargetType="Button">
             <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
             <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Foreground" Value="#707078"/>
+            <Setter Property="Foreground" Value="{DynamicResource WidgetHideButtonBrush}"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Width" Value="18"/>
@@ -136,28 +107,8 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Trigger.EnterActions>
-                                    <BeginStoryboard>
-                                        <Storyboard>
-                                            <ColorAnimation Storyboard.TargetName="BtnBorder"
-                                                            Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)"
-                                                            To="#2D2D38" Duration="0:0:0.12"/>
-                                            <ColorAnimation Storyboard.TargetProperty="(Button.Foreground).(SolidColorBrush.Color)"
-                                                            To="#FFFFFF" Duration="0:0:0.12"/>
-                                        </Storyboard>
-                                    </BeginStoryboard>
-                                </Trigger.EnterActions>
-                                <Trigger.ExitActions>
-                                    <BeginStoryboard>
-                                        <Storyboard>
-                                            <ColorAnimation Storyboard.TargetName="BtnBorder"
-                                                            Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)"
-                                                            To="#00000000" Duration="0:0:0.12"/>
-                                            <ColorAnimation Storyboard.TargetProperty="(Button.Foreground).(SolidColorBrush.Color)"
-                                                            To="#707078" Duration="0:0:0.12"/>
-                                        </Storyboard>
-                                    </BeginStoryboard>
-                                </Trigger.ExitActions>
+                                <Setter TargetName="BtnBorder" Property="Background" Value="{DynamicResource WidgetHideButtonHoverBgBrush}"/>
+                                <Setter Property="Foreground" Value="{DynamicResource WidgetNavHoverBrush}"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -179,7 +130,7 @@
                             <!-- Background Unfilled Track -->
                             <Border Height="3"
                                     CornerRadius="1.5"
-                                    Background="#25FFFFFF"
+                                    Background="{DynamicResource WidgetTrackBackgroundBrush}"
                                     Margin="6,0,6,0"
                                     VerticalAlignment="Center"/>
 
@@ -270,17 +221,17 @@
 
             <!-- 1. Ambient Drop Shadow -->
             <Border CornerRadius="18"
-                    Background="#D9111114">
+                    Background="{DynamicResource WidgetBackgroundBrush}">
                 <Border.Effect>
-                    <DropShadowEffect BlurRadius="25" ShadowDepth="4" Opacity="0.4" Color="#000000" RenderingBias="Performance"/>
+                    <DropShadowEffect BlurRadius="25" ShadowDepth="4" Opacity="0.4" Color="{DynamicResource WidgetDropShadowColor}" RenderingBias="Performance"/>
                 </Border.Effect>
             </Border>
 
             <!-- 2. Floating Glass Island Container -->
             <Border x:Name="MainCard"
                     CornerRadius="18"
-                    Background="#D9111114"
-                    BorderBrush="#26FFFFFF"
+                    Background="{DynamicResource WidgetBackgroundBrush}"
+                    BorderBrush="{DynamicResource WidgetBorderBrush}"
                     BorderThickness="1"
                     ClipToBounds="True"
                     MouseEnter="OnMainCardMouseEnter"
@@ -334,14 +285,14 @@
                             <Border x:Name="ArtContainer"
                                     Width="50" Height="50"
                                     CornerRadius="10"
-                                    Background="#1A1A20"
+                                    Background="{DynamicResource WidgetNavHoverCircleBrush}"
                                     ClipToBounds="True">
                                 <Grid>
                                     <!-- Note icon placeholder -->
                                     <Path x:Name="PlaceholderArt"
                                           Width="20" Height="20"
                                           Stretch="Uniform"
-                                          Fill="#666672"
+                                          Fill="{DynamicResource WidgetArtistBrush}"
                                           HorizontalAlignment="Center" VerticalAlignment="Center"
                                           Data="M12,3V13.55A4,4 0 1,0 14,17V7H18V3H12Z"/>
 
@@ -368,7 +319,7 @@
                                        Text="Нет активного трека"
                                        FontSize="14"
                                        FontWeight="SemiBold"
-                                       Foreground="#FFFFFF"
+                                       Foreground="{DynamicResource WidgetTitleBrush}"
                                        TextTrimming="CharacterEllipsis"
                                        TextWrapping="NoWrap"
                                        Margin="0,0,0,1"/>
@@ -379,7 +330,7 @@
                                        Text="Запустите музыку"
                                        FontSize="11.5"
                                        FontWeight="Normal"
-                                       Foreground="#8E8E93"
+                                       Foreground="{DynamicResource WidgetArtistBrush}"
                                        TextTrimming="CharacterEllipsis"
                                        TextWrapping="NoWrap"
                                        Margin="0,0,0,5"/>
@@ -388,7 +339,7 @@
                             <Border x:Name="ProgressBarTrack"
                                     Grid.Row="2"
                                     Height="3"
-                                    Background="#20FFFFFF"
+                                    Background="{DynamicResource WidgetTrackBackgroundBrush}"
                                     CornerRadius="1.5"
                                     ClipToBounds="True"
                                     HorizontalAlignment="Stretch">
@@ -434,7 +385,7 @@
                                       Width="12" Height="12"
                                       Margin="2,0,0,0"
                                       Stretch="Uniform"
-                                      Fill="#FFFFFF"
+                                      Fill="{DynamicResource WidgetPlayButtonIconBrush}"
                                       Data="{StaticResource PlayGeometry}"
                                       HorizontalAlignment="Center"
                                       VerticalAlignment="Center"/>
@@ -474,7 +425,7 @@
                                 <Path x:Name="VolumeIconPath"
                                       Width="12" Height="12"
                                       Stretch="Uniform"
-                                      Fill="#8E8E98"
+                                      Fill="{DynamicResource WidgetVolumeIconBrush}"
                                       Data="{StaticResource VolumeHighGeometry}"/>
                             </Button>
 

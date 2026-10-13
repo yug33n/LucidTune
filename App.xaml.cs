@@ -13,5 +13,12 @@ namespace LucidTune
                 Debug.WriteLine($"[DispatcherUnhandledException] {e.Exception}");
             };
         }
+
+        protected override void OnStartup(StartupEventArgs e)
+        {
+            base.OnStartup(e);
+            var config = new Config.ConfigManager().CurrentConfig;
+            Services.ThemeManager.ApplyTheme(config.Theme);
+        }
     }
 }
