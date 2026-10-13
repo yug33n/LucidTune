@@ -25,6 +25,7 @@ namespace LucidTune
         private bool _isWindowVisible = true;
         private bool _hiddenByFullscreen;
         private bool _isAnimating;
+        private SettingsWindow? _settingsWindow;
 
         public MainWindow()
         {
@@ -205,8 +206,26 @@ namespace LucidTune
 
         public void OpenSettingsWindow()
         {
-            var settingsWindow = new SettingsWindow(this, _configManager);
-            settingsWindow.Show();
+            Dispatcher.Invoke(() =>
+            {
+                try
+                {
+                    if (_settingsWindow != null && _settingsWindow.IsLoaded)
+                    {
+                        _settingsWindow.Activate();
+                        return;
+                    }
+
+                    _settingsWindow = new SettingsWindow(this, _configManager);
+                    _settingsWindow.Closed += (s, e) => _settingsWindow = null;
+                    _settingsWindow.Show();
+                    _settingsWindow.Activate();
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Failed to open settings window: {ex.Message}");
+                }
+            });
         }
 
         public void RegisterAllConfiguredHotkeys()

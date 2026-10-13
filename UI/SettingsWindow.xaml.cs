@@ -131,10 +131,16 @@ namespace LucidTune.UI
 
         private void UpdateAllPreviews()
         {
-            PreviewToggleText.Text = $"{ToggleModifierBox.SelectedItem} + {ToggleKeyBox.SelectedItem}";
-            PreviewPlayPauseText.Text = $"{PlayPauseModifierBox.SelectedItem} + {PlayPauseKeyBox.SelectedItem}";
-            PreviewNextText.Text = $"{NextModifierBox.SelectedItem} + {NextKeyBox.SelectedItem}";
-            PreviewPrevText.Text = $"{PrevModifierBox.SelectedItem} + {PrevKeyBox.SelectedItem}";
+            if (PreviewToggleText == null || PreviewPlayPauseText == null || 
+                PreviewNextText == null || PreviewPrevText == null)
+            {
+                return;
+            }
+
+            PreviewToggleText.Text = $"{ToggleModifierBox?.SelectedItem} + {ToggleKeyBox?.SelectedItem}";
+            PreviewPlayPauseText.Text = $"{PlayPauseModifierBox?.SelectedItem} + {PlayPauseKeyBox?.SelectedItem}";
+            PreviewNextText.Text = $"{NextModifierBox?.SelectedItem} + {NextKeyBox?.SelectedItem}";
+            PreviewPrevText.Text = $"{PrevModifierBox?.SelectedItem} + {PrevKeyBox?.SelectedItem}";
         }
 
         private void OnTitleBarMouseLeftButtonDown(object sender, MouseButtonEventArgs e)

@@ -7,7 +7,7 @@
         AllowsTransparency="True"
         Background="Transparent"
         WindowStartupLocation="CenterScreen"
-        Topmost="False"
+        Topmost="True"
         ResizeMode="NoResize">
 
     <Window.Resources>
@@ -196,7 +196,7 @@
                                             <DropShadowEffect BlurRadius="18" ShadowDepth="4" Opacity="0.6" Color="#000000"/>
                                         </Border.Effect>
                                         <ScrollViewer Margin="3" SnapsToDevicePixels="True">
-                                            <StackPanel IsItemsHost="True" KeyboardNavigation.DirectionalNavigation="Circular" />
+                                            <ItemsPresenter KeyboardNavigation.DirectionalNavigation="Contained" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"/>
                                         </ScrollViewer>
                                     </Border>
                                 </Grid>
