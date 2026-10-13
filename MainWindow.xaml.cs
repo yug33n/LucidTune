@@ -191,7 +191,7 @@ namespace LucidTune
             }
         }
 
-        private void OnCloseButtonClick(object sender, RoutedEventArgs e)
+        private void OnHideButtonClick(object sender, RoutedEventArgs e)
         {
             e.Handled = true;
             ToggleVisibility();
