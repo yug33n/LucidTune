@@ -113,8 +113,8 @@ namespace LucidTune.Services
             SetBrush("SettingsTextMutedBrush", Color.FromRgb(0x9C, 0xA3, 0xAF));
             SetBrush("SettingsInputBackgroundBrush", Color.FromRgb(0xFF, 0xFF, 0xFF));
             SetBrush("SettingsInputBorderBrush", Color.FromRgb(0xD1, 0xD5, 0xDB));
-            SetBrush("SettingsBadgeBackgroundBrush", Color.FromRgb(0xEE, 0xF2, 0xFF));
-            SetBrush("SettingsBadgeTextBrush", Color.FromRgb(0x3B, 0x82, 0xF6));
+            SetBrush("SettingsBadgeBackgroundBrush", Color.FromRgb(0xE0, 0xE7, 0xFF));
+            SetBrush("SettingsBadgeTextBrush", Color.FromRgb(0x1D, 0x4E, 0xD8));
             SetBrush("SettingsButtonSecondaryBackgroundBrush", Color.FromRgb(0xE5, 0xE7, 0xEB));
             SetBrush("SettingsButtonSecondaryTextBrush", Color.FromRgb(0x1F, 0x29, 0x37));
             SetBrush("SettingsScrollBarThumbBrush", Color.FromRgb(0xD1, 0xD5, 0xDB));

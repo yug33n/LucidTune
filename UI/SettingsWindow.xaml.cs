@@ -137,6 +137,7 @@ namespace LucidTune.UI
             if (_isInitializing || ThemeComboBox.SelectedItem is not ComboBoxItem item) return;
             string theme = item.Tag?.ToString() ?? ThemeManager.DarkTheme;
             ThemeManager.ApplyTheme(theme);
+            UpdateAllPreviews();
         }
 
         private static void SelectBoxItem(ComboBox box, string value, string defaultValue)
@@ -283,20 +284,20 @@ namespace LucidTune.UI
             if (string.IsNullOrWhiteSpace(key) || key.Equals("None", StringComparison.OrdinalIgnoreCase))
             {
                 textBlock.Text = "Не назначено";
-                textBlock.Foreground = new SolidColorBrush(Color.FromRgb(0x8E, 0x8E, 0x98));
-                badgeBorder.Background = new SolidColorBrush(Color.FromRgb(0x22, 0x22, 0x2C));
+                textBlock.SetResourceReference(TextBlock.ForegroundProperty, "SettingsTextMutedBrush");
+                badgeBorder.SetResourceReference(Border.BackgroundProperty, "SettingsButtonSecondaryBackgroundBrush");
             }
             else if (string.IsNullOrWhiteSpace(mod) || mod.Equals("None", StringComparison.OrdinalIgnoreCase))
             {
                 textBlock.Text = key;
-                textBlock.Foreground = new SolidColorBrush(Color.FromRgb(0x4E, 0x75, 0xFF));
-                badgeBorder.Background = new SolidColorBrush(Color.FromRgb(0x2A, 0x2A, 0x38));
+                textBlock.SetResourceReference(TextBlock.ForegroundProperty, "SettingsBadgeTextBrush");
+                badgeBorder.SetResourceReference(Border.BackgroundProperty, "SettingsBadgeBackgroundBrush");
             }
             else
             {
                 textBlock.Text = $"{mod} + {key}";
-                textBlock.Foreground = new SolidColorBrush(Color.FromRgb(0x4E, 0x75, 0xFF));
-                badgeBorder.Background = new SolidColorBrush(Color.FromRgb(0x2A, 0x2A, 0x38));
+                textBlock.SetResourceReference(TextBlock.ForegroundProperty, "SettingsBadgeTextBrush");
+                badgeBorder.SetResourceReference(Border.BackgroundProperty, "SettingsBadgeBackgroundBrush");
             }
         }
 

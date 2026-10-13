@@ -148,31 +148,34 @@ namespace LucidTune.Services
             }
         }
 
-        private ISimpleAudioVolume? GetTargetAudioVolume()
+        private List<ISimpleAudioVolume> GetTargetAudioVolumes(out string? matchedDisplayName)
         {
+            matchedDisplayName = null;
+            var list = new List<ISimpleAudioVolume>();
+            if (string.IsNullOrWhiteSpace(_targetAppId))
+            {
+                TargetAppDisplayName = null;
+                return list;
+            }
+
             try
             {
                 var enumerator = (IMMDeviceEnumerator)new MMDeviceEnumeratorComObject();
                 int hr = enumerator.GetDefaultAudioEndpoint(eRender, eMultimedia, out var device);
-                if (hr != 0 || device == null) return null;
+                if (hr != 0 || device == null) return list;
 
                 Guid sessionManagerGuid = typeof(IAudioSessionManager2).GUID;
                 hr = device.Activate(ref sessionManagerGuid, CLSCTX_ALL, IntPtr.Zero, out var sessionManagerObj);
-                if (hr != 0 || sessionManagerObj == null) return null;
+                if (hr != 0 || sessionManagerObj == null) return list;
 
                 var sessionManager = sessionManagerObj as IAudioSessionManager2;
-                if (sessionManager == null) return null;
+                if (sessionManager == null) return list;
 
                 hr = sessionManager.GetSessionEnumerator(out var sessionEnum);
-                if (hr != 0 || sessionEnum == null) return null;
+                if (hr != 0 || sessionEnum == null) return list;
 
                 hr = sessionEnum.GetCount(out int count);
-                if (hr != 0 || count == 0) return null;
-
-                ISimpleAudioVolume? matchedVolume = null;
-                ISimpleAudioVolume? activeFallbackVolume = null;
-                string? matchedName = null;
-                string? fallbackName = null;
+                if (hr != 0 || count == 0) return list;
 
                 for (int i = 0; i < count; i++)
                 {
@@ -182,58 +185,41 @@ namespace LucidTune.Services
                     var control2 = control as IAudioSessionControl2;
                     var simpleVol = control as ISimpleAudioVolume;
 
-                    if (control2 != null && simpleVol != null)
+                    if (simpleVol != null)
                     {
-                        control2.GetProcessId(out uint pid);
-                        if (pid == 0) continue; // Skip idle / system sound endpoints
+                        uint pid = 0;
+                        string sessionId = "";
+                        int isSystem = 0;
 
-                        control2.GetSessionIdentifier(out string sessionId);
-                        control.GetState(out int state);
+                        if (control2 != null)
+                        {
+                            control2.GetProcessId(out pid);
+                            control2.GetSessionIdentifier(out sessionId);
+                            isSystem = control2.IsSystemSoundsSession();
+                        }
+
+                        if (isSystem != 0) continue; // Skip Windows system sounds
 
                         string procName = GetProcessName(pid);
 
-                        // If session is actively outputting sound (state == 1)
-                        if (state == 1 && activeFallbackVolume == null)
+                        if (IsMatch(_targetAppId, pid, procName, sessionId))
                         {
-                            activeFallbackVolume = simpleVol;
-                            fallbackName = procName;
-                        }
-
-                        if (!string.IsNullOrWhiteSpace(_targetAppId))
-                        {
-                            if (IsMatch(_targetAppId, pid, procName, sessionId))
+                            list.Add(simpleVol);
+                            if (string.IsNullOrEmpty(matchedDisplayName))
                             {
-                                matchedName = !string.IsNullOrEmpty(procName) ? procName : _targetAppId;
-                                if (state == 1)
-                                {
-                                    TargetAppDisplayName = matchedName;
-                                    return simpleVol;
-                                }
-                                matchedVolume ??= simpleVol;
+                                matchedDisplayName = !string.IsNullOrEmpty(procName) ? procName : _targetAppId;
                             }
                         }
                     }
                 }
 
-                if (matchedVolume != null)
-                {
-                    TargetAppDisplayName = matchedName;
-                    return matchedVolume;
-                }
-
-                if (activeFallbackVolume != null)
-                {
-                    TargetAppDisplayName = fallbackName;
-                    return activeFallbackVolume;
-                }
-
-                TargetAppDisplayName = null;
-                return null;
+                TargetAppDisplayName = matchedDisplayName;
+                return list;
             }
             catch
             {
                 TargetAppDisplayName = null;
-                return null;
+                return list;
             }
         }
 
@@ -257,78 +243,133 @@ namespace LucidTune.Services
 
             string target = targetAppId.ToLowerInvariant();
             string pName = procName.ToLowerInvariant();
+            string sId = (sessionId ?? "").ToLowerInvariant();
 
-            // 1. Direct process name containment or localized synonyms
-            if (!string.IsNullOrEmpty(pName))
+            string normTarget = Normalize(target);
+            string normProc = Normalize(pName);
+            string normSession = Normalize(sId);
+
+            // 1. Yandex Music & Yandex Browser matchers
+            bool targetIsYandex = normTarget.Contains("yandex") || normTarget.Contains("яндекс") || normTarget.Contains("ruyandex");
+            if (targetIsYandex)
             {
-                if (target.Contains(pName) || pName.Contains(target))
+                if (normProc.Contains("yandex") || normProc.Contains("яндекс") || normProc.Contains("music") || normProc.Contains("музыка") || normProc.Contains("browser"))
                     return true;
-
-                // Yandex Music synonyms
-                if ((target.Contains("yandex") || target.Contains("яндекс")) &&
-                    (pName.Contains("yandex") || pName.Contains("яндекс") || pName.Contains("музыка")))
-                    return true;
-
-                // Spotify synonyms
-                if ((target.Contains("spotify") || target.Contains("спотифай")) &&
-                    (pName.Contains("spotify") || pName.Contains("спотифай")))
-                    return true;
-
-                // VK Music synonyms
-                if ((target.Contains("vk") || target.Contains("вк")) &&
-                    (pName.Contains("vk") || pName.Contains("вк")))
+                if (normSession.Contains("yandex") || normSession.Contains("яндекс") || normSession.Contains("music") || normSession.Contains("ruyandex"))
                     return true;
             }
 
-            // 2. Executable file name or installation folder path
+            // 2. Spotify matchers
+            bool targetIsSpotify = normTarget.Contains("spotify") || normTarget.Contains("спотифай");
+            if (targetIsSpotify)
+            {
+                if (normProc.Contains("spotify") || normProc.Contains("спотифай") || normSession.Contains("spotify"))
+                    return true;
+            }
+
+            // 3. VK Music matchers
+            bool targetIsVk = normTarget.Contains("vk") || normTarget.Contains("вк");
+            if (targetIsVk)
+            {
+                if (normProc.Contains("vk") || normProc.Contains("вк") || normSession.Contains("vk"))
+                    return true;
+            }
+
+            // 4. Telegram matchers
+            bool targetIsTelegram = normTarget.Contains("telegram") || normTarget.Contains("телеграм");
+            if (targetIsTelegram)
+            {
+                if (normProc.Contains("telegram") || normSession.Contains("telegram"))
+                    return true;
+            }
+
+            // 5. Popular browser matchers
+            if (normTarget.Contains("chrome") && (normProc.Contains("chrome") || normSession.Contains("chrome"))) return true;
+            if ((normTarget.Contains("edge") || normTarget.Contains("msedge")) && (normProc.Contains("edge") || normProc.Contains("msedge") || normSession.Contains("edge"))) return true;
+            if (normTarget.Contains("firefox") && (normProc.Contains("firefox") || normSession.Contains("firefox"))) return true;
+            if (normTarget.Contains("opera") && (normProc.Contains("opera") || normSession.Contains("opera"))) return true;
+            if (normTarget.Contains("brave") && (normProc.Contains("brave") || normSession.Contains("brave"))) return true;
+            if (normTarget.Contains("vivaldi") && (normProc.Contains("vivaldi") || normSession.Contains("vivaldi"))) return true;
+            if ((normTarget.Contains("browser") || normTarget.Contains("yandex")) && normProc.Equals("browser")) return true;
+
+            // 6. Direct containment
+            if (!string.IsNullOrEmpty(normProc) && normProc.Length >= 3)
+            {
+                if (normTarget.Contains(normProc) || normProc.Contains(normTarget))
+                    return true;
+            }
+
+            // 7. Session ID containment
+            if (!string.IsNullOrEmpty(normSession) && normSession.Length >= 4)
+            {
+                if (normTarget.Contains(normSession) || normSession.Contains(normTarget))
+                    return true;
+            }
+
+            // 8. Executable file path on disk
             if (pid != 0)
             {
                 try
                 {
                     using var proc = Process.GetProcessById((int)pid);
-                    string? path = proc.MainModule?.FileName?.ToLowerInvariant();
-                    if (!string.IsNullOrEmpty(path))
+                    string? exePath = proc.MainModule?.FileName;
+                    if (!string.IsNullOrEmpty(exePath))
                     {
-                        if (target.Contains("yandex") && path.Contains("yandex")) return true;
-                        if (target.Contains("spotify") && path.Contains("spotify")) return true;
-                        if (target.Contains("chrome") && path.Contains("chrome")) return true;
-                        if (target.Contains("firefox") && path.Contains("firefox")) return true;
-                        if (target.Contains("edge") && (path.Contains("edge") || path.Contains("msedge"))) return true;
-                        if (target.Contains("telegram") && path.Contains("telegram")) return true;
-
-                        string fileName = Path.GetFileNameWithoutExtension(path);
-                        if (target.Contains(fileName) || fileName.Contains(target)) return true;
+                        string normPath = Normalize(exePath.ToLowerInvariant());
+                        if (targetIsYandex && (normPath.Contains("yandex") || normPath.Contains("яндекс") || normPath.Contains("music"))) return true;
+                        if (targetIsSpotify && normPath.Contains("spotify")) return true;
+                        if (!string.IsNullOrEmpty(normTarget) && normTarget.Length >= 4 && normPath.Contains(normTarget)) return true;
                     }
                 }
                 catch { }
             }
 
-            // 3. Audio session identifier string
-            if (!string.IsNullOrEmpty(sessionId))
-            {
-                string sId = sessionId.ToLowerInvariant();
-                if (target.Contains(sId) || sId.Contains(target))
-                    return true;
-            }
-
             return false;
+        }
+
+        private static string Normalize(string str)
+        {
+            if (string.IsNullOrEmpty(str)) return "";
+            var sb = new System.Text.StringBuilder(str.Length);
+            foreach (char c in str)
+            {
+                if (char.IsLetterOrDigit(c))
+                {
+                    sb.Append(char.ToLowerInvariant(c));
+                }
+            }
+            return sb.ToString();
         }
 
         public float GetVolume()
         {
             try
             {
-                var appVolume = GetTargetAudioVolume();
-                if (appVolume != null)
+                var volumes = GetTargetAudioVolumes(out var matchedName);
+                if (volumes.Count > 0)
                 {
-                    int hr = appVolume.GetMasterVolume(out float level);
-                    if (hr == 0) return Math.Clamp(level, 0.0f, 1.0f);
+                    TargetAppDisplayName = matchedName;
+                    foreach (var v in volumes)
+                    {
+                        int hr = v.GetMasterVolume(out float level);
+                        if (hr == 0 && level > 0)
+                        {
+                            return Math.Clamp(level, 0.0f, 1.0f);
+                        }
+                    }
+
+                    if (volumes[0].GetMasterVolume(out float firstLevel) == 0)
+                    {
+                        return Math.Clamp(firstLevel, 0.0f, 1.0f);
+                    }
                 }
 
+                TargetAppDisplayName = null;
                 return GetMasterVolume();
             }
             catch
             {
+                TargetAppDisplayName = null;
                 return GetMasterVolume();
             }
         }
@@ -338,18 +379,28 @@ namespace LucidTune.Services
             float clamped = Math.Clamp(level, 0.0f, 1.0f);
             try
             {
-                var appVolume = GetTargetAudioVolume();
-                if (appVolume != null)
+                var volumes = GetTargetAudioVolumes(out var matchedName);
+                if (volumes.Count > 0)
                 {
+                    TargetAppDisplayName = matchedName;
                     Guid emptyGuid = Guid.Empty;
-                    appVolume.SetMasterVolume(clamped, ref emptyGuid);
+                    foreach (var v in volumes)
+                    {
+                        try
+                        {
+                            v.SetMasterVolume(clamped, ref emptyGuid);
+                        }
+                        catch { }
+                    }
                     return;
                 }
 
+                TargetAppDisplayName = null;
                 SetMasterVolume(clamped);
             }
             catch
             {
+                TargetAppDisplayName = null;
                 SetMasterVolume(clamped);
             }
         }
@@ -358,17 +409,24 @@ namespace LucidTune.Services
         {
             try
             {
-                var appVolume = GetTargetAudioVolume();
-                if (appVolume != null)
+                var volumes = GetTargetAudioVolumes(out var matchedName);
+                if (volumes.Count > 0)
                 {
-                    int hr = appVolume.GetMute(out bool isMuted);
-                    if (hr == 0) return isMuted;
+                    TargetAppDisplayName = matchedName;
+                    foreach (var v in volumes)
+                    {
+                        int hr = v.GetMute(out bool isMuted);
+                        if (hr == 0 && isMuted) return true;
+                    }
+                    return false;
                 }
 
+                TargetAppDisplayName = null;
                 return IsMasterMuted();
             }
             catch
             {
+                TargetAppDisplayName = null;
                 return IsMasterMuted();
             }
         }
@@ -377,22 +435,30 @@ namespace LucidTune.Services
         {
             try
             {
-                var appVolume = GetTargetAudioVolume();
-                if (appVolume != null)
+                var volumes = GetTargetAudioVolumes(out var matchedName);
+                if (volumes.Count > 0)
                 {
-                    int hr = appVolume.GetMute(out bool isMuted);
-                    if (hr == 0)
+                    TargetAppDisplayName = matchedName;
+                    bool currentMute = IsMuted();
+                    bool newMute = !currentMute;
+                    Guid emptyGuid = Guid.Empty;
+                    foreach (var v in volumes)
                     {
-                        Guid emptyGuid = Guid.Empty;
-                        appVolume.SetMute(!isMuted, ref emptyGuid);
-                        return;
+                        try
+                        {
+                            v.SetMute(newMute, ref emptyGuid);
+                        }
+                        catch { }
                     }
+                    return;
                 }
 
+                TargetAppDisplayName = null;
                 ToggleMasterMute();
             }
             catch
             {
+                TargetAppDisplayName = null;
                 ToggleMasterMute();
             }
         }

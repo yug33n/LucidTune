@@ -461,7 +461,7 @@ namespace LucidTune
             if (VolumeSlider != null)
             {
                 string? target = _volumeService.TargetAppDisplayName;
-                VolumeSlider.ToolTip = !string.IsNullOrEmpty(target) ? $"Громкость: {target}" : "Громкость музыки";
+                VolumeSlider.ToolTip = !string.IsNullOrEmpty(target) ? $"Громкость: {target}" : "Громкость (Windows)";
             }
         }
 
