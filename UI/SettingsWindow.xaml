@@ -100,6 +100,61 @@
             </Style.Triggers>
         </Style>
 
+        <!-- Modern Dark Slider Thumb -->
+        <Style x:Key="DarkSliderThumb" TargetType="{x:Type Thumb}">
+            <Setter Property="OverridesDefaultStyle" Value="True"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type Thumb}">
+                        <Ellipse x:Name="ThumbEllipse"
+                                 Width="16" Height="16"
+                                 Fill="#FFFFFF"
+                                 Stroke="#4E75FF"
+                                 StrokeThickness="2"
+                                 SnapsToDevicePixels="True">
+                            <Ellipse.Effect>
+                                <DropShadowEffect BlurRadius="6" ShadowDepth="1" Opacity="0.35" Color="#000000"/>
+                            </Ellipse.Effect>
+                        </Ellipse>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="ThumbEllipse" Property="Fill" Value="#E0EBFF"/>
+                                <Setter TargetName="ThumbEllipse" Property="Width" Value="18"/>
+                                <Setter TargetName="ThumbEllipse" Property="Height" Value="18"/>
+                            </Trigger>
+                            <Trigger Property="IsDragging" Value="True">
+                                <Setter TargetName="ThumbEllipse" Property="Fill" Value="#4E75FF"/>
+                                <Setter TargetName="ThumbEllipse" Property="Stroke" Value="#FFFFFF"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Modern Dark Horizontal Slider Style -->
+        <Style x:Key="DarkSliderStyle" TargetType="{x:Type Slider}">
+            <Setter Property="OverridesDefaultStyle" Value="True"/>
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Setter Property="SnapsToDevicePixels" Value="True"/>
+            <Setter Property="Height" Value="24"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type Slider}">
+                        <Grid VerticalAlignment="Center">
+                            <Border Height="5" CornerRadius="2.5" Background="#262634" VerticalAlignment="Center"/>
+                            <Track x:Name="PART_Track">
+                                <Track.Thumb>
+                                    <Thumb Style="{StaticResource DarkSliderThumb}" VerticalAlignment="Center"/>
+                                </Track.Thumb>
+                            </Track>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
         <!-- Standard Button Style -->
         <Style x:Key="ActionButtonStyle" TargetType="Button">
             <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
@@ -380,6 +435,44 @@
                                         Content="Скрыть"
                                         Click="OnToggleOverlayClick"/>
                             </Grid>
+                        </Border>
+
+                        <!-- Appearance Section -->
+                        <Border Background="#191922" CornerRadius="10" Padding="14,12" Margin="0,0,0,14" BorderBrush="#18FFFFFF" BorderThickness="1">
+                            <StackPanel>
+                                <Grid Margin="0,0,0,10">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock Text="Прозрачность виджета" FontWeight="SemiBold" FontSize="13" Foreground="#FFFFFF"/>
+                                        <TextBlock Text="Настройка видимости оверлея поверх других окон." FontSize="11.5" Foreground="#8E8E98" Margin="0,2,0,0"/>
+                                    </StackPanel>
+                                    <Border Grid.Column="1" Background="#282838" CornerRadius="6" Padding="8,4" VerticalAlignment="Center">
+                                        <TextBlock x:Name="OpacityValueText" Text="100%" FontSize="12" FontWeight="SemiBold" Foreground="#4E75FF"/>
+                                    </Border>
+                                </Grid>
+
+                                <Grid Margin="2,4,2,2">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="20%" FontSize="11" Foreground="#6C6C78" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                    <Slider x:Name="OpacitySlider"
+                                            Grid.Column="1"
+                                            Style="{StaticResource DarkSliderStyle}"
+                                            Minimum="20"
+                                            Maximum="100"
+                                            Value="100"
+                                            SmallChange="1"
+                                            LargeChange="5"
+                                            ValueChanged="OnOpacitySliderValueChanged"/>
+                                    <TextBlock Grid.Column="2" Text="100%" FontSize="11" Foreground="#6C6C78" VerticalAlignment="Center" Margin="8,0,0,0"/>
+                                </Grid>
+                            </StackPanel>
                         </Border>
 
                         <!-- Hotkeys Section -->

@@ -55,6 +55,7 @@ namespace LucidTune
         private async void OnMainWindowLoaded(object sender, RoutedEventArgs e)
         {
             ApplySavedPosition();
+            ApplyWidgetOpacity(_configManager.CurrentConfig.WidgetOpacity);
 
             var hwnd = new WindowInteropHelper(this).Handle;
             _hotkeyService.Initialize(hwnd);
@@ -79,6 +80,11 @@ namespace LucidTune
             var targetPos = _configManager.GetValidatedPosition(Width, Height);
             Left = targetPos.X;
             Top = targetPos.Y;
+        }
+
+        public void ApplyWidgetOpacity(double opacity)
+        {
+            Opacity = Math.Clamp(opacity, 0.2, 1.0);
         }
 
         public void ToggleVisibility()

@@ -24,5 +24,8 @@ namespace LucidTune.Config
         public bool AutoHideInFullscreen { get; set; } = false;
         public bool AutoStart { get; set; } = false;
         public bool ShowSettingsOnStartup { get; set; } = true;
+
+        // Appearance
+        public double WidgetOpacity { get; set; } = 1.0;
     }
 }

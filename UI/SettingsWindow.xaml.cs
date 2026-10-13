@@ -42,7 +42,11 @@ namespace LucidTune.UI
             _isInitializing = false;
 
             _mainWindow.OverlayVisibilityChanged += OnOverlayVisibilityChanged;
-            Closed += (s, e) => _mainWindow.OverlayVisibilityChanged -= OnOverlayVisibilityChanged;
+            Closed += (s, e) =>
+            {
+                _mainWindow.OverlayVisibilityChanged -= OnOverlayVisibilityChanged;
+                _mainWindow.ApplyWidgetOpacity(_configManager.CurrentConfig.WidgetOpacity);
+            };
             UpdateOverlayStatus(_mainWindow.IsOverlayVisible);
         }
 
@@ -92,6 +96,12 @@ namespace LucidTune.UI
             AutoStartCheckBox.IsChecked = AutoStartupService.IsAutoStartEnabled();
             AutoHideInGamesCheckBox.IsChecked = cfg.AutoHideInFullscreen;
             ShowSettingsOnStartupCheckBox.IsChecked = cfg.ShowSettingsOnStartup;
+
+            int opacityPercent = (int)Math.Round(cfg.WidgetOpacity * 100);
+            if (opacityPercent < 20) opacityPercent = 20;
+            if (opacityPercent > 100) opacityPercent = 100;
+            OpacitySlider.Value = opacityPercent;
+            OpacityValueText.Text = $"{opacityPercent}%";
 
             UpdateAllPreviews();
         }
@@ -221,6 +231,9 @@ namespace LucidTune.UI
             cfg.AutoHideInFullscreen = AutoHideInGamesCheckBox.IsChecked == true;
             cfg.ShowSettingsOnStartup = ShowSettingsOnStartupCheckBox.IsChecked == true;
 
+            cfg.WidgetOpacity = OpacitySlider.Value / 100.0;
+            _mainWindow.ApplyWidgetOpacity(cfg.WidgetOpacity);
+
             _configManager.Save(cfg);
 
             AutoStartupService.SetAutoStart(autoStart);
@@ -229,8 +242,17 @@ namespace LucidTune.UI
             Close();
         }
 
+        private void OnOpacitySliderValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            if (_isInitializing || OpacityValueText == null) return;
+            int percent = (int)Math.Round(e.NewValue);
+            OpacityValueText.Text = $"{percent}%";
+            _mainWindow.ApplyWidgetOpacity(percent / 100.0);
+        }
+
         private void OnCloseClick(object sender, RoutedEventArgs e)
         {
+            _mainWindow.ApplyWidgetOpacity(_configManager.CurrentConfig.WidgetOpacity);
             Close();
         }
     }
