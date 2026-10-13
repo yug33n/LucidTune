@@ -40,6 +40,10 @@ namespace LucidTune.UI
             PopulateAllBoxes();
             LoadCurrentSettings();
             _isInitializing = false;
+
+            _mainWindow.OverlayVisibilityChanged += OnOverlayVisibilityChanged;
+            Closed += (s, e) => _mainWindow.OverlayVisibilityChanged -= OnOverlayVisibilityChanged;
+            UpdateOverlayStatus(_mainWindow.IsOverlayVisible);
         }
 
         private void PopulateAllBoxes()
@@ -151,9 +155,36 @@ namespace LucidTune.UI
             }
         }
 
+        private void OnOverlayVisibilityChanged(bool isVisible)
+        {
+            Dispatcher.Invoke(() => UpdateOverlayStatus(isVisible));
+        }
+
+        private void UpdateOverlayStatus(bool isVisible)
+        {
+            if (ToggleOverlayButton == null || OverlayStatusTitleText == null || OverlayStatusDescText == null)
+            {
+                return;
+            }
+
+            if (isVisible)
+            {
+                ToggleOverlayButton.Content = "Скрыть";
+                OverlayStatusTitleText.Text = "Оверлей рабочего стола активен";
+                OverlayStatusDescText.Text = "Готов к перехвату медиа (Spotify, браузеры, Telegram)";
+            }
+            else
+            {
+                ToggleOverlayButton.Content = "Показать";
+                OverlayStatusTitleText.Text = "Оверлей скрыт";
+                OverlayStatusDescText.Text = "Нажмите «Показать» или используйте горячую клавишу для активации.";
+            }
+        }
+
         private void OnToggleOverlayClick(object sender, RoutedEventArgs e)
         {
             _mainWindow.ToggleVisibility();
+            UpdateOverlayStatus(_mainWindow.IsOverlayVisible);
         }
 
         private void OnResetPositionClick(object sender, RoutedEventArgs e)

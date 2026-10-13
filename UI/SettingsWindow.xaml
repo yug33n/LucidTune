@@ -11,6 +11,95 @@
         ResizeMode="NoResize">
 
     <Window.Resources>
+        <!-- Modern Dark ScrollBar Thumb -->
+        <Style x:Key="DarkScrollBarThumb" TargetType="{x:Type Thumb}">
+            <Setter Property="OverridesDefaultStyle" Value="True"/>
+            <Setter Property="IsTabStop" Value="False"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type Thumb}">
+                        <Border x:Name="ThumbBorder"
+                                Background="#3A3A4D"
+                                CornerRadius="3"
+                                Margin="1,0"
+                                SnapsToDevicePixels="True"/>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="ThumbBorder" Property="Background" Value="#555570"/>
+                            </Trigger>
+                            <Trigger Property="IsDragging" Value="True">
+                                <Setter TargetName="ThumbBorder" Property="Background" Value="#6F6F90"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Modern Dark ScrollBar RepeatButton -->
+        <Style x:Key="DarkScrollBarRepeatButton" TargetType="{x:Type RepeatButton}">
+            <Setter Property="OverridesDefaultStyle" Value="True"/>
+            <Setter Property="Focusable" Value="False"/>
+            <Setter Property="IsTabStop" Value="False"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type RepeatButton}">
+                        <Border Background="Transparent"/>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Modern Dark Vertical ScrollBar Template -->
+        <ControlTemplate x:Key="DarkVerticalScrollBarTemplate" TargetType="{x:Type ScrollBar}">
+            <Grid Width="7" SnapsToDevicePixels="True" Background="Transparent">
+                <Track x:Name="PART_Track" IsDirectionReversed="True">
+                    <Track.DecreaseRepeatButton>
+                        <RepeatButton Style="{StaticResource DarkScrollBarRepeatButton}" Command="{x:Static ScrollBar.PageUpCommand}"/>
+                    </Track.DecreaseRepeatButton>
+                    <Track.IncreaseRepeatButton>
+                        <RepeatButton Style="{StaticResource DarkScrollBarRepeatButton}" Command="{x:Static ScrollBar.PageDownCommand}"/>
+                    </Track.IncreaseRepeatButton>
+                    <Track.Thumb>
+                        <Thumb Style="{StaticResource DarkScrollBarThumb}"/>
+                    </Track.Thumb>
+                </Track>
+            </Grid>
+        </ControlTemplate>
+
+        <!-- Modern Dark Horizontal ScrollBar Template -->
+        <ControlTemplate x:Key="DarkHorizontalScrollBarTemplate" TargetType="{x:Type ScrollBar}">
+            <Grid Height="7" SnapsToDevicePixels="True" Background="Transparent">
+                <Track x:Name="PART_Track">
+                    <Track.DecreaseRepeatButton>
+                        <RepeatButton Style="{StaticResource DarkScrollBarRepeatButton}" Command="{x:Static ScrollBar.PageLeftCommand}"/>
+                    </Track.DecreaseRepeatButton>
+                    <Track.IncreaseRepeatButton>
+                        <RepeatButton Style="{StaticResource DarkScrollBarRepeatButton}" Command="{x:Static ScrollBar.PageRightCommand}"/>
+                    </Track.IncreaseRepeatButton>
+                    <Track.Thumb>
+                        <Thumb Style="{StaticResource DarkScrollBarThumb}"/>
+                    </Track.Thumb>
+                </Track>
+            </Grid>
+        </ControlTemplate>
+
+        <!-- Global Dark ScrollBar Style -->
+        <Style TargetType="{x:Type ScrollBar}">
+            <Setter Property="SnapsToDevicePixels" Value="True"/>
+            <Setter Property="OverridesDefaultStyle" Value="True"/>
+            <Style.Triggers>
+                <Trigger Property="Orientation" Value="Vertical">
+                    <Setter Property="Width" Value="7"/>
+                    <Setter Property="Template" Value="{StaticResource DarkVerticalScrollBarTemplate}"/>
+                </Trigger>
+                <Trigger Property="Orientation" Value="Horizontal">
+                    <Setter Property="Height" Value="7"/>
+                    <Setter Property="Template" Value="{StaticResource DarkHorizontalScrollBarTemplate}"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
         <!-- Standard Button Style -->
         <Style x:Key="ActionButtonStyle" TargetType="Button">
             <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
@@ -276,18 +365,19 @@
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
 
-                                <StackPanel Grid.Column="0">
-                                    <TextBlock Text="Оверлей рабочего стола активен" FontWeight="SemiBold" FontSize="13" Foreground="#FFFFFF"/>
-                                    <TextBlock Text="Готов к перехвату медиа (Spotify, браузеры, Telegram)" FontSize="11.5" Foreground="#8E8E98" Margin="0,2,0,0"/>
+                                <StackPanel Grid.Column="0" Margin="0,0,12,0" VerticalAlignment="Center">
+                                    <TextBlock x:Name="OverlayStatusTitleText" Text="Оверлей рабочего стола активен" FontWeight="SemiBold" FontSize="13" Foreground="#FFFFFF"/>
+                                    <TextBlock x:Name="OverlayStatusDescText" Text="Готов к перехвату медиа (Spotify, браузеры, Telegram)" FontSize="11.5" Foreground="#8E8E98" Margin="0,2,0,0" TextWrapping="Wrap"/>
                                 </StackPanel>
 
-                                <Button Grid.Column="1"
+                                <Button x:Name="ToggleOverlayButton"
+                                        Grid.Column="1"
                                         Style="{StaticResource ActionButtonStyle}"
                                         Background="#282836"
                                         Foreground="#E0E0E6"
-                                        Padding="10,0"
+                                        Padding="14,0"
                                         Height="28"
-                                        Content="Показать / Скрыть"
+                                        Content="Скрыть"
                                         Click="OnToggleOverlayClick"/>
                             </Grid>
                         </Border>
@@ -433,16 +523,17 @@
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
 
-                                <StackPanel Grid.Column="0">
+                                <StackPanel Grid.Column="0" Margin="0,0,12,0" VerticalAlignment="Center">
                                     <TextBlock Text="Позиция на экране" FontWeight="SemiBold" FontSize="13" Foreground="#FFFFFF"/>
-                                    <TextBlock Text="Перемещайте виджет за любую неинтерактивную область мыши." FontSize="11.5" Foreground="#8E8E98" Margin="0,2,0,0"/>
+                                    <TextBlock Text="Перемещайте виджет мышью за любое свободное место."
+                                               FontSize="11.5" Foreground="#8E8E98" Margin="0,2,0,0" TextWrapping="Wrap"/>
                                 </StackPanel>
 
                                 <Button Grid.Column="1"
                                         Style="{StaticResource ActionButtonStyle}"
                                         Background="#282836"
                                         Foreground="#E0E0E6"
-                                        Padding="10,0"
+                                        Padding="12,0"
                                         Height="28"
                                         Content="Сбросить в центр"
                                         Click="OnResetPositionClick"/>

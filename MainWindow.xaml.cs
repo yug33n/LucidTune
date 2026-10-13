@@ -27,6 +27,9 @@ namespace LucidTune
         private bool _isAnimating;
         private SettingsWindow? _settingsWindow;
 
+        public bool IsOverlayVisible => _isWindowVisible;
+        public event Action<bool>? OverlayVisibilityChanged;
+
         public MainWindow()
         {
             InitializeComponent();
@@ -109,6 +112,7 @@ namespace LucidTune
                 Hide();
                 _isWindowVisible = false;
                 _isAnimating = false;
+                OverlayVisibilityChanged?.Invoke(false);
 
                 ContainerTranslate.BeginAnimation(TranslateTransform.YProperty, null);
                 ContainerScale.BeginAnimation(ScaleTransform.ScaleXProperty, null);
@@ -149,6 +153,7 @@ namespace LucidTune
             Topmost = true;
             Activate();
             _isWindowVisible = true;
+            OverlayVisibilityChanged?.Invoke(true);
 
             var duration = TimeSpan.FromMilliseconds(250);
             var easeOut = new CubicEase { EasingMode = EasingMode.EaseOut };
