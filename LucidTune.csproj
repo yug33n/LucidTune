@@ -9,6 +9,12 @@
     <RootNamespace>LucidTune</RootNamespace>
     <AssemblyName>LucidTune</AssemblyName>
     <ApplicationIcon>Resources\app.ico</ApplicationIcon>
+    <Version>1.0.0</Version>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <FileVersion>1.0.0.0</FileVersion>
+    <Product>LucidTune</Product>
+    <Description>Lightweight Windows Desktop Media Overlay Widget</Description>
+    <Authors>LucidTune Team</Authors>
   </PropertyGroup>
 
   <ItemGroup>
