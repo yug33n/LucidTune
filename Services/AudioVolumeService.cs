@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics;
+using System.IO;
 using System.Runtime.InteropServices;
 
 namespace LucidTune.Services
@@ -46,7 +47,7 @@ namespace LucidTune.Services
         [PreserveSig] int UnregisterEndpointNotificationCallback(IntPtr pClient);
     }
 
-    [Guid("77AA99A0-1BD6-484F-BC0A-52C0A88BD450"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    [Guid("77AA99A0-1BD6-484F-8BC7-2C654C9A9B6F"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
     internal interface IAudioSessionManager2
     {
         [PreserveSig] int GetAudioSessionControl(ref Guid AudioSessionGuid, uint StreamFlags, out IntPtr SessionControl);
@@ -58,7 +59,7 @@ namespace LucidTune.Services
         [PreserveSig] int UnregisterDuckNotification(IntPtr duckNotification);
     }
 
-    [Guid("E2F5EE11-070C-401E-B525-4985E457DE29"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    [Guid("E2F5BB11-0570-40CA-ACDD-3AA01277DEE8"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
     internal interface IAudioSessionEnumerator
     {
         [PreserveSig] int GetCount(out int SessionCount);
@@ -79,18 +80,18 @@ namespace LucidTune.Services
         [PreserveSig] int UnregisterAudioSessionNotification(IntPtr NewNotifications);
     }
 
-    [Guid("BFB7FF88-7239-4FC9-8FA8-880FBC2428DC"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-    internal interface IAudioSessionControl2
+    [Guid("bfb7ff88-7239-4fc9-8fa2-07c950be9c6d"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    internal interface IAudioSessionControl2 : IAudioSessionControl
     {
-        [PreserveSig] int GetState(out int pRetVal);
-        [PreserveSig] int GetDisplayName([MarshalAs(UnmanagedType.LPWStr)] out string pRetVal);
-        [PreserveSig] int SetDisplayName([MarshalAs(UnmanagedType.LPWStr)] string Value, ref Guid EventContext);
-        [PreserveSig] int GetIconPath([MarshalAs(UnmanagedType.LPWStr)] out string pRetVal);
-        [PreserveSig] int SetIconPath([MarshalAs(UnmanagedType.LPWStr)] string Value, ref Guid EventContext);
-        [PreserveSig] int GetGroupingParam(out Guid pRetVal);
-        [PreserveSig] int SetGroupingParam(ref Guid Override, ref Guid EventContext);
-        [PreserveSig] int RegisterAudioSessionNotification(IntPtr NewNotifications);
-        [PreserveSig] int UnregisterAudioSessionNotification(IntPtr NewNotifications);
+        [PreserveSig] new int GetState(out int pRetVal);
+        [PreserveSig] new int GetDisplayName([MarshalAs(UnmanagedType.LPWStr)] out string pRetVal);
+        [PreserveSig] new int SetDisplayName([MarshalAs(UnmanagedType.LPWStr)] string Value, ref Guid EventContext);
+        [PreserveSig] new int GetIconPath([MarshalAs(UnmanagedType.LPWStr)] out string pRetVal);
+        [PreserveSig] new int SetIconPath([MarshalAs(UnmanagedType.LPWStr)] string Value, ref Guid EventContext);
+        [PreserveSig] new int GetGroupingParam(out Guid pRetVal);
+        [PreserveSig] new int SetGroupingParam(ref Guid Override, ref Guid EventContext);
+        [PreserveSig] new int RegisterAudioSessionNotification(IntPtr NewNotifications);
+        [PreserveSig] new int UnregisterAudioSessionNotification(IntPtr NewNotifications);
 
         [PreserveSig] int GetSessionIdentifier([MarshalAs(UnmanagedType.LPWStr)] out string pRetVal);
         [PreserveSig] int GetSessionInstanceIdentifier([MarshalAs(UnmanagedType.LPWStr)] out string pRetVal);
@@ -99,7 +100,7 @@ namespace LucidTune.Services
         [PreserveSig] int SetDuckingPreference([MarshalAs(UnmanagedType.Bool)] bool optOut);
     }
 
-    [Guid("87CE5498-68D6-44E5-ACCA-09377E70CD91"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    [Guid("87CE5498-68D6-44E5-9215-6DA47EF883D8"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
     internal interface ISimpleAudioVolume
     {
         [PreserveSig] int SetMasterVolume(float fLevel, ref Guid EventContext);
@@ -178,37 +179,37 @@ namespace LucidTune.Services
                     hr = sessionEnum.GetSession(i, out var control);
                     if (hr != 0 || control == null) continue;
 
-                    if (control is IAudioSessionControl2 control2)
-                    {
-                        // S_OK (0) means it IS a system sounds session - ignore
-                        if (control2.IsSystemSoundsSession() == 0) continue;
+                    var control2 = control as IAudioSessionControl2;
+                    var simpleVol = control as ISimpleAudioVolume;
 
+                    if (control2 != null && simpleVol != null)
+                    {
                         control2.GetProcessId(out uint pid);
+                        if (pid == 0) continue; // Skip idle / system sound endpoints
+
                         control2.GetSessionIdentifier(out string sessionId);
                         control.GetState(out int state);
 
-                        if (control is ISimpleAudioVolume simpleVol)
+                        string procName = GetProcessName(pid);
+
+                        // If session is actively outputting sound (state == 1)
+                        if (state == 1 && activeFallbackVolume == null)
                         {
-                            string procName = GetProcessName(pid);
+                            activeFallbackVolume = simpleVol;
+                            fallbackName = procName;
+                        }
 
-                            if (state == 1 && activeFallbackVolume == null)
+                        if (!string.IsNullOrWhiteSpace(_targetAppId))
+                        {
+                            if (IsMatch(_targetAppId, pid, procName, sessionId))
                             {
-                                activeFallbackVolume = simpleVol;
-                                fallbackName = procName;
-                            }
-
-                            if (!string.IsNullOrWhiteSpace(_targetAppId))
-                            {
-                                if (IsMatch(_targetAppId, pid, procName, sessionId))
+                                matchedName = !string.IsNullOrEmpty(procName) ? procName : _targetAppId;
+                                if (state == 1)
                                 {
-                                    matchedName = !string.IsNullOrEmpty(procName) ? procName : _targetAppId;
-                                    if (state == 1)
-                                    {
-                                        TargetAppDisplayName = matchedName;
-                                        return simpleVol;
-                                    }
-                                    matchedVolume ??= simpleVol;
+                                    TargetAppDisplayName = matchedName;
+                                    return simpleVol;
                                 }
+                                matchedVolume ??= simpleVol;
                             }
                         }
                     }
@@ -254,22 +255,60 @@ namespace LucidTune.Services
         {
             if (string.IsNullOrWhiteSpace(targetAppId)) return false;
 
-            if (!string.IsNullOrEmpty(procName))
+            string target = targetAppId.ToLowerInvariant();
+            string pName = procName.ToLowerInvariant();
+
+            // 1. Direct process name containment or localized synonyms
+            if (!string.IsNullOrEmpty(pName))
             {
-                if (targetAppId.Contains(procName, StringComparison.OrdinalIgnoreCase) ||
-                    procName.Contains(targetAppId, StringComparison.OrdinalIgnoreCase))
-                {
+                if (target.Contains(pName) || pName.Contains(target))
                     return true;
-                }
+
+                // Yandex Music synonyms
+                if ((target.Contains("yandex") || target.Contains("яндекс")) &&
+                    (pName.Contains("yandex") || pName.Contains("яндекс") || pName.Contains("музыка")))
+                    return true;
+
+                // Spotify synonyms
+                if ((target.Contains("spotify") || target.Contains("спотифай")) &&
+                    (pName.Contains("spotify") || pName.Contains("спотифай")))
+                    return true;
+
+                // VK Music synonyms
+                if ((target.Contains("vk") || target.Contains("вк")) &&
+                    (pName.Contains("vk") || pName.Contains("вк")))
+                    return true;
             }
 
+            // 2. Executable file name or installation folder path
+            if (pid != 0)
+            {
+                try
+                {
+                    using var proc = Process.GetProcessById((int)pid);
+                    string? path = proc.MainModule?.FileName?.ToLowerInvariant();
+                    if (!string.IsNullOrEmpty(path))
+                    {
+                        if (target.Contains("yandex") && path.Contains("yandex")) return true;
+                        if (target.Contains("spotify") && path.Contains("spotify")) return true;
+                        if (target.Contains("chrome") && path.Contains("chrome")) return true;
+                        if (target.Contains("firefox") && path.Contains("firefox")) return true;
+                        if (target.Contains("edge") && (path.Contains("edge") || path.Contains("msedge"))) return true;
+                        if (target.Contains("telegram") && path.Contains("telegram")) return true;
+
+                        string fileName = Path.GetFileNameWithoutExtension(path);
+                        if (target.Contains(fileName) || fileName.Contains(target)) return true;
+                    }
+                }
+                catch { }
+            }
+
+            // 3. Audio session identifier string
             if (!string.IsNullOrEmpty(sessionId))
             {
-                if (sessionId.Contains(targetAppId, StringComparison.OrdinalIgnoreCase) ||
-                    targetAppId.Contains(sessionId, StringComparison.OrdinalIgnoreCase))
-                {
+                string sId = sessionId.ToLowerInvariant();
+                if (target.Contains(sId) || sId.Contains(target))
                     return true;
-                }
             }
 
             return false;
