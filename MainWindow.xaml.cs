@@ -25,6 +25,10 @@ namespace LucidTune
         private bool _isWindowVisible = true;
         private bool _hiddenByFullscreen;
         private bool _isAnimating;
+        private SettingsWindow? _settingsWindow;
+
+        public bool IsOverlayVisible => _isWindowVisible;
+        public event Action<bool>? OverlayVisibilityChanged;
 
         public MainWindow()
         {
@@ -51,17 +55,24 @@ namespace LucidTune
         private async void OnMainWindowLoaded(object sender, RoutedEventArgs e)
         {
             ApplySavedPosition();
+            ApplyWidgetOpacity(_configManager.CurrentConfig.WidgetOpacity);
 
             var hwnd = new WindowInteropHelper(this).Handle;
             _hotkeyService.Initialize(hwnd);
-            _hotkeyService.Register(_configManager.CurrentConfig.HotkeyModifiers, _configManager.CurrentConfig.HotkeyKey);
+            RegisterAllConfiguredHotkeys();
+            _hotkeyService.HotkeyTriggered += OnHotkeyTriggered;
 
             _fullscreenService.Start(hwnd);
 
-            _trayManager = new TrayIconManager(_configManager, ToggleVisibility, OpenHotkeySettings);
+            _trayManager = new TrayIconManager(_configManager, ToggleVisibility, OpenSettingsWindow, () => _isWindowVisible);
             _trayManager.Initialize(hwnd);
 
             await _mediaService.InitializeAsync();
+
+            if (_configManager.CurrentConfig.ShowSettingsOnStartup)
+            {
+                OpenSettingsWindow();
+            }
         }
 
         private void ApplySavedPosition()
@@ -69,6 +80,11 @@ namespace LucidTune
             var targetPos = _configManager.GetValidatedPosition(Width, Height);
             Left = targetPos.X;
             Top = targetPos.Y;
+        }
+
+        public void ApplyWidgetOpacity(double opacity)
+        {
+            Opacity = Math.Clamp(opacity, 0.2, 1.0);
         }
 
         public void ToggleVisibility()
@@ -102,6 +118,7 @@ namespace LucidTune
                 Hide();
                 _isWindowVisible = false;
                 _isAnimating = false;
+                OverlayVisibilityChanged?.Invoke(false);
 
                 ContainerTranslate.BeginAnimation(TranslateTransform.YProperty, null);
                 ContainerScale.BeginAnimation(ScaleTransform.ScaleXProperty, null);
@@ -142,6 +159,7 @@ namespace LucidTune
             Topmost = true;
             Activate();
             _isWindowVisible = true;
+            OverlayVisibilityChanged?.Invoke(true);
 
             var duration = TimeSpan.FromMilliseconds(250);
             var easeOut = new CubicEase { EasingMode = EasingMode.EaseOut };
@@ -197,19 +215,70 @@ namespace LucidTune
             });
         }
 
-        private void OpenHotkeySettings()
+        public void OpenSettingsWindow()
         {
-            var dialog = new HotkeySettingsWindow(_configManager)
+            Dispatcher.Invoke(() =>
             {
-                Owner = this
-            };
+                try
+                {
+                    if (_settingsWindow != null && _settingsWindow.IsLoaded)
+                    {
+                        _settingsWindow.Activate();
+                        return;
+                    }
 
-            dialog.HotkeyChanged += (mod, key) =>
+                    _settingsWindow = new SettingsWindow(this, _configManager);
+                    _settingsWindow.Closed += (s, e) => _settingsWindow = null;
+                    _settingsWindow.Show();
+                    _settingsWindow.Activate();
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Failed to open settings window: {ex.Message}");
+                }
+            });
+        }
+
+        public void RegisterAllConfiguredHotkeys()
+        {
+            var cfg = _configManager.CurrentConfig;
+            _hotkeyService.UnregisterAll();
+
+            _hotkeyService.Register(HotkeyAction.ToggleVisibility, cfg.HotkeyModifiers, cfg.HotkeyKey);
+
+            if (cfg.MediaHotkeysEnabled)
             {
-                _hotkeyService.Register(mod, key);
-            };
+                _hotkeyService.Register(HotkeyAction.PlayPause, cfg.PlayPauseModifiers, cfg.PlayPauseKey);
+                _hotkeyService.Register(HotkeyAction.NextTrack, cfg.NextTrackModifiers, cfg.NextTrackKey);
+                _hotkeyService.Register(HotkeyAction.PreviousTrack, cfg.PrevTrackModifiers, cfg.PrevTrackKey);
+            }
+        }
 
-            dialog.ShowDialog();
+        private void OnHotkeyTriggered(HotkeyAction action)
+        {
+            Dispatcher.Invoke(async () =>
+            {
+                switch (action)
+                {
+                    case HotkeyAction.ToggleVisibility:
+                        ToggleVisibility();
+                        break;
+                    case HotkeyAction.PlayPause:
+                        await _mediaService.TogglePlayPauseAsync();
+                        break;
+                    case HotkeyAction.NextTrack:
+                        await _mediaService.SkipNextAsync();
+                        break;
+                    case HotkeyAction.PreviousTrack:
+                        await _mediaService.SkipPreviousAsync();
+                        break;
+                }
+            });
+        }
+
+        public void ApplyNewHotkey(string modifier, string key)
+        {
+            RegisterAllConfiguredHotkeys();
         }
 
         private void OnHotkeyPressed()

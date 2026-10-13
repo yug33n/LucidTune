@@ -6,9 +6,26 @@ namespace LucidTune.Config
     {
         public double? WindowX { get; set; }
         public double? WindowY { get; set; }
+        
+        // Visibility toggle hotkey
         public string HotkeyModifiers { get; set; } = "Alt";
         public string HotkeyKey { get; set; } = "M";
+
+        // Media controls hotkeys
+        public bool MediaHotkeysEnabled { get; set; } = true;
+        public string PlayPauseModifiers { get; set; } = "Alt";
+        public string PlayPauseKey { get; set; } = "Space";
+        public string NextTrackModifiers { get; set; } = "Alt";
+        public string NextTrackKey { get; set; } = "Right";
+        public string PrevTrackModifiers { get; set; } = "Alt";
+        public string PrevTrackKey { get; set; } = "Left";
+
+        // System preferences
         public bool AutoHideInFullscreen { get; set; } = false;
         public bool AutoStart { get; set; } = false;
+        public bool ShowSettingsOnStartup { get; set; } = true;
+
+        // Appearance
+        public double WidgetOpacity { get; set; } = 1.0;
     }
 }

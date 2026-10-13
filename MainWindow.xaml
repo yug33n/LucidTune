@@ -229,7 +229,7 @@
                             <!-- Center: Track title, artist, progress bar -->
                             <ColumnDefinition Width="*"/>
                             <!-- Right: Control buttons -->
-                            <ColumnDefinition Width="88"/>
+                            <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
 
                         <!-- Album Art Block -->
@@ -318,8 +318,13 @@
                                     ToolTip="Предыдущий трек">
                                 <Path Width="12" Height="12"
                                       Stretch="Uniform"
+                                      RenderTransformOrigin="0.5,0.5"
                                       Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
-                                      Data="{StaticResource PrevGeometry}"/>
+                                      Data="{StaticResource NextGeometry}">
+                                    <Path.RenderTransform>
+                                        <ScaleTransform ScaleX="-1"/>
+                                    </Path.RenderTransform>
+                                </Path>
                             </Button>
 
                             <!-- Play / Pause Button with Optical Center Margin -->

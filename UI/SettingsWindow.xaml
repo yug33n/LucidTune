@@ -1,0 +1,664 @@
+<Window x:Class="LucidTune.UI.SettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="LucidTune — Настройки"
+        Width="520" Height="650"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        WindowStartupLocation="CenterScreen"
+        Topmost="True"
+        ResizeMode="NoResize">
+
+    <Window.Resources>
+        <!-- Modern Dark ScrollBar Thumb -->
+        <Style x:Key="DarkScrollBarThumb" TargetType="{x:Type Thumb}">
+            <Setter Property="OverridesDefaultStyle" Value="True"/>
+            <Setter Property="IsTabStop" Value="False"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type Thumb}">
+                        <Border x:Name="ThumbBorder"
+                                Background="#3A3A4D"
+                                CornerRadius="3"
+                                Margin="1,0"
+                                SnapsToDevicePixels="True"/>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="ThumbBorder" Property="Background" Value="#555570"/>
+                            </Trigger>
+                            <Trigger Property="IsDragging" Value="True">
+                                <Setter TargetName="ThumbBorder" Property="Background" Value="#6F6F90"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Modern Dark ScrollBar RepeatButton -->
+        <Style x:Key="DarkScrollBarRepeatButton" TargetType="{x:Type RepeatButton}">
+            <Setter Property="OverridesDefaultStyle" Value="True"/>
+            <Setter Property="Focusable" Value="False"/>
+            <Setter Property="IsTabStop" Value="False"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type RepeatButton}">
+                        <Border Background="Transparent"/>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Modern Dark Vertical ScrollBar Template -->
+        <ControlTemplate x:Key="DarkVerticalScrollBarTemplate" TargetType="{x:Type ScrollBar}">
+            <Grid Width="7" SnapsToDevicePixels="True" Background="Transparent">
+                <Track x:Name="PART_Track" IsDirectionReversed="True">
+                    <Track.DecreaseRepeatButton>
+                        <RepeatButton Style="{StaticResource DarkScrollBarRepeatButton}" Command="{x:Static ScrollBar.PageUpCommand}"/>
+                    </Track.DecreaseRepeatButton>
+                    <Track.IncreaseRepeatButton>
+                        <RepeatButton Style="{StaticResource DarkScrollBarRepeatButton}" Command="{x:Static ScrollBar.PageDownCommand}"/>
+                    </Track.IncreaseRepeatButton>
+                    <Track.Thumb>
+                        <Thumb Style="{StaticResource DarkScrollBarThumb}"/>
+                    </Track.Thumb>
+                </Track>
+            </Grid>
+        </ControlTemplate>
+
+        <!-- Modern Dark Horizontal ScrollBar Template -->
+        <ControlTemplate x:Key="DarkHorizontalScrollBarTemplate" TargetType="{x:Type ScrollBar}">
+            <Grid Height="7" SnapsToDevicePixels="True" Background="Transparent">
+                <Track x:Name="PART_Track">
+                    <Track.DecreaseRepeatButton>
+                        <RepeatButton Style="{StaticResource DarkScrollBarRepeatButton}" Command="{x:Static ScrollBar.PageLeftCommand}"/>
+                    </Track.DecreaseRepeatButton>
+                    <Track.IncreaseRepeatButton>
+                        <RepeatButton Style="{StaticResource DarkScrollBarRepeatButton}" Command="{x:Static ScrollBar.PageRightCommand}"/>
+                    </Track.IncreaseRepeatButton>
+                    <Track.Thumb>
+                        <Thumb Style="{StaticResource DarkScrollBarThumb}"/>
+                    </Track.Thumb>
+                </Track>
+            </Grid>
+        </ControlTemplate>
+
+        <!-- Global Dark ScrollBar Style -->
+        <Style TargetType="{x:Type ScrollBar}">
+            <Setter Property="SnapsToDevicePixels" Value="True"/>
+            <Setter Property="OverridesDefaultStyle" Value="True"/>
+            <Style.Triggers>
+                <Trigger Property="Orientation" Value="Vertical">
+                    <Setter Property="Width" Value="7"/>
+                    <Setter Property="Template" Value="{StaticResource DarkVerticalScrollBarTemplate}"/>
+                </Trigger>
+                <Trigger Property="Orientation" Value="Horizontal">
+                    <Setter Property="Height" Value="7"/>
+                    <Setter Property="Template" Value="{StaticResource DarkHorizontalScrollBarTemplate}"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Modern Dark Slider Thumb -->
+        <Style x:Key="DarkSliderThumb" TargetType="{x:Type Thumb}">
+            <Setter Property="OverridesDefaultStyle" Value="True"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type Thumb}">
+                        <Ellipse x:Name="ThumbEllipse"
+                                 Width="16" Height="16"
+                                 Fill="#FFFFFF"
+                                 Stroke="#4E75FF"
+                                 StrokeThickness="2"
+                                 SnapsToDevicePixels="True">
+                            <Ellipse.Effect>
+                                <DropShadowEffect BlurRadius="6" ShadowDepth="1" Opacity="0.35" Color="#000000"/>
+                            </Ellipse.Effect>
+                        </Ellipse>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="ThumbEllipse" Property="Fill" Value="#E0EBFF"/>
+                                <Setter TargetName="ThumbEllipse" Property="Width" Value="18"/>
+                                <Setter TargetName="ThumbEllipse" Property="Height" Value="18"/>
+                            </Trigger>
+                            <Trigger Property="IsDragging" Value="True">
+                                <Setter TargetName="ThumbEllipse" Property="Fill" Value="#4E75FF"/>
+                                <Setter TargetName="ThumbEllipse" Property="Stroke" Value="#FFFFFF"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Modern Dark Horizontal Slider Style -->
+        <Style x:Key="DarkSliderStyle" TargetType="{x:Type Slider}">
+            <Setter Property="OverridesDefaultStyle" Value="True"/>
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Setter Property="SnapsToDevicePixels" Value="True"/>
+            <Setter Property="Height" Value="24"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type Slider}">
+                        <Grid VerticalAlignment="Center">
+                            <Border Height="5" CornerRadius="2.5" Background="#262634" VerticalAlignment="Center"/>
+                            <Track x:Name="PART_Track">
+                                <Track.Thumb>
+                                    <Thumb Style="{StaticResource DarkSliderThumb}" VerticalAlignment="Center"/>
+                                </Track.Thumb>
+                            </Track>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Standard Button Style -->
+        <Style x:Key="ActionButtonStyle" TargetType="Button">
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FontSize" Value="12.5"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="Height" Value="32"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="BtnBorder"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="8"
+                                SnapsToDevicePixels="True">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="BtnBorder" Property="Opacity" Value="0.88"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="BtnBorder" Property="Opacity" Value="0.75"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Window Close Button Style -->
+        <Style x:Key="WindowCloseButtonStyle" TargetType="Button">
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#888894"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Width" Value="28"/>
+            <Setter Property="Height" Value="28"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Border"
+                                Background="Transparent"
+                                CornerRadius="6"
+                                SnapsToDevicePixels="True">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Border" Property="Background" Value="#E81123"/>
+                                <Setter Property="Foreground" Value="#FFFFFF"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Custom CheckBox Style -->
+        <Style x:Key="DarkCheckBoxStyle" TargetType="CheckBox">
+            <Setter Property="Foreground" Value="#E0E0E6"/>
+            <Setter Property="FontSize" Value="12.5"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Margin" Value="0,4,0,8"/>
+        </Style>
+
+        <!-- Modern Dark ComboBoxItem Style -->
+        <Style TargetType="ComboBoxItem">
+            <Setter Property="SnapsToDevicePixels" Value="True"/>
+            <Setter Property="OverridesDefaultStyle" Value="True"/>
+            <Setter Property="Foreground" Value="#DCDCE6"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ComboBoxItem">
+                        <Border x:Name="ItemBorder"
+                                Padding="10,7"
+                                Margin="3,1"
+                                CornerRadius="6"
+                                Background="Transparent"
+                                SnapsToDevicePixels="True">
+                            <ContentPresenter HorizontalAlignment="Left" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="ItemBorder" Property="Background" Value="#2D2D3D"/>
+                                <Setter Property="Foreground" Value="#FFFFFF"/>
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="ItemBorder" Property="Background" Value="#38384E"/>
+                                <Setter Property="Foreground" Value="#6B8EFF"/>
+                                <Setter Property="FontWeight" Value="SemiBold"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Modern Dark ComboBox ToggleButton -->
+        <ControlTemplate x:Key="ComboBoxToggleButton" TargetType="ToggleButton">
+            <Border x:Name="Border"
+                    CornerRadius="7"
+                    Background="#202028"
+                    BorderBrush="#2EFFFFFF"
+                    BorderThickness="1"
+                    SnapsToDevicePixels="True">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition />
+                        <ColumnDefinition Width="26" />
+                    </Grid.ColumnDefinitions>
+                    <Path x:Name="Arrow"
+                          Grid.Column="1"
+                          HorizontalAlignment="Center"
+                          VerticalAlignment="Center"
+                          Data="M1,2 L5,6 L9,2"
+                          Stroke="#8E8E98"
+                          StrokeThickness="1.5"
+                          StrokeStartLineCap="Round"
+                          StrokeEndLineCap="Round"
+                          StrokeLineJoin="Round"/>
+                </Grid>
+            </Border>
+            <ControlTemplate.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter TargetName="Border" Property="BorderBrush" Value="#4E75FF"/>
+                    <Setter TargetName="Arrow" Property="Stroke" Value="#FFFFFF"/>
+                </Trigger>
+                <Trigger Property="IsChecked" Value="True">
+                    <Setter TargetName="Border" Property="BorderBrush" Value="#4E75FF"/>
+                    <Setter TargetName="Arrow" Property="Stroke" Value="#4E75FF"/>
+                </Trigger>
+            </ControlTemplate.Triggers>
+        </ControlTemplate>
+
+        <!-- Modern Dark ComboBox Style -->
+        <Style TargetType="ComboBox">
+            <Setter Property="SnapsToDevicePixels" Value="True"/>
+            <Setter Property="OverridesDefaultStyle" Value="True"/>
+            <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled"/>
+            <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto"/>
+            <Setter Property="ScrollViewer.CanContentScroll" Value="True"/>
+            <Setter Property="Foreground" Value="#FFFFFF"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Height" Value="30"/>
+            <Setter Property="MaxDropDownHeight" Value="240"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ComboBox">
+                        <Grid>
+                            <ToggleButton x:Name="ToggleButton"
+                                          Focusable="False"
+                                          IsChecked="{Binding Path=IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"
+                                          ClickMode="Press"
+                                          Template="{StaticResource ComboBoxToggleButton}"/>
+                            <ContentPresenter x:Name="ContentSite"
+                                              IsHitTestVisible="False"
+                                              Content="{TemplateBinding SelectionBoxItem}"
+                                              ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                              ContentTemplateSelector="{TemplateBinding ItemTemplateSelector}"
+                                              Margin="10,0,26,0"
+                                              VerticalAlignment="Center"
+                                              HorizontalAlignment="Left" />
+                            <Popup x:Name="Popup"
+                                   Placement="Bottom"
+                                   IsOpen="{TemplateBinding IsDropDownOpen}"
+                                   AllowsTransparency="True"
+                                   Focusable="False"
+                                   PopupAnimation="Slide">
+                                <Grid x:Name="DropDown"
+                                      SnapsToDevicePixels="True"
+                                      MinWidth="{TemplateBinding ActualWidth}"
+                                      MaxHeight="{TemplateBinding MaxDropDownHeight}">
+                                    <Border x:Name="DropDownBorder"
+                                            Margin="0,4,0,8"
+                                            Background="#181820"
+                                            BorderBrush="#33FFFFFF"
+                                            BorderThickness="1"
+                                            CornerRadius="8">
+                                        <Border.Effect>
+                                            <DropShadowEffect BlurRadius="18" ShadowDepth="4" Opacity="0.6" Color="#000000"/>
+                                        </Border.Effect>
+                                        <ScrollViewer Margin="3" SnapsToDevicePixels="True">
+                                            <ItemsPresenter KeyboardNavigation.DirectionalNavigation="Contained" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"/>
+                                        </ScrollViewer>
+                                    </Border>
+                                </Grid>
+                            </Popup>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <!-- Outer Shadow Layer -->
+    <Grid Margin="15">
+        <Border CornerRadius="16" Background="#14141A" BorderBrush="#26FFFFFF" BorderThickness="1">
+            <Border.Effect>
+                <DropShadowEffect BlurRadius="25" ShadowDepth="4" Opacity="0.5" Color="#000000"/>
+            </Border.Effect>
+
+            <Grid>
+                <Grid.RowDefinitions>
+                    <!-- Header -->
+                    <RowDefinition Height="52"/>
+                    <!-- Content -->
+                    <RowDefinition Height="*"/>
+                    <!-- Footer -->
+                    <RowDefinition Height="56"/>
+                </Grid.RowDefinitions>
+
+                <!-- Header / Titlebar (Draggable) -->
+                <Border Grid.Row="0"
+                        Background="#191922"
+                        CornerRadius="16,16,0,0"
+                        BorderBrush="#15FFFFFF"
+                        BorderThickness="0,0,0,1"
+                        MouseLeftButtonDown="OnTitleBarMouseLeftButtonDown">
+                    <Grid Margin="16,0,12,0">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <!-- Logo Icon -->
+                            <Border Width="24" Height="24" CornerRadius="6" Background="#4E75FF" Margin="0,0,10,0">
+                                <Path Width="12" Height="12" Fill="#FFFFFF" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                      Data="M12,3V13.55A4,4 0 1,0 14,17V7H18V3H12Z"/>
+                            </Border>
+
+                            <TextBlock Text="LucidTune"
+                                       FontSize="15"
+                                       FontWeight="SemiBold"
+                                       Foreground="#FFFFFF"
+                                       VerticalAlignment="Center"/>
+
+                            <Border Background="#25FFFFFF" CornerRadius="4" Padding="6,2" Margin="10,0,0,0" VerticalAlignment="Center">
+                                <TextBlock Text="Settings" FontSize="11" Foreground="#A0A0AB"/>
+                            </Border>
+                        </StackPanel>
+
+                        <!-- Header Close Button -->
+                        <Button Style="{StaticResource WindowCloseButtonStyle}"
+                                HorizontalAlignment="Right"
+                                VerticalAlignment="Center"
+                                Click="OnCloseClick"
+                                ToolTip="Закрыть настройки">
+                            <Path Width="9" Height="9" Stretch="Uniform"
+                                  Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                                  StrokeThickness="1.5"
+                                  Data="M0,0 L8,8 M8,0 L0,8"/>
+                        </Button>
+                    </Grid>
+                </Border>
+
+                <!-- Content Area -->
+                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="18,14">
+                    <StackPanel>
+                        <!-- Status Banner -->
+                        <Border Background="#1B1B24" CornerRadius="10" Padding="12,10" Margin="0,0,0,14" BorderBrush="#18FFFFFF" BorderThickness="1">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel Grid.Column="0" Margin="0,0,12,0" VerticalAlignment="Center">
+                                    <TextBlock x:Name="OverlayStatusTitleText" Text="Оверлей рабочего стола активен" FontWeight="SemiBold" FontSize="13" Foreground="#FFFFFF"/>
+                                    <TextBlock x:Name="OverlayStatusDescText" Text="Готов к перехвату медиа (Spotify, браузеры, Telegram)" FontSize="11.5" Foreground="#8E8E98" Margin="0,2,0,0" TextWrapping="Wrap"/>
+                                </StackPanel>
+
+                                <Button x:Name="ToggleOverlayButton"
+                                        Grid.Column="1"
+                                        Style="{StaticResource ActionButtonStyle}"
+                                        Background="#282836"
+                                        Foreground="#E0E0E6"
+                                        Padding="14,0"
+                                        Height="28"
+                                        Content="Скрыть"
+                                        Click="OnToggleOverlayClick"/>
+                            </Grid>
+                        </Border>
+
+                        <!-- Appearance Section -->
+                        <Border Background="#191922" CornerRadius="10" Padding="14,12" Margin="0,0,0,14" BorderBrush="#18FFFFFF" BorderThickness="1">
+                            <StackPanel>
+                                <Grid Margin="0,0,0,10">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock Text="Прозрачность виджета" FontWeight="SemiBold" FontSize="13" Foreground="#FFFFFF"/>
+                                        <TextBlock Text="Настройка видимости оверлея поверх других окон." FontSize="11.5" Foreground="#8E8E98" Margin="0,2,0,0"/>
+                                    </StackPanel>
+                                    <Border Grid.Column="1" Background="#282838" CornerRadius="6" Padding="8,4" VerticalAlignment="Center">
+                                        <TextBlock x:Name="OpacityValueText" Text="100%" FontSize="12" FontWeight="SemiBold" Foreground="#4E75FF"/>
+                                    </Border>
+                                </Grid>
+
+                                <Grid Margin="2,4,2,2">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="20%" FontSize="11" Foreground="#6C6C78" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                    <Slider x:Name="OpacitySlider"
+                                            Grid.Column="1"
+                                            Style="{StaticResource DarkSliderStyle}"
+                                            Minimum="20"
+                                            Maximum="100"
+                                            Value="100"
+                                            SmallChange="1"
+                                            LargeChange="5"
+                                            ValueChanged="OnOpacitySliderValueChanged"/>
+                                    <TextBlock Grid.Column="2" Text="100%" FontSize="11" Foreground="#6C6C78" VerticalAlignment="Center" Margin="8,0,0,0"/>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Hotkeys Section -->
+                        <Border Background="#191922" CornerRadius="10" Padding="14,12" Margin="0,0,0,14" BorderBrush="#18FFFFFF" BorderThickness="1">
+                            <StackPanel>
+                                <TextBlock Text="Глобальные горячие клавиши" FontWeight="SemiBold" FontSize="13" Foreground="#FFFFFF"/>
+                                <TextBlock Text="Управление оверлеем и воспроизведением поверх всех окон и игр." FontSize="11.5" Foreground="#8E8E98" Margin="0,2,0,10"/>
+
+                                <!-- 1. Toggle Overlay Hotkey -->
+                                <Border Background="#14141C" CornerRadius="8" Padding="10,8" Margin="0,0,0,8" BorderBrush="#12FFFFFF" BorderThickness="1">
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <StackPanel Grid.Row="0" Grid.ColumnSpan="2" Orientation="Horizontal" Margin="0,0,0,6">
+                                            <TextBlock Text="Показать / скрыть оверлей: " FontSize="12" FontWeight="Medium" Foreground="#E0E0E8" VerticalAlignment="Center"/>
+                                            <Border Background="#2A2A38" CornerRadius="4" Padding="6,2" Margin="6,0,0,0">
+                                                <TextBlock x:Name="PreviewToggleText" Text="Alt + M" FontSize="11" FontWeight="SemiBold" Foreground="#4E75FF"/>
+                                            </Border>
+                                        </StackPanel>
+
+                                        <ComboBox x:Name="ToggleModifierBox" Grid.Row="1" Grid.Column="0" Margin="0,0,6,0" SelectionChanged="OnHotkeyInputsChanged"/>
+                                        <ComboBox x:Name="ToggleKeyBox" Grid.Row="1" Grid.Column="1" Margin="6,0,0,0" SelectionChanged="OnHotkeyInputsChanged"/>
+                                    </Grid>
+                                </Border>
+
+                                <!-- Media Hotkeys Checkbox -->
+                                <CheckBox x:Name="EnableMediaHotkeysCheckBox"
+                                          Style="{StaticResource DarkCheckBoxStyle}"
+                                          Content="Включить горячие клавиши управления медиа"
+                                          Checked="OnMediaHotkeysToggle"
+                                          Unchecked="OnMediaHotkeysToggle"
+                                          Margin="0,4,0,8"/>
+
+                                <StackPanel x:Name="MediaHotkeysPanel">
+                                    <!-- 2. Play / Pause Hotkey -->
+                                    <Border Background="#14141C" CornerRadius="8" Padding="10,8" Margin="0,0,0,8" BorderBrush="#12FFFFFF" BorderThickness="1">
+                                        <Grid>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                            </Grid.RowDefinitions>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+
+                                            <StackPanel Grid.Row="0" Grid.ColumnSpan="2" Orientation="Horizontal" Margin="0,0,0,6">
+                                                <TextBlock Text="Пауза / Воспроизведение: " FontSize="12" FontWeight="Medium" Foreground="#E0E0E8" VerticalAlignment="Center"/>
+                                                <Border Background="#2A2A38" CornerRadius="4" Padding="6,2" Margin="6,0,0,0">
+                                                    <TextBlock x:Name="PreviewPlayPauseText" Text="Alt + Space" FontSize="11" FontWeight="SemiBold" Foreground="#4E75FF"/>
+                                                </Border>
+                                            </StackPanel>
+
+                                            <ComboBox x:Name="PlayPauseModifierBox" Grid.Row="1" Grid.Column="0" Margin="0,0,6,0" SelectionChanged="OnHotkeyInputsChanged"/>
+                                            <ComboBox x:Name="PlayPauseKeyBox" Grid.Row="1" Grid.Column="1" Margin="6,0,0,0" SelectionChanged="OnHotkeyInputsChanged"/>
+                                        </Grid>
+                                    </Border>
+
+                                    <!-- 3. Next Track Hotkey -->
+                                    <Border Background="#14141C" CornerRadius="8" Padding="10,8" Margin="0,0,0,8" BorderBrush="#12FFFFFF" BorderThickness="1">
+                                        <Grid>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                            </Grid.RowDefinitions>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+
+                                            <StackPanel Grid.Row="0" Grid.ColumnSpan="2" Orientation="Horizontal" Margin="0,0,0,6">
+                                                <TextBlock Text="Следующий трек: " FontSize="12" FontWeight="Medium" Foreground="#E0E0E8" VerticalAlignment="Center"/>
+                                                <Border Background="#2A2A38" CornerRadius="4" Padding="6,2" Margin="6,0,0,0">
+                                                    <TextBlock x:Name="PreviewNextText" Text="Alt + Right" FontSize="11" FontWeight="SemiBold" Foreground="#4E75FF"/>
+                                                </Border>
+                                            </StackPanel>
+
+                                            <ComboBox x:Name="NextModifierBox" Grid.Row="1" Grid.Column="0" Margin="0,0,6,0" SelectionChanged="OnHotkeyInputsChanged"/>
+                                            <ComboBox x:Name="NextKeyBox" Grid.Row="1" Grid.Column="1" Margin="6,0,0,0" SelectionChanged="OnHotkeyInputsChanged"/>
+                                        </Grid>
+                                    </Border>
+
+                                    <!-- 4. Previous Track Hotkey -->
+                                    <Border Background="#14141C" CornerRadius="8" Padding="10,8" Margin="0,0,0,4" BorderBrush="#12FFFFFF" BorderThickness="1">
+                                        <Grid>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                            </Grid.RowDefinitions>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+
+                                            <StackPanel Grid.Row="0" Grid.ColumnSpan="2" Orientation="Horizontal" Margin="0,0,0,6">
+                                                <TextBlock Text="Предыдущий трек: " FontSize="12" FontWeight="Medium" Foreground="#E0E0E8" VerticalAlignment="Center"/>
+                                                <Border Background="#2A2A38" CornerRadius="4" Padding="6,2" Margin="6,0,0,0">
+                                                    <TextBlock x:Name="PreviewPrevText" Text="Alt + Left" FontSize="11" FontWeight="SemiBold" Foreground="#4E75FF"/>
+                                                </Border>
+                                            </StackPanel>
+
+                                            <ComboBox x:Name="PrevModifierBox" Grid.Row="1" Grid.Column="0" Margin="0,0,6,0" SelectionChanged="OnHotkeyInputsChanged"/>
+                                            <ComboBox x:Name="PrevKeyBox" Grid.Row="1" Grid.Column="1" Margin="6,0,0,0" SelectionChanged="OnHotkeyInputsChanged"/>
+                                        </Grid>
+                                    </Border>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- System and Behavior Section -->
+                        <Border Background="#191922" CornerRadius="10" Padding="14,12" Margin="0,0,0,14" BorderBrush="#18FFFFFF" BorderThickness="1">
+                            <StackPanel>
+                                <TextBlock Text="Параметры работы" FontWeight="SemiBold" FontSize="13" Foreground="#FFFFFF" Margin="0,0,0,8"/>
+
+                                <CheckBox x:Name="AutoStartCheckBox"
+                                          Style="{StaticResource DarkCheckBoxStyle}"
+                                          Content="Автозагрузка при старте Windows"/>
+
+                                <CheckBox x:Name="AutoHideInGamesCheckBox"
+                                          Style="{StaticResource DarkCheckBoxStyle}"
+                                          Content="Автоматически скрывать в полноэкранных играх"/>
+
+                                <CheckBox x:Name="ShowSettingsOnStartupCheckBox"
+                                          Style="{StaticResource DarkCheckBoxStyle}"
+                                          Content="Открывать это окно настроек при запуске приложения"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Positioning and Reset Section -->
+                        <Border Background="#191922" CornerRadius="10" Padding="14,12" BorderBrush="#18FFFFFF" BorderThickness="1">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel Grid.Column="0" Margin="0,0,12,0" VerticalAlignment="Center">
+                                    <TextBlock Text="Позиция на экране" FontWeight="SemiBold" FontSize="13" Foreground="#FFFFFF"/>
+                                    <TextBlock Text="Перемещайте виджет мышью за любое свободное место."
+                                               FontSize="11.5" Foreground="#8E8E98" Margin="0,2,0,0" TextWrapping="Wrap"/>
+                                </StackPanel>
+
+                                <Button Grid.Column="1"
+                                        Style="{StaticResource ActionButtonStyle}"
+                                        Background="#282836"
+                                        Foreground="#E0E0E6"
+                                        Padding="12,0"
+                                        Height="28"
+                                        Content="Сбросить в центр"
+                                        Click="OnResetPositionClick"/>
+                            </Grid>
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
+
+                <!-- Footer (Save / Close) -->
+                <Border Grid.Row="2"
+                        Background="#191922"
+                        CornerRadius="0,0,16,16"
+                        BorderBrush="#15FFFFFF"
+                        BorderThickness="0,1,0,0">
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,18,0">
+                        <Button Style="{StaticResource ActionButtonStyle}"
+                                Width="85"
+                                Background="#2A2A36"
+                                Foreground="#C0C0C8"
+                                Content="Закрыть"
+                                Margin="0,0,10,0"
+                                Click="OnCloseClick"/>
+
+                        <Button Style="{StaticResource ActionButtonStyle}"
+                                Width="150"
+                                Background="#4E75FF"
+                                Foreground="#FFFFFF"
+                                Content="Сохранить настройки"
+                                Click="OnSaveClick"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

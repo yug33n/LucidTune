@@ -16,6 +16,7 @@ namespace LucidTune.Services
         private GlobalSystemMediaTransportControlsSession? _currentSession;
         private readonly DispatcherTimer _progressTimer;
         private readonly SemaphoreSlim _updateLock = new(1, 1);
+        private readonly object _sessionLock = new();
 
         private DateTime _lastTimelineUpdateUtc;
         private TimeSpan _lastReportedPosition = TimeSpan.Zero;
@@ -56,25 +57,29 @@ namespace LucidTune.Services
 
         private void AttachSession(GlobalSystemMediaTransportControlsSession? session)
         {
-            if (_currentSession != null)
+            lock (_sessionLock)
             {
-                _currentSession.PlaybackInfoChanged -= OnPlaybackInfoChanged;
-                _currentSession.MediaPropertiesChanged -= OnMediaPropertiesChanged;
-                _currentSession.TimelinePropertiesChanged -= OnTimelinePropertiesChanged;
-            }
+                var oldSession = _currentSession;
+                _currentSession = session;
 
-            _currentSession = session;
+                if (oldSession != null)
+                {
+                    try { oldSession.PlaybackInfoChanged -= OnPlaybackInfoChanged; } catch { }
+                    try { oldSession.MediaPropertiesChanged -= OnMediaPropertiesChanged; } catch { }
+                    try { oldSession.TimelinePropertiesChanged -= OnTimelinePropertiesChanged; } catch { }
+                }
 
-            if (_currentSession != null)
-            {
-                _currentSession.PlaybackInfoChanged += OnPlaybackInfoChanged;
-                _currentSession.MediaPropertiesChanged += OnMediaPropertiesChanged;
-                _currentSession.TimelinePropertiesChanged += OnTimelinePropertiesChanged;
-                _ = UpdateMediaStateAsync();
-            }
-            else
-            {
-                NotifyEmptySession();
+                if (_currentSession != null)
+                {
+                    try { _currentSession.PlaybackInfoChanged += OnPlaybackInfoChanged; } catch { }
+                    try { _currentSession.MediaPropertiesChanged += OnMediaPropertiesChanged; } catch { }
+                    try { _currentSession.TimelinePropertiesChanged += OnTimelinePropertiesChanged; } catch { }
+                    _ = UpdateMediaStateAsync();
+                }
+                else
+                {
+                    NotifyEmptySession();
+                }
             }
         }
 
@@ -267,10 +272,11 @@ namespace LucidTune.Services
 
         public async Task<bool> TogglePlayPauseAsync()
         {
-            if (_currentSession == null) return false;
+            var session = _currentSession;
+            if (session == null) return false;
             try
             {
-                return await _currentSession.TryTogglePlayPauseAsync();
+                return await session.TryTogglePlayPauseAsync();
             }
             catch
             {
@@ -280,10 +286,11 @@ namespace LucidTune.Services
 
         public async Task<bool> SkipNextAsync()
         {
-            if (_currentSession == null) return false;
+            var session = _currentSession;
+            if (session == null) return false;
             try
             {
-                return await _currentSession.TrySkipNextAsync();
+                return await session.TrySkipNextAsync();
             }
             catch
             {
@@ -293,10 +300,11 @@ namespace LucidTune.Services
 
         public async Task<bool> SkipPreviousAsync()
         {
-            if (_currentSession == null) return false;
+            var session = _currentSession;
+            if (session == null) return false;
             try
             {
-                return await _currentSession.TrySkipPreviousAsync();
+                return await session.TrySkipPreviousAsync();
             }
             catch
             {
@@ -312,13 +320,17 @@ namespace LucidTune.Services
             _progressTimer.Stop();
             if (_sessionManager != null)
             {
-                _sessionManager.CurrentSessionChanged -= OnCurrentSessionChanged;
+                try { _sessionManager.CurrentSessionChanged -= OnCurrentSessionChanged; } catch { }
             }
-            if (_currentSession != null)
+            lock (_sessionLock)
             {
-                _currentSession.PlaybackInfoChanged -= OnPlaybackInfoChanged;
-                _currentSession.MediaPropertiesChanged -= OnMediaPropertiesChanged;
-                _currentSession.TimelinePropertiesChanged -= OnTimelinePropertiesChanged;
+                if (_currentSession != null)
+                {
+                    try { _currentSession.PlaybackInfoChanged -= OnPlaybackInfoChanged; } catch { }
+                    try { _currentSession.MediaPropertiesChanged -= OnMediaPropertiesChanged; } catch { }
+                    try { _currentSession.TimelinePropertiesChanged -= OnTimelinePropertiesChanged; } catch { }
+                    _currentSession = null;
+                }
             }
             _updateLock.Dispose();
         }
