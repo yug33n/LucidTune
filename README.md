@@ -1,114 +1,116 @@
 # LucidTune 🎵
 
+**English** | [Русский](README_RU.md)
+
 [![Platform: Windows](https://img.shields.io/badge/Platform-Windows%2010%20%7C%2011-0078D6.svg?logo=windows)](https://microsoft.com/windows)
 [![.NET 9.0](https://img.shields.io/badge/.NET-9.0%20WPF-512BD4.svg?logo=dotnet)](https://dotnet.microsoft.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Release: v1.0.0](https://img.shields.io/badge/Release-v1.0.0-4E75FF.svg)](https://github.com/yug33n/LucidTune/releases)
 
-**LucidTune** — это лёгкий, стильный и высокопроизводительный плавающий медиа-виджет (Dynamic Island) для Windows 10 и 11. Он отображает текущий трек, обложку альбома, автора и шкалу прогресса прямо поверх окон и игр, а также предоставляет удобное управление воспроизведением и гибкую настройку горячих клавиш.
+**LucidTune** is an ultra-lightweight, customizable desktop overlay widget (Dynamic Island style) for Windows 10 and 11. It brings real-time media metadata, album artwork, track playback progress, and media controls directly above your apps and games with a frosted glass aesthetic and customizable global hotkeys.
 
 ---
 
-## ✨ Основные возможности
+## ✨ Features
 
-### 🎶 Интеграция с Windows Media (SMTC)
-- Автоматически синхронизируется с системным транспортом мультимедиа Windows (**System Media Transport Controls**).
-- Поддерживает любые популярные плееры и браузеры: **Spotify, Яндекс Музыка, VK Музыка, Chrome, Edge, Firefox, Telegram, VLC, AIMP** и др.
-- Отображает название трека, исполнителя, актуальную обложку альбома (с запасной векторной заглушкой) и живой прогресс трека.
-- Защита от сбоев при быстром переключении треков (debounce и проверка сессий).
+### 🎶 Windows Media (SMTC) Integration
+- Seamlessly synchronizes with Windows **System Media Transport Controls**.
+- Automatically captures media sessions from **Spotify, YouTube Music / Chrome, Edge, Firefox, Telegram, VLC, Yandex Music, AIMP**, and any other SMTC-compatible media player.
+- Live track titles, artist details, dynamic progress bar, and crisp album art with an elegant vector fallback.
+- Rapid track switching safety guards (debounce protection preventing null-reference crashes).
 
-### 🎛️ Элегантный плавающий оверлей
-- **Дизайн в стиле тёмного матового стекла**: минималистичные скруглённые формы, мягкие тени и гармоничная неоново-синяя акцентная палитра (`#4E75FF`).
-- **Симметричные элементы управления**: кнопки «Предыдущий трек», «Пауза / Плей» и «Следующий трек» с выверенной толщиной и плавной реакцией на наведение.
-- **Анимация скрытия в панель задач**: кинематографичный эффект скольжения вниз с масштабированием при сворачивании и плавный выезд обратно.
-- **Кнопка скрытия «из темноты»**: плавающая круглая кнопка сворачивания мягко проявляется при наведении курсора на виджет и исчезает, когда мышь уходит, не загромождая интерфейс.
-- **Регулировка прозрачности**: настраиваемая непрозрачность виджета от 20% до 100% с мгновенным предпросмотром.
+### 🎛️ Elegant Dynamic Island Overlay
+- **Frosted Glass Island Design**: Modern deep dark glass palette (`#D9111114`), smooth 18px corner radius, and neon blue accents (`#4E75FF`).
+- **Balanced Playback Controls**: Pixel-perfect Previous, Play/Pause, and Next buttons with matching stroke weights and fluid hover states.
+- **Cinematic Taskbar Minimize Animation**: Smooth slide-down & scale transition when hiding into the taskbar, and an upward slide reveal when showing.
+- **Hover-Reveal Close Button**: Floating circular button emerges gracefully from the darkness when hovering over the widget and disappears when unhovered.
+- **Real-Time Opacity Slider**: Adjust widget transparency from 20% to 100% with live overlay feedback.
 
-### ⚙️ Полноценное окно настроек
-- **Пресеты расположения на экране**: быстрое перемещение виджета (Вверху слева / по центру / справа, Внизу слева / по центру / справа или Произвольно) с автоматическим удержанием в границах рабочих мониторов.
-- **Настройка глобальных горячих клавиш**:
-  - Показать / скрыть оверлей (по умолчанию `Alt + M`).
-  - Воспроизведение / Пауза.
-  - Следующий трек.
-  - Предыдущий трек.
-  - Поддержка модификаторов `Ctrl`, `Alt`, `Shift`, `Win`.
-- **Кастомные тёмные контролы**: стилизованные выпадающие списки (ComboBox) с плавным скроллбаром и красивой подсветкой.
-- **Скрытие в полноэкранных приложениях**: режим автоматического скрытия во время запуска полноэкранных игр и программ.
-- **Интеграция с системой**: опции автозагрузки при входе в Windows и автооткрытия окна настроек при старте.
+### ⚙️ Rich Configuration Window
+- **Position Presets**: Instantly dock the widget to Top Left, Top Center, Top Right, Bottom Left, Bottom Center, Bottom Right, or Custom coordinates with automated display boundary clamping.
+- **Global Hotkey Customization**:
+  - Show / Hide widget (defaults to `Alt + M`).
+  - Play / Pause.
+  - Next Track.
+  - Previous Track.
+  - Full support for `Ctrl`, `Alt`, `Shift`, and `Win` modifiers.
+- **Custom Dark Controls**: Handcrafted dark dropdown menus (ComboBox), custom scrollbars, and focus rings.
+- **Fullscreen & Game Detection**: Optional automatic hiding when launching fullscreen games or applications.
+- **System Integration**: Toggle launch on Windows startup and startup window display.
 
-### 🔔 Системный трей и кастомная иконка
-- Центрированная векторная иконка приложения в мультиформатном разрешении (от 16×16 до 256×256) для чёткого отображения на любых масштабах DPI.
-- Тёмное контекстное меню трея без системных светлых полос, с аккуратными синими галочками и динамическим пунктом «Показать / Скрыть».
-- Управление оверлеем в один клик: левый клик по иконке в трее мгновенно переключает видимость виджета.
-
----
-
-## 🖥️ Системные требования
-
-- **ОС**: Windows 10 (сборка 19041+) или Windows 11 (x64)
-- **Среда выполнения**: 
-  - Для стандартной сборки: [.NET 9.0 Desktop Runtime (x64)](https://dotnet.microsoft.com/download/dotnet/9.0)
-  - Для автономной сборки (Self-Contained): установка дополнительных сред **не требуется**.
+### 🔔 System Tray & Brand Icon
+- Mathematically centered vector music note inside a circular dark badge, packaged in multi-resolution ICO (16×16 to 256×256) for sharp rendering at all DPI scales.
+- Dark context menu without the default Windows white gutter, featuring accent checkmarks and a dynamic "Show / Hide" state.
+- Single-click toggle: click the tray icon to quickly show or hide the overlay.
 
 ---
 
-## 🚀 Установка и запуск
+## 🖥️ System Requirements
 
-### Вариант 1. Автономная сборка (Standalone)
-Не требует установленного .NET Runtime. Запустите готовый исполняемый файл:
+- **OS**: Windows 10 (Build 19041+) or Windows 11 (x64)
+- **Runtime**:
+  - **Standard Build**: [.NET 9.0 Desktop Runtime (x64)](https://dotnet.microsoft.com/download/dotnet/9.0)
+  - **Standalone Build (Self-Contained)**: No external dependencies or runtime required.
+
+---
+
+## 🚀 Installation & Running
+
+### Option 1. Standalone Single-File Executable
+Runs out of the box on any compatible Windows PC without requiring .NET 9 pre-installed:
 ```powershell
 ./publish/standalone/LucidTune.exe
 ```
 
-### Вариант 2. Портативная сборка (Portable)
-Для систем с уже установленным .NET 9.0 Desktop Runtime:
+### Option 2. Portable Framework-Dependent Build
+Lightweight build for systems that already have the .NET 9.0 Desktop Runtime installed:
 ```powershell
 ./publish/portable/LucidTune.exe
 ```
 
 ---
 
-## 🛠️ Сборка из исходного кода
+## 🛠️ Building from Source
 
-Клонируйте репозиторий:
+Clone the repository:
 ```powershell
 git clone https://github.com/yug33n/LucidTune.git
 cd LucidTune
 ```
 
-### Сборка проекта
+### Build Solution
 ```powershell
 dotnet build -c Release
 ```
 
-### Публикация автономного single-file файла
+### Publish Standalone Single-File Executable
 ```powershell
 dotnet publish LucidTune.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o ./publish/standalone
 ```
 
-### Публикация легковесного single-file файла (Framework-dependent)
+### Publish Portable Single-File Executable
 ```powershell
 dotnet publish LucidTune.csproj -c Release -r win-x64 --self-contained false -p:PublishSingleFile=true -o ./publish/portable
 ```
 
 ---
 
-## ⌨️ Горячие клавиши по умолчанию
+## ⌨️ Default Hotkeys
 
-| Действие | Комбинация клавиш | Описание |
+| Action | Shortcut | Description |
 |---|---|---|
-| **Показать / Скрыть виджет** | `Alt + M` | Быстрое скрытие или отображение оверлея |
-| **Пауза / Воспроизведение** | *Настраивается* | Управление текущим треком |
-| **Следующий трек** | *Настраивается* | Перемотка вперед на следующий трек |
-| **Предыдущий трек** | *Настраивается* | Перемотка назад на предыдущий трек |
+| **Toggle Widget** | `Alt + M` | Quickly hide or show the overlay |
+| **Play / Pause** | *Configurable* | Toggle media playback |
+| **Next Track** | *Configurable* | Skip to the next track |
+| **Previous Track** | *Configurable* | Return to the previous track |
 
-*Все сочетания клавиш можно переназначить в окне настроек или через файл `config.json`.*
+*All keybindings can be customized in the settings window or directly edited in `config.json`.*
 
 ---
 
-## 📁 Структура конфигурации (`config.json`)
+## 📁 Configuration File (`config.json`)
 
-Файл конфигурации создается автоматически рядом с исполняемым файлом или в рабочем каталоге:
+Settings are stored in `config.json` alongside the executable or working directory:
 ```json
 {
   "WindowX": 780.0,
@@ -131,6 +133,6 @@ dotnet publish LucidTune.csproj -c Release -r win-x64 --self-contained false -p:
 
 ---
 
-## 📄 Лицензия
+## 📄 License
 
-Проект распространяется под лицензией [MIT](LICENSE).
+This project is licensed under the [MIT License](LICENSE).
