@@ -1,10 +1,12 @@
 using System;
 using System.Windows;
 using System.Windows.Input;
+using System.Windows.Interop;
 using System.Windows.Media;
 using LucidTune.Config;
 using LucidTune.Models;
 using LucidTune.Services;
+using LucidTune.UI;
 
 namespace LucidTune
 {
@@ -12,10 +14,13 @@ namespace LucidTune
     {
         private readonly SmtcMediaService _mediaService;
         private readonly ConfigManager _configManager;
+        private readonly HotkeyService _hotkeyService;
         private readonly Geometry _playGeometry;
         private readonly Geometry _pauseGeometry;
 
+        private TrayIconManager? _trayManager;
         private double _currentProgress;
+        private bool _isWindowVisible = true;
 
         public MainWindow()
         {
@@ -26,9 +31,11 @@ namespace LucidTune
 
             _configManager = new ConfigManager();
             _mediaService = new SmtcMediaService();
+            _hotkeyService = new HotkeyService();
 
             _mediaService.TrackInfoChanged += OnTrackInfoChanged;
             _mediaService.ProgressUpdated += OnProgressUpdated;
+            _hotkeyService.HotkeyPressed += OnHotkeyPressed;
 
             Loaded += OnMainWindowLoaded;
             Closing += OnMainWindowClosing;
@@ -38,6 +45,14 @@ namespace LucidTune
         private async void OnMainWindowLoaded(object sender, RoutedEventArgs e)
         {
             ApplySavedPosition();
+
+            var hwnd = new WindowInteropHelper(this).Handle;
+            _hotkeyService.Initialize(hwnd);
+            _hotkeyService.Register(_configManager.CurrentConfig.HotkeyModifiers, _configManager.CurrentConfig.HotkeyKey);
+
+            _trayManager = new TrayIconManager(_configManager, ToggleVisibility, OpenHotkeySettings);
+            _trayManager.Initialize(hwnd);
+
             await _mediaService.InitializeAsync();
         }
 
@@ -46,6 +61,42 @@ namespace LucidTune
             var targetPos = _configManager.GetValidatedPosition(Width, Height);
             Left = targetPos.X;
             Top = targetPos.Y;
+        }
+
+        public void ToggleVisibility()
+        {
+            if (_isWindowVisible)
+            {
+                Hide();
+                _isWindowVisible = false;
+            }
+            else
+            {
+                Show();
+                Topmost = true;
+                Activate();
+                _isWindowVisible = true;
+            }
+        }
+
+        private void OpenHotkeySettings()
+        {
+            var dialog = new HotkeySettingsWindow(_configManager)
+            {
+                Owner = this
+            };
+
+            dialog.HotkeyChanged += (mod, key) =>
+            {
+                _hotkeyService.Register(mod, key);
+            };
+
+            dialog.ShowDialog();
+        }
+
+        private void OnHotkeyPressed()
+        {
+            Dispatcher.Invoke(ToggleVisibility);
         }
 
         private void OnTrackInfoChanged(MediaTrackInfo track)
@@ -101,6 +152,7 @@ namespace LucidTune
             if (e.ButtonState == MouseButtonState.Pressed)
             {
                 DragMove();
+                SaveCurrentPosition();
             }
         }
 
@@ -125,6 +177,8 @@ namespace LucidTune
         private void OnMainWindowClosing(object? sender, System.ComponentModel.CancelEventArgs e)
         {
             SaveCurrentPosition();
+            _hotkeyService.Dispose();
+            _trayManager?.Dispose();
             _mediaService.Dispose();
         }
 

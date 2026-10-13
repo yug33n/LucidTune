@@ -8,6 +8,13 @@
     <UseWPF>true</UseWPF>
     <RootNamespace>LucidTune</RootNamespace>
     <AssemblyName>LucidTune</AssemblyName>
+    <ApplicationIcon>Resources\app.ico</ApplicationIcon>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="Resources\app.ico">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
 
 </Project>
