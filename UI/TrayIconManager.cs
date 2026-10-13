@@ -72,13 +72,18 @@ namespace LucidTune.UI
         private readonly ConfigManager _configManager;
         private readonly Action _toggleVisibilityAction;
         private readonly Action _hotkeySettingsAction;
+        private readonly Func<bool>? _isWidgetVisibleGetter;
         private ContextMenu? _trayContextMenu;
+        private MenuItem? _toggleItem;
+        private MenuItem? _autoHideItem;
+        private MenuItem? _autoStartItem;
 
-        public TrayIconManager(ConfigManager configManager, Action toggleVisibilityAction, Action hotkeySettingsAction)
+        public TrayIconManager(ConfigManager configManager, Action toggleVisibilityAction, Action hotkeySettingsAction, Func<bool>? isWidgetVisibleGetter = null)
         {
             _configManager = configManager;
             _toggleVisibilityAction = toggleVisibilityAction;
             _hotkeySettingsAction = hotkeySettingsAction;
+            _isWidgetVisibleGetter = isWidgetVisibleGetter;
         }
 
         public void Initialize(IntPtr windowHandle)
@@ -129,56 +134,49 @@ namespace LucidTune.UI
 
         private void BuildContextMenu()
         {
-            var menu = new ContextMenu
-            {
-                Background = new SolidColorBrush(Color.FromRgb(0x1B, 0x1B, 0x22)),
-                BorderBrush = new SolidColorBrush(Color.FromArgb(0x40, 0xFF, 0xFF, 0xFF)),
-                BorderThickness = new Thickness(1),
-                Foreground = Brushes.White,
-                Padding = new Thickness(4)
-            };
+            var menu = new ContextMenu();
 
-            var toggleItem = new MenuItem
+            _toggleItem = new MenuItem
             {
-                Header = "Показать / Скрыть",
-                Foreground = Brushes.White
+                Header = _isWidgetVisibleGetter != null && _isWidgetVisibleGetter() ? "Скрыть" : "Показать"
             };
-            toggleItem.Click += (s, e) => _toggleVisibilityAction();
+            _toggleItem.Click += (s, e) =>
+            {
+                _toggleVisibilityAction();
+                UpdateState();
+            };
 
             var hotkeyItem = new MenuItem
             {
-                Header = "Настройки виджета",
-                Foreground = Brushes.White
+                Header = "Настройки виджета"
             };
             hotkeyItem.Click += (s, e) => _hotkeySettingsAction();
 
-            var autoHideItem = new MenuItem
+            _autoHideItem = new MenuItem
             {
                 Header = "Скрывать в полноэкранных играх",
                 IsCheckable = true,
-                IsChecked = _configManager.CurrentConfig.AutoHideInFullscreen,
-                Foreground = Brushes.White
+                IsChecked = _configManager.CurrentConfig.AutoHideInFullscreen
             };
-            autoHideItem.Click += (s, e) =>
+            _autoHideItem.Click += (s, e) =>
             {
                 var cfg = _configManager.CurrentConfig;
                 cfg.AutoHideInFullscreen = !cfg.AutoHideInFullscreen;
-                autoHideItem.IsChecked = cfg.AutoHideInFullscreen;
+                _autoHideItem.IsChecked = cfg.AutoHideInFullscreen;
                 _configManager.Save(cfg);
             };
 
-            var autoStartItem = new MenuItem
+            _autoStartItem = new MenuItem
             {
                 Header = "Автозагрузка",
                 IsCheckable = true,
-                IsChecked = AutoStartupService.IsAutoStartEnabled(),
-                Foreground = Brushes.White
+                IsChecked = AutoStartupService.IsAutoStartEnabled()
             };
-            autoStartItem.Click += (s, e) =>
+            _autoStartItem.Click += (s, e) =>
             {
                 bool newState = !AutoStartupService.IsAutoStartEnabled();
                 AutoStartupService.SetAutoStart(newState);
-                autoStartItem.IsChecked = newState;
+                _autoStartItem.IsChecked = newState;
 
                 var cfg = _configManager.CurrentConfig;
                 cfg.AutoStart = newState;
@@ -195,15 +193,33 @@ namespace LucidTune.UI
                 Application.Current.Shutdown();
             };
 
-            menu.Items.Add(toggleItem);
+            menu.Items.Add(_toggleItem);
             menu.Items.Add(hotkeyItem);
-            menu.Items.Add(new Separator { Background = new SolidColorBrush(Color.FromArgb(0x20, 0xFF, 0xFF, 0xFF)) });
-            menu.Items.Add(autoHideItem);
-            menu.Items.Add(autoStartItem);
-            menu.Items.Add(new Separator { Background = new SolidColorBrush(Color.FromArgb(0x20, 0xFF, 0xFF, 0xFF)) });
+            menu.Items.Add(new Separator());
+            menu.Items.Add(_autoHideItem);
+            menu.Items.Add(_autoStartItem);
+            menu.Items.Add(new Separator());
             menu.Items.Add(exitItem);
 
             _trayContextMenu = menu;
+        }
+
+        private void UpdateState()
+        {
+            if (_toggleItem != null && _isWidgetVisibleGetter != null)
+            {
+                _toggleItem.Header = _isWidgetVisibleGetter() ? "Скрыть" : "Показать";
+            }
+
+            if (_autoHideItem != null)
+            {
+                _autoHideItem.IsChecked = _configManager.CurrentConfig.AutoHideInFullscreen;
+            }
+
+            if (_autoStartItem != null)
+            {
+                _autoStartItem.IsChecked = AutoStartupService.IsAutoStartEnabled();
+            }
         }
 
         private IntPtr HwndHook(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
@@ -230,6 +246,7 @@ namespace LucidTune.UI
         {
             if (_trayContextMenu == null) return;
 
+            UpdateState();
             SetForegroundWindow(_hWnd);
             _trayContextMenu.Placement = PlacementMode.MousePoint;
             _trayContextMenu.IsOpen = true;

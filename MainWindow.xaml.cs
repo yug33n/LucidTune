@@ -64,7 +64,7 @@ namespace LucidTune
 
             _fullscreenService.Start(hwnd);
 
-            _trayManager = new TrayIconManager(_configManager, ToggleVisibility, OpenSettingsWindow);
+            _trayManager = new TrayIconManager(_configManager, ToggleVisibility, OpenSettingsWindow, () => _isWindowVisible);
             _trayManager.Initialize(hwnd);
 
             await _mediaService.InitializeAsync();
