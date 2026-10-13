@@ -1,10 +1,19 @@
 using System;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Windows.Input;
 using System.Windows.Interop;
 
 namespace LucidTune.Services
 {
+    public enum HotkeyAction
+    {
+        ToggleVisibility = 9001,
+        PlayPause = 9002,
+        NextTrack = 9003,
+        PreviousTrack = 9004
+    }
+
     public class HotkeyService : IDisposable
     {
         private const int WM_HOTKEY = 0x0312;
@@ -14,8 +23,6 @@ namespace LucidTune.Services
         private const uint MOD_WIN = 0x0008;
         private const uint MOD_NOREPEAT = 0x4000;
 
-        private const int HotkeyId = 9001;
-
         [DllImport("user32.dll", SetLastError = true)]
         private static extern bool RegisterHotKey(IntPtr hWnd, int id, uint fsModifiers, uint vk);
 
@@ -24,10 +31,11 @@ namespace LucidTune.Services
 
         private IntPtr _hWnd;
         private HwndSource? _source;
-        private bool _isRegistered;
+        private readonly HashSet<int> _registeredIds = new();
         private bool _disposed;
 
         public event Action? HotkeyPressed;
+        public event Action<HotkeyAction>? HotkeyTriggered;
 
         public void Initialize(IntPtr windowHandle)
         {
@@ -38,21 +46,48 @@ namespace LucidTune.Services
 
         public bool Register(string modifierStr, string keyStr)
         {
+            return Register(HotkeyAction.ToggleVisibility, modifierStr, keyStr);
+        }
+
+        public bool Register(HotkeyAction action, string modifierStr, string keyStr)
+        {
             if (_hWnd == IntPtr.Zero) return false;
 
-            if (_isRegistered)
-            {
-                UnregisterHotKey(_hWnd, HotkeyId);
-                _isRegistered = false;
-            }
+            int id = (int)action;
+            Unregister(action);
 
             uint modifiers = ParseModifiers(modifierStr) | MOD_NOREPEAT;
             uint vk = ParseVirtualKey(keyStr);
 
             if (vk == 0) return false;
 
-            _isRegistered = RegisterHotKey(_hWnd, HotkeyId, modifiers, vk);
-            return _isRegistered;
+            bool success = RegisterHotKey(_hWnd, id, modifiers, vk);
+            if (success)
+            {
+                _registeredIds.Add(id);
+            }
+            return success;
+        }
+
+        public void Unregister(HotkeyAction action)
+        {
+            int id = (int)action;
+            if (_registeredIds.Contains(id) && _hWnd != IntPtr.Zero)
+            {
+                UnregisterHotKey(_hWnd, id);
+                _registeredIds.Remove(id);
+            }
+        }
+
+        public void UnregisterAll()
+        {
+            if (_hWnd == IntPtr.Zero) return;
+
+            foreach (var id in _registeredIds)
+            {
+                UnregisterHotKey(_hWnd, id);
+            }
+            _registeredIds.Clear();
         }
 
         private static uint ParseModifiers(string modifierStr)
@@ -86,10 +121,19 @@ namespace LucidTune.Services
 
         private IntPtr HwndHook(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
         {
-            if (msg == WM_HOTKEY && wParam.ToInt32() == HotkeyId)
+            if (msg == WM_HOTKEY)
             {
-                HotkeyPressed?.Invoke();
-                handled = true;
+                int id = wParam.ToInt32();
+                if (_registeredIds.Contains(id))
+                {
+                    var action = (HotkeyAction)id;
+                    if (action == HotkeyAction.ToggleVisibility)
+                    {
+                        HotkeyPressed?.Invoke();
+                    }
+                    HotkeyTriggered?.Invoke(action);
+                    handled = true;
+                }
             }
 
             return IntPtr.Zero;
@@ -100,12 +144,7 @@ namespace LucidTune.Services
             if (_disposed) return;
             _disposed = true;
 
-            if (_isRegistered && _hWnd != IntPtr.Zero)
-            {
-                UnregisterHotKey(_hWnd, HotkeyId);
-                _isRegistered = false;
-            }
-
+            UnregisterAll();
             _source?.RemoveHook(HwndHook);
         }
     }

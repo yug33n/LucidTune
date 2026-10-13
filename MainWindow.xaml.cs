@@ -54,7 +54,8 @@ namespace LucidTune
 
             var hwnd = new WindowInteropHelper(this).Handle;
             _hotkeyService.Initialize(hwnd);
-            _hotkeyService.Register(_configManager.CurrentConfig.HotkeyModifiers, _configManager.CurrentConfig.HotkeyKey);
+            RegisterAllConfiguredHotkeys();
+            _hotkeyService.HotkeyTriggered += OnHotkeyTriggered;
 
             _fullscreenService.Start(hwnd);
 
@@ -208,9 +209,46 @@ namespace LucidTune
             settingsWindow.Show();
         }
 
+        public void RegisterAllConfiguredHotkeys()
+        {
+            var cfg = _configManager.CurrentConfig;
+            _hotkeyService.UnregisterAll();
+
+            _hotkeyService.Register(HotkeyAction.ToggleVisibility, cfg.HotkeyModifiers, cfg.HotkeyKey);
+
+            if (cfg.MediaHotkeysEnabled)
+            {
+                _hotkeyService.Register(HotkeyAction.PlayPause, cfg.PlayPauseModifiers, cfg.PlayPauseKey);
+                _hotkeyService.Register(HotkeyAction.NextTrack, cfg.NextTrackModifiers, cfg.NextTrackKey);
+                _hotkeyService.Register(HotkeyAction.PreviousTrack, cfg.PrevTrackModifiers, cfg.PrevTrackKey);
+            }
+        }
+
+        private void OnHotkeyTriggered(HotkeyAction action)
+        {
+            Dispatcher.Invoke(async () =>
+            {
+                switch (action)
+                {
+                    case HotkeyAction.ToggleVisibility:
+                        ToggleVisibility();
+                        break;
+                    case HotkeyAction.PlayPause:
+                        await _mediaService.TogglePlayPauseAsync();
+                        break;
+                    case HotkeyAction.NextTrack:
+                        await _mediaService.SkipNextAsync();
+                        break;
+                    case HotkeyAction.PreviousTrack:
+                        await _mediaService.SkipPreviousAsync();
+                        break;
+                }
+            });
+        }
+
         public void ApplyNewHotkey(string modifier, string key)
         {
-            _hotkeyService.Register(modifier, key);
+            RegisterAllConfiguredHotkeys();
         }
 
         private void OnHotkeyPressed()
