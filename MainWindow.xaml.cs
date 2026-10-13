@@ -337,6 +337,9 @@ namespace LucidTune
                 PrevButton.IsEnabled = controlsEnabled;
                 PlayPauseButton.IsEnabled = controlsEnabled;
                 NextButton.IsEnabled = controlsEnabled;
+
+                _volumeService.SetTargetApp(track.SourceAppUserModelId);
+                SyncVolumeFromSystem();
             });
         }
 
@@ -420,7 +423,7 @@ namespace LucidTune
             try
             {
                 _isUpdatingVolumeFromSystem = true;
-                float vol = _volumeService.GetMasterVolume();
+                float vol = _volumeService.GetVolume();
                 bool muted = _volumeService.IsMuted();
                 VolumeSlider.Value = Math.Round(vol * 100);
                 UpdateVolumeVisuals(muted, VolumeSlider.Value);
@@ -454,6 +457,12 @@ namespace LucidTune
                 VolumeIconPath.Data = (Geometry)FindResource("VolumeHighGeometry");
                 VolumeIconPath.Opacity = 1.0;
             }
+
+            if (VolumeSlider != null)
+            {
+                string? target = _volumeService.TargetAppDisplayName;
+                VolumeSlider.ToolTip = !string.IsNullOrEmpty(target) ? $"Громкость: {target}" : "Громкость музыки";
+            }
         }
 
         private void OnVolumeSliderValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
@@ -461,7 +470,7 @@ namespace LucidTune
             if (_isUpdatingVolumeFromSystem) return;
 
             float level = (float)(e.NewValue / 100.0);
-            _volumeService.SetMasterVolume(level);
+            _volumeService.SetVolume(level);
             UpdateVolumeVisuals(_volumeService.IsMuted(), e.NewValue);
         }
 

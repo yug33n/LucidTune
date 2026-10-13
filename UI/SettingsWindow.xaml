@@ -526,7 +526,7 @@
                                           Checked="OnCompactModeChanged"
                                           Unchecked="OnCompactModeChanged">
                                     <StackPanel Margin="6,0,0,0">
-                                        <TextBlock Text="Компактный виджет (без обложки трека)" FontSize="12.5" FontWeight="Medium" Foreground="#FFFFFF"/>
+                                        <TextBlock Text="Компактный виджет" FontSize="12.5" FontWeight="Medium" Foreground="#FFFFFF"/>
                                         <TextBlock Text="Скрывает изображение альбома, делая оверлей меньше и компактнее." FontSize="11" Foreground="#8E8E98" Margin="0,2,0,0"/>
                                     </StackPanel>
                                 </CheckBox>
