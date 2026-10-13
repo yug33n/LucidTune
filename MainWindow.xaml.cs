@@ -58,10 +58,15 @@ namespace LucidTune
 
             _fullscreenService.Start(hwnd);
 
-            _trayManager = new TrayIconManager(_configManager, ToggleVisibility, OpenHotkeySettings);
+            _trayManager = new TrayIconManager(_configManager, ToggleVisibility, OpenSettingsWindow);
             _trayManager.Initialize(hwnd);
 
             await _mediaService.InitializeAsync();
+
+            if (_configManager.CurrentConfig.ShowSettingsOnStartup)
+            {
+                OpenSettingsWindow();
+            }
         }
 
         private void ApplySavedPosition()
@@ -197,19 +202,15 @@ namespace LucidTune
             });
         }
 
-        private void OpenHotkeySettings()
+        public void OpenSettingsWindow()
         {
-            var dialog = new HotkeySettingsWindow(_configManager)
-            {
-                Owner = this
-            };
+            var settingsWindow = new SettingsWindow(this, _configManager);
+            settingsWindow.Show();
+        }
 
-            dialog.HotkeyChanged += (mod, key) =>
-            {
-                _hotkeyService.Register(mod, key);
-            };
-
-            dialog.ShowDialog();
+        public void ApplyNewHotkey(string modifier, string key)
+        {
+            _hotkeyService.Register(modifier, key);
         }
 
         private void OnHotkeyPressed()

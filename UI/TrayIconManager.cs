@@ -147,7 +147,7 @@ namespace LucidTune.UI
 
             var hotkeyItem = new MenuItem
             {
-                Header = "Настройки хоткея",
+                Header = "Настройки виджета",
                 Foreground = Brushes.White
             };
             hotkeyItem.Click += (s, e) => _hotkeySettingsAction();

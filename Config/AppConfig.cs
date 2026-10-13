@@ -10,5 +10,6 @@ namespace LucidTune.Config
         public string HotkeyKey { get; set; } = "M";
         public bool AutoHideInFullscreen { get; set; } = false;
         public bool AutoStart { get; set; } = false;
+        public bool ShowSettingsOnStartup { get; set; } = true;
     }
 }
