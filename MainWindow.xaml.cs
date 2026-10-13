@@ -156,6 +156,7 @@ namespace LucidTune
 
                 ArtContainer.Opacity = track.IsPlaying ? 1.0 : 0.65;
                 PlayPauseIcon.Data = track.IsPlaying ? _pauseGeometry : _playGeometry;
+                PlayPauseIcon.Margin = track.IsPlaying ? new Thickness(0) : new Thickness(2, 0, 0, 0);
 
                 bool controlsEnabled = track.HasActiveSession;
                 PrevButton.IsEnabled = controlsEnabled;
@@ -191,7 +192,7 @@ namespace LucidTune
             }
         }
 
-        private void OnCloseButtonClick(object sender, RoutedEventArgs e)
+        private void OnHideButtonClick(object sender, RoutedEventArgs e)
         {
             e.Handled = true;
             ToggleVisibility();
