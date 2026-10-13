@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
+using System.Windows.Media.Animation;
 using LucidTune.Config;
 using LucidTune.Models;
 using LucidTune.Services;
@@ -23,6 +24,7 @@ namespace LucidTune
         private double _currentProgress;
         private bool _isWindowVisible = true;
         private bool _hiddenByFullscreen;
+        private bool _isAnimating;
 
         public MainWindow()
         {
@@ -74,16 +76,100 @@ namespace LucidTune
             _hiddenByFullscreen = false;
             if (_isWindowVisible)
             {
-                Hide();
-                _isWindowVisible = false;
+                HideWithAnimation();
             }
             else
             {
-                Show();
-                Topmost = true;
-                Activate();
-                _isWindowVisible = true;
+                ShowWithAnimation();
             }
+        }
+
+        public void HideWithAnimation()
+        {
+            if (_isAnimating || !_isWindowVisible) return;
+            _isAnimating = true;
+
+            var duration = TimeSpan.FromMilliseconds(220);
+            var easeIn = new CubicEase { EasingMode = EasingMode.EaseIn };
+
+            var animY = new DoubleAnimation(0, 48, duration) { EasingFunction = easeIn };
+            var animScaleX = new DoubleAnimation(1.0, 0.85, duration) { EasingFunction = easeIn };
+            var animScaleY = new DoubleAnimation(1.0, 0.85, duration) { EasingFunction = easeIn };
+            var animOpacity = new DoubleAnimation(1.0, 0.0, duration) { EasingFunction = easeIn };
+
+            animOpacity.Completed += (s, e) =>
+            {
+                Hide();
+                _isWindowVisible = false;
+                _isAnimating = false;
+
+                ContainerTranslate.BeginAnimation(TranslateTransform.YProperty, null);
+                ContainerScale.BeginAnimation(ScaleTransform.ScaleXProperty, null);
+                ContainerScale.BeginAnimation(ScaleTransform.ScaleYProperty, null);
+                IslandContainer.BeginAnimation(UIElement.OpacityProperty, null);
+
+                ContainerTranslate.Y = 0;
+                ContainerScale.ScaleX = 1.0;
+                ContainerScale.ScaleY = 1.0;
+                IslandContainer.Opacity = 1.0;
+
+                HideButton.BeginAnimation(UIElement.OpacityProperty, null);
+                HideButtonScale.BeginAnimation(ScaleTransform.ScaleXProperty, null);
+                HideButtonScale.BeginAnimation(ScaleTransform.ScaleYProperty, null);
+                HideButton.Opacity = 0.0;
+                HideButton.IsHitTestVisible = false;
+                HideButtonScale.ScaleX = 0.82;
+                HideButtonScale.ScaleY = 0.82;
+            };
+
+            ContainerTranslate.BeginAnimation(TranslateTransform.YProperty, animY);
+            ContainerScale.BeginAnimation(ScaleTransform.ScaleXProperty, animScaleX);
+            ContainerScale.BeginAnimation(ScaleTransform.ScaleYProperty, animScaleY);
+            IslandContainer.BeginAnimation(UIElement.OpacityProperty, animOpacity);
+        }
+
+        public void ShowWithAnimation()
+        {
+            if (_isAnimating || _isWindowVisible) return;
+            _isAnimating = true;
+
+            ContainerTranslate.Y = 48;
+            ContainerScale.ScaleX = 0.85;
+            ContainerScale.ScaleY = 0.85;
+            IslandContainer.Opacity = 0.0;
+
+            Show();
+            Topmost = true;
+            Activate();
+            _isWindowVisible = true;
+
+            var duration = TimeSpan.FromMilliseconds(250);
+            var easeOut = new CubicEase { EasingMode = EasingMode.EaseOut };
+
+            var animY = new DoubleAnimation(48, 0, duration) { EasingFunction = easeOut };
+            var animScaleX = new DoubleAnimation(0.85, 1.0, duration) { EasingFunction = easeOut };
+            var animScaleY = new DoubleAnimation(0.85, 1.0, duration) { EasingFunction = easeOut };
+            var animOpacity = new DoubleAnimation(0.0, 1.0, duration) { EasingFunction = easeOut };
+
+            animOpacity.Completed += (s, e) =>
+            {
+                _isAnimating = false;
+
+                ContainerTranslate.BeginAnimation(TranslateTransform.YProperty, null);
+                ContainerScale.BeginAnimation(ScaleTransform.ScaleXProperty, null);
+                ContainerScale.BeginAnimation(ScaleTransform.ScaleYProperty, null);
+                IslandContainer.BeginAnimation(UIElement.OpacityProperty, null);
+
+                ContainerTranslate.Y = 0;
+                ContainerScale.ScaleX = 1.0;
+                ContainerScale.ScaleY = 1.0;
+                IslandContainer.Opacity = 1.0;
+            };
+
+            ContainerTranslate.BeginAnimation(TranslateTransform.YProperty, animY);
+            ContainerScale.BeginAnimation(ScaleTransform.ScaleXProperty, animScaleX);
+            ContainerScale.BeginAnimation(ScaleTransform.ScaleYProperty, animScaleY);
+            IslandContainer.BeginAnimation(UIElement.OpacityProperty, animOpacity);
         }
 
         private void OnFullscreenStateChanged(bool isFullscreen)
@@ -97,8 +183,7 @@ namespace LucidTune
                     if (_isWindowVisible)
                     {
                         _hiddenByFullscreen = true;
-                        Hide();
-                        _isWindowVisible = false;
+                        HideWithAnimation();
                     }
                 }
                 else
@@ -106,9 +191,7 @@ namespace LucidTune
                     if (_hiddenByFullscreen)
                     {
                         _hiddenByFullscreen = false;
-                        Show();
-                        Topmost = true;
-                        _isWindowVisible = true;
+                        ShowWithAnimation();
                     }
                 }
             });
@@ -196,6 +279,46 @@ namespace LucidTune
         {
             e.Handled = true;
             ToggleVisibility();
+        }
+
+        private void OnMainCardMouseEnter(object sender, MouseEventArgs e)
+        {
+            if (!_isWindowVisible || _isAnimating) return;
+
+            HideButton.IsHitTestVisible = true;
+
+            var duration = TimeSpan.FromMilliseconds(220);
+            var easeOut = new CubicEase { EasingMode = EasingMode.EaseOut };
+
+            var opacityAnim = new DoubleAnimation(1.0, duration) { EasingFunction = easeOut };
+            var scaleAnim = new DoubleAnimation(1.0, duration) { EasingFunction = easeOut };
+
+            HideButton.BeginAnimation(UIElement.OpacityProperty, opacityAnim);
+            HideButtonScale.BeginAnimation(ScaleTransform.ScaleXProperty, scaleAnim);
+            HideButtonScale.BeginAnimation(ScaleTransform.ScaleYProperty, scaleAnim);
+        }
+
+        private void OnMainCardMouseLeave(object sender, MouseEventArgs e)
+        {
+            if (!_isWindowVisible || _isAnimating) return;
+
+            var duration = TimeSpan.FromMilliseconds(200);
+            var easeIn = new CubicEase { EasingMode = EasingMode.EaseIn };
+
+            var opacityAnim = new DoubleAnimation(0.0, duration) { EasingFunction = easeIn };
+            var scaleAnim = new DoubleAnimation(0.82, duration) { EasingFunction = easeIn };
+
+            opacityAnim.Completed += (s, args) =>
+            {
+                if (!MainCard.IsMouseOver)
+                {
+                    HideButton.IsHitTestVisible = false;
+                }
+            };
+
+            HideButton.BeginAnimation(UIElement.OpacityProperty, opacityAnim);
+            HideButtonScale.BeginAnimation(ScaleTransform.ScaleXProperty, scaleAnim);
+            HideButtonScale.BeginAnimation(ScaleTransform.ScaleYProperty, scaleAnim);
         }
 
         private async void OnPlayPauseButtonClick(object sender, RoutedEventArgs e)
