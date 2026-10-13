@@ -189,10 +189,14 @@
                         Style="{StaticResource MinimizeButtonStyle}"
                         HorizontalAlignment="Right"
                         VerticalAlignment="Top"
-                        Margin="0,5,8,0"
+                        Margin="0,5,14,0"
                         Panel.ZIndex="10"
                         Click="OnHideButtonClick"
                         ToolTip="Скрыть (Alt+M)">
+                    <Button.LayoutTransform>
+                        <RotateTransform Angle="180"/>
+                    </Button.LayoutTransform>
+
                     <Path Width="9" Height="5"
                           Stretch="Uniform"
                           Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
@@ -312,6 +316,7 @@
                                 ToolTip="Воспроизведение / Пауза">
                             <Path x:Name="PlayPauseIcon"
                                   Width="12" Height="12"
+                                  Margin="2,0,0,0"
                                   Stretch="Uniform"
                                   Fill="#FFFFFF"
                                   Data="{StaticResource PlayGeometry}"
