@@ -15,11 +15,10 @@
         WindowStartupLocation="Manual">
 
     <Window.Resources>
-        <!-- Geometries -->
-        <Geometry x:Key="PlayGeometry">M4,2 L14,8 L4,14 Z</Geometry>
-        <Geometry x:Key="PauseGeometry">M3,2 L6,2 L6,14 L3,14 Z M10,2 L13,2 L13,14 L10,14 Z</Geometry>
-        <Geometry x:Key="PrevGeometry">M11,2 L4,7 L11,12 Z M3,2 L1,2 L1,12 L3,12 Z</Geometry>
-        <Geometry x:Key="NextGeometry">M1,2 L8,7 L1,12 Z M9,2 L11,2 L11,12 L9,12 Z</Geometry>
+        <!-- Geometries with unified 24x24 frame for exact scaling and optical centering -->
+        <Geometry x:Key="SkipGeometry">M0,0 M24,24 M6,6 L14.5,12 L6,18 Z M16,6 L18,6 L18,18 L16,18 Z</Geometry>
+        <Geometry x:Key="PlayGeometry">M0,0 M24,24 M8.5,5.5 L19,12 L8.5,18.5 Z</Geometry>
+        <Geometry x:Key="PauseGeometry">M0,0 M24,24 M6,5.5 L10,5.5 L10,18.5 L6,18.5 Z M14,5.5 L18,5.5 L18,18.5 L14,18.5 Z</Geometry>
 
         <!-- Nav Icon Button Style (Prev / Next) with Smooth 120ms Hover -->
         <Style x:Key="NavButtonStyle" TargetType="Button">
@@ -110,6 +109,57 @@
                 </Setter.Value>
             </Setter>
         </Style>
+
+        <!-- Close / Hide Button Style -->
+        <Style x:Key="CloseButtonStyle" TargetType="Button">
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#70707A"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Width" Value="16"/>
+            <Setter Property="Height" Value="16"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="BtnBorder"
+                                Width="16" Height="16"
+                                CornerRadius="8"
+                                Background="Transparent"
+                                SnapsToDevicePixels="True">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Trigger.EnterActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <ColorAnimation Storyboard.TargetName="BtnBorder"
+                                                            Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)"
+                                                            To="#2D2D38" Duration="0:0:0.12"/>
+                                            <ColorAnimation Storyboard.TargetProperty="(Button.Foreground).(SolidColorBrush.Color)"
+                                                            To="#FFFFFF" Duration="0:0:0.12"/>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.EnterActions>
+                                <Trigger.ExitActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <ColorAnimation Storyboard.TargetName="BtnBorder"
+                                                            Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)"
+                                                            To="#00000000" Duration="0:0:0.12"/>
+                                            <ColorAnimation Storyboard.TargetProperty="(Button.Foreground).(SolidColorBrush.Color)"
+                                                            To="#70707A" Duration="0:0:0.12"/>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.ExitActions>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </Window.Resources>
 
     <Grid Background="Transparent" MouseLeftButtonDown="OnRootMouseLeftButtonDown">
@@ -132,132 +182,158 @@
                 BorderBrush="#26FFFFFF"
                 BorderThickness="1"
                 ClipToBounds="True">
-            <Grid VerticalAlignment="Center">
-                <Grid.ColumnDefinitions>
-                    <!-- Left: Album Art (12px margin + 50px art) -->
-                    <ColumnDefinition Width="62"/>
-                    <!-- Center: Track title, artist, progress bar -->
-                    <ColumnDefinition Width="*"/>
-                    <!-- Right: Control buttons -->
-                    <ColumnDefinition Width="88"/>
-                </Grid.ColumnDefinitions>
+            <Grid>
+                <!-- Close / Hide Button (Top-Right) -->
+                <Button x:Name="CloseButton"
+                        Style="{StaticResource CloseButtonStyle}"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Top"
+                        Margin="0,6,8,0"
+                        Panel.ZIndex="10"
+                        Click="OnCloseButtonClick"
+                        ToolTip="Скрыть (Alt+M)">
+                    <Path Width="7" Height="7"
+                          Stretch="Uniform"
+                          Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                          StrokeThickness="1.5"
+                          StrokeStartLineCap="Round"
+                          StrokeEndLineCap="Round"
+                          Data="M0,0 L8,8 M8,0 L0,8"/>
+                </Button>
 
-                <!-- Album Art Block -->
-                <Grid Grid.Column="0" Margin="12,0,0,0" Width="50" Height="50" HorizontalAlignment="Left">
-                    <Border x:Name="ArtContainer"
-                            Width="50" Height="50"
-                            CornerRadius="10"
-                            Background="#1A1A20"
-                            ClipToBounds="True">
-                        <Grid>
-                            <!-- Note icon placeholder -->
-                            <Path x:Name="PlaceholderArt"
-                                  Width="20" Height="20"
-                                  Stretch="Uniform"
-                                  Fill="#666672"
-                                  HorizontalAlignment="Center" VerticalAlignment="Center"
-                                  Data="M12,3V13.55A4,4 0 1,0 14,17V7H18V3H12Z"/>
+                <!-- Content Layout -->
+                <Grid VerticalAlignment="Center">
+                    <Grid.ColumnDefinitions>
+                        <!-- Left: Album Art (12px margin + 50px art) -->
+                        <ColumnDefinition Width="62"/>
+                        <!-- Center: Track title, artist, progress bar -->
+                        <ColumnDefinition Width="*"/>
+                        <!-- Right: Control buttons -->
+                        <ColumnDefinition Width="88"/>
+                    </Grid.ColumnDefinitions>
 
-                            <!-- Loaded Album Image -->
-                            <Image x:Name="AlbumArtImage"
-                                   Width="50" Height="50"
-                                   Stretch="UniformToFill"
-                                   RenderOptions.BitmapScalingMode="HighQuality"/>
-                        </Grid>
-                    </Border>
-                </Grid>
+                    <!-- Album Art Block -->
+                    <Grid Grid.Column="0" Margin="12,0,0,0" Width="50" Height="50" HorizontalAlignment="Left">
+                        <Border x:Name="ArtContainer"
+                                Width="50" Height="50"
+                                CornerRadius="10"
+                                Background="#1A1A20"
+                                ClipToBounds="True">
+                            <Grid>
+                                <!-- Note icon placeholder -->
+                                <Path x:Name="PlaceholderArt"
+                                      Width="20" Height="20"
+                                      Stretch="Uniform"
+                                      Fill="#666672"
+                                      HorizontalAlignment="Center" VerticalAlignment="Center"
+                                      Data="M12,3V13.55A4,4 0 1,0 14,17V7H18V3H12Z"/>
 
-                <!-- Text Block and Progress -->
-                <Grid Grid.Column="1" Margin="10,0,8,0" VerticalAlignment="Center">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
+                                <!-- Loaded Album Image -->
+                                <Image x:Name="AlbumArtImage"
+                                       Width="50" Height="50"
+                                       Stretch="UniformToFill"
+                                       RenderOptions.BitmapScalingMode="HighQuality"/>
+                            </Grid>
+                        </Border>
+                    </Grid>
 
-                    <!-- Title (13 pt) -->
-                    <TextBlock x:Name="TitleText"
-                               Grid.Row="0"
-                               Text="Нет активного трека"
-                               FontSize="14"
-                               FontWeight="SemiBold"
-                               Foreground="#FFFFFF"
-                               TextTrimming="CharacterEllipsis"
-                               TextWrapping="NoWrap"
-                               Margin="0,0,0,1"/>
+                    <!-- Text Block and Progress -->
+                    <Grid Grid.Column="1" Margin="10,0,8,0" VerticalAlignment="Center">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
 
-                    <!-- Artist (11 pt) -->
-                    <TextBlock x:Name="ArtistText"
-                               Grid.Row="1"
-                               Text="Запустите музыку"
-                               FontSize="11.5"
-                               FontWeight="Normal"
-                               Foreground="#8E8E93"
-                               TextTrimming="CharacterEllipsis"
-                               TextWrapping="NoWrap"
-                               Margin="0,0,0,5"/>
+                        <!-- Title (13 pt) -->
+                        <TextBlock x:Name="TitleText"
+                                   Grid.Row="0"
+                                   Text="Нет активного трека"
+                                   FontSize="14"
+                                   FontWeight="SemiBold"
+                                   Foreground="#FFFFFF"
+                                   TextTrimming="CharacterEllipsis"
+                                   TextWrapping="NoWrap"
+                                   Margin="0,0,0,1"/>
 
-                    <!-- Progress Bar (3px height, #20FFFFFF bg, 1.5px radius) -->
-                    <Border x:Name="ProgressBarTrack"
-                            Grid.Row="2"
-                            Height="3"
-                            Background="#20FFFFFF"
-                            CornerRadius="1.5"
-                            ClipToBounds="True"
-                            HorizontalAlignment="Stretch">
-                        <Border x:Name="ProgressBarFill"
+                        <!-- Artist (11 pt) -->
+                        <TextBlock x:Name="ArtistText"
+                                   Grid.Row="1"
+                                   Text="Запустите музыку"
+                                   FontSize="11.5"
+                                   FontWeight="Normal"
+                                   Foreground="#8E8E93"
+                                   TextTrimming="CharacterEllipsis"
+                                   TextWrapping="NoWrap"
+                                   Margin="0,0,0,5"/>
+
+                        <!-- Progress Bar (3px height, #20FFFFFF bg, 1.5px radius) -->
+                        <Border x:Name="ProgressBarTrack"
+                                Grid.Row="2"
                                 Height="3"
-                                HorizontalAlignment="Left"
-                                Width="0"
-                                Background="#4E75FF"
-                                CornerRadius="1.5"/>
-                    </Border>
+                                Background="#20FFFFFF"
+                                CornerRadius="1.5"
+                                ClipToBounds="True"
+                                HorizontalAlignment="Stretch">
+                            <Border x:Name="ProgressBarFill"
+                                    Height="3"
+                                    HorizontalAlignment="Left"
+                                    Width="0"
+                                    Background="#4E75FF"
+                                    CornerRadius="1.5"/>
+                        </Border>
+                    </Grid>
+
+                    <!-- Control Buttons Block -->
+                    <StackPanel Grid.Column="2"
+                                Orientation="Horizontal"
+                                HorizontalAlignment="Right"
+                                VerticalAlignment="Center"
+                                Margin="0,0,12,0">
+
+                        <!-- Prev Button (Pixel-perfect mirror of SkipGeometry) -->
+                        <Button x:Name="PrevButton"
+                                Style="{StaticResource NavButtonStyle}"
+                                Click="OnPrevButtonClick"
+                                ToolTip="Предыдущий трек">
+                            <Path Width="12" Height="12"
+                                  Stretch="Uniform"
+                                  RenderTransformOrigin="0.5,0.5"
+                                  Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                                  Data="{StaticResource SkipGeometry}">
+                                <Path.RenderTransform>
+                                    <ScaleTransform ScaleX="-1"/>
+                                </Path.RenderTransform>
+                            </Path>
+                        </Button>
+
+                        <!-- Play / Pause Button (14px icon, optically centered) -->
+                        <Button x:Name="PlayPauseButton"
+                                Style="{StaticResource PlayPauseButtonStyle}"
+                                Click="OnPlayPauseButtonClick"
+                                Margin="4,0,4,0"
+                                ToolTip="Воспроизведение / Пауза">
+                            <Path x:Name="PlayPauseIcon"
+                                  Width="14" Height="14"
+                                  Stretch="Uniform"
+                                  Fill="#FFFFFF"
+                                  Data="{StaticResource PlayGeometry}"
+                                  HorizontalAlignment="Center"
+                                  VerticalAlignment="Center"/>
+                        </Button>
+
+                        <!-- Next Button -->
+                        <Button x:Name="NextButton"
+                                Style="{StaticResource NavButtonStyle}"
+                                Click="OnNextButtonClick"
+                                ToolTip="Следующий трек">
+                            <Path Width="12" Height="12"
+                                  Stretch="Uniform"
+                                  Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                                  Data="{StaticResource SkipGeometry}"/>
+                        </Button>
+                    </StackPanel>
                 </Grid>
-
-                <!-- Control Buttons Block -->
-                <StackPanel Grid.Column="2"
-                            Orientation="Horizontal"
-                            HorizontalAlignment="Right"
-                            VerticalAlignment="Center"
-                            Margin="0,0,12,0">
-
-                    <!-- Prev Button -->
-                    <Button x:Name="PrevButton"
-                            Style="{StaticResource NavButtonStyle}"
-                            Click="OnPrevButtonClick"
-                            ToolTip="Предыдущий трек">
-                        <Path Width="12" Height="12"
-                              Stretch="Uniform"
-                              Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
-                              Data="{StaticResource PrevGeometry}"/>
-                    </Button>
-
-                    <!-- Play / Pause Button -->
-                    <Button x:Name="PlayPauseButton"
-                            Style="{StaticResource PlayPauseButtonStyle}"
-                            Click="OnPlayPauseButtonClick"
-                            Margin="4,0,4,0"
-                            ToolTip="Воспроизведение / Пауза">
-                        <Path x:Name="PlayPauseIcon"
-                              Width="12" Height="12"
-                              Stretch="Uniform"
-                              Fill="#FFFFFF"
-                              Data="{StaticResource PlayGeometry}"
-                              HorizontalAlignment="Center"
-                              VerticalAlignment="Center"/>
-                    </Button>
-
-                    <!-- Next Button -->
-                    <Button x:Name="NextButton"
-                            Style="{StaticResource NavButtonStyle}"
-                            Click="OnNextButtonClick"
-                            ToolTip="Следующий трек">
-                        <Path Width="12" Height="12"
-                              Stretch="Uniform"
-                              Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
-                              Data="{StaticResource NextGeometry}"/>
-                    </Button>
-                </StackPanel>
             </Grid>
         </Border>
     </Grid>
