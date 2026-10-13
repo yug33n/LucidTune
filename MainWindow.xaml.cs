@@ -112,6 +112,14 @@ namespace LucidTune
                 ContainerScale.ScaleX = 1.0;
                 ContainerScale.ScaleY = 1.0;
                 IslandContainer.Opacity = 1.0;
+
+                HideButton.BeginAnimation(UIElement.OpacityProperty, null);
+                HideButtonScale.BeginAnimation(ScaleTransform.ScaleXProperty, null);
+                HideButtonScale.BeginAnimation(ScaleTransform.ScaleYProperty, null);
+                HideButton.Opacity = 0.0;
+                HideButton.IsHitTestVisible = false;
+                HideButtonScale.ScaleX = 0.82;
+                HideButtonScale.ScaleY = 0.82;
             };
 
             ContainerTranslate.BeginAnimation(TranslateTransform.YProperty, animY);
@@ -271,6 +279,46 @@ namespace LucidTune
         {
             e.Handled = true;
             ToggleVisibility();
+        }
+
+        private void OnMainCardMouseEnter(object sender, MouseEventArgs e)
+        {
+            if (!_isWindowVisible || _isAnimating) return;
+
+            HideButton.IsHitTestVisible = true;
+
+            var duration = TimeSpan.FromMilliseconds(220);
+            var easeOut = new CubicEase { EasingMode = EasingMode.EaseOut };
+
+            var opacityAnim = new DoubleAnimation(1.0, duration) { EasingFunction = easeOut };
+            var scaleAnim = new DoubleAnimation(1.0, duration) { EasingFunction = easeOut };
+
+            HideButton.BeginAnimation(UIElement.OpacityProperty, opacityAnim);
+            HideButtonScale.BeginAnimation(ScaleTransform.ScaleXProperty, scaleAnim);
+            HideButtonScale.BeginAnimation(ScaleTransform.ScaleYProperty, scaleAnim);
+        }
+
+        private void OnMainCardMouseLeave(object sender, MouseEventArgs e)
+        {
+            if (!_isWindowVisible || _isAnimating) return;
+
+            var duration = TimeSpan.FromMilliseconds(200);
+            var easeIn = new CubicEase { EasingMode = EasingMode.EaseIn };
+
+            var opacityAnim = new DoubleAnimation(0.0, duration) { EasingFunction = easeIn };
+            var scaleAnim = new DoubleAnimation(0.82, duration) { EasingFunction = easeIn };
+
+            opacityAnim.Completed += (s, args) =>
+            {
+                if (!MainCard.IsMouseOver)
+                {
+                    HideButton.IsHitTestVisible = false;
+                }
+            };
+
+            HideButton.BeginAnimation(UIElement.OpacityProperty, opacityAnim);
+            HideButtonScale.BeginAnimation(ScaleTransform.ScaleXProperty, scaleAnim);
+            HideButtonScale.BeginAnimation(ScaleTransform.ScaleYProperty, scaleAnim);
         }
 
         private async void OnPlayPauseButtonClick(object sender, RoutedEventArgs e)
