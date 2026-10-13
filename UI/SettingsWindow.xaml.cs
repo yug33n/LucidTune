@@ -10,36 +10,13 @@ using LucidTune.Services;
 
 namespace LucidTune.UI
 {
-    public static class ScrollViewerExtensions
-    {
-        public static readonly DependencyProperty AnimatedVerticalOffsetProperty =
-            DependencyProperty.RegisterAttached(
-                "AnimatedVerticalOffset",
-                typeof(double),
-                typeof(ScrollViewerExtensions),
-                new PropertyMetadata(0.0, OnAnimatedVerticalOffsetChanged));
-
-        public static double GetAnimatedVerticalOffset(DependencyObject target) =>
-            (double)target.GetValue(AnimatedVerticalOffsetProperty);
-
-        public static void SetAnimatedVerticalOffset(DependencyObject target, double value) =>
-            target.SetValue(AnimatedVerticalOffsetProperty, value);
-
-        private static void OnAnimatedVerticalOffsetChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
-        {
-            if (d is ScrollViewer sv)
-            {
-                sv.ScrollToVerticalOffset((double)e.NewValue);
-            }
-        }
-    }
-
     public partial class SettingsWindow : Window
     {
         private readonly MainWindow _mainWindow;
         private readonly ConfigManager _configManager;
         private bool _isInitializing = true;
         private double _targetVerticalOffset;
+        private bool _isSmoothScrolling;
 
         private static readonly string[] ModifiersList = ["Alt", "Ctrl", "Shift", "Ctrl+Alt", "Win", "None"];
         private static readonly List<string> CommonKeys = ["None", "Space", "Right", "Left", "Up", "Down", "M", "P", "L", "J", "Tab", "Enter"];
@@ -70,6 +47,7 @@ namespace LucidTune.UI
             _mainWindow.OverlayVisibilityChanged += OnOverlayVisibilityChanged;
             Closed += (s, e) =>
             {
+                StopSmoothScroll();
                 _mainWindow.OverlayVisibilityChanged -= OnOverlayVisibilityChanged;
                 _mainWindow.ApplyWidgetOpacity(_configManager.CurrentConfig.WidgetOpacity);
                 _mainWindow.ApplyCompactMode(_configManager.CurrentConfig.CompactMode);
@@ -163,31 +141,57 @@ namespace LucidTune.UI
             if (ContentScrollViewer == null) return;
             e.Handled = true;
 
-            // Dampened smooth scrolling step (36px per notch)
             double deltaLines = (double)e.Delta / Mouse.MouseWheelDeltaForOneLine;
-            double scrollStep = -deltaLines * 36.0;
+            double scrollStep = -deltaLines * 45.0;
 
-            double currentTarget = _targetVerticalOffset;
-            if (Math.Abs(ContentScrollViewer.VerticalOffset - currentTarget) > 120)
+            double current = ContentScrollViewer.VerticalOffset;
+            if (Math.Abs(current - _targetVerticalOffset) > 150)
             {
-                currentTarget = ContentScrollViewer.VerticalOffset;
+                _targetVerticalOffset = current;
             }
 
-            _targetVerticalOffset = Math.Clamp(currentTarget + scrollStep, 0, ContentScrollViewer.ScrollableHeight);
+            _targetVerticalOffset = Math.Clamp(_targetVerticalOffset + scrollStep, 0, ContentScrollViewer.ScrollableHeight);
 
-            var animation = new DoubleAnimation
+            if (!_isSmoothScrolling)
             {
-                To = _targetVerticalOffset,
-                Duration = TimeSpan.FromMilliseconds(220),
-                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
-            };
+                _isSmoothScrolling = true;
+                CompositionTarget.Rendering += OnSmoothScrollTick;
+            }
+        }
 
-            ContentScrollViewer.BeginAnimation(ScrollViewerExtensions.AnimatedVerticalOffsetProperty, animation);
+        private void OnSmoothScrollTick(object? sender, EventArgs e)
+        {
+            if (ContentScrollViewer == null)
+            {
+                StopSmoothScroll();
+                return;
+            }
+
+            double current = ContentScrollViewer.VerticalOffset;
+            double diff = _targetVerticalOffset - current;
+
+            if (Math.Abs(diff) < 0.5)
+            {
+                ContentScrollViewer.ScrollToVerticalOffset(_targetVerticalOffset);
+                StopSmoothScroll();
+                return;
+            }
+
+            ContentScrollViewer.ScrollToVerticalOffset(current + diff * 0.28);
+        }
+
+        private void StopSmoothScroll()
+        {
+            if (_isSmoothScrolling)
+            {
+                CompositionTarget.Rendering -= OnSmoothScrollTick;
+                _isSmoothScrolling = false;
+            }
         }
 
         private void OnContentScrollViewerScrollChanged(object sender, ScrollChangedEventArgs e)
         {
-            if (ContentScrollViewer != null && e.VerticalChange != 0 && Math.Abs(ContentScrollViewer.VerticalOffset - _targetVerticalOffset) > 120)
+            if (ContentScrollViewer != null && !_isSmoothScrolling && e.VerticalChange != 0)
             {
                 _targetVerticalOffset = ContentScrollViewer.VerticalOffset;
             }

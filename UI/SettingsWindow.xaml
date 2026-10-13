@@ -551,17 +551,19 @@
                                             <ColumnDefinition Width="*"/>
                                         </Grid.ColumnDefinitions>
 
-                                        <StackPanel Grid.Row="0" Grid.ColumnSpan="2" Orientation="Horizontal" Margin="0,0,0,6">
-                                            <TextBlock Text="Показать / скрыть оверлей: " FontSize="12" FontWeight="Medium" Foreground="#E0E0E8" VerticalAlignment="Center"/>
-                                            <Border x:Name="BadgeToggle" Background="#2A2A38" CornerRadius="4" Padding="6,2" Margin="6,0,0,0">
-                                                <TextBlock x:Name="PreviewToggleText" Text="Alt + M" FontSize="11" FontWeight="SemiBold" Foreground="#4E75FF"/>
-                                            </Border>
-                                            <Button Style="{StaticResource MiniClearButtonStyle}"
+                                        <DockPanel Grid.Row="0" Grid.ColumnSpan="2" Margin="0,0,0,6">
+                                            <Button DockPanel.Dock="Right"
+                                                    Style="{StaticResource MiniClearButtonStyle}"
                                                     Content="Очистить"
-                                                    Margin="8,0,0,0"
                                                     ToolTip="Очистить горячую клавишу"
                                                     Click="OnClearToggleClick"/>
-                                        </StackPanel>
+                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                <TextBlock Text="Показать / скрыть оверлей: " FontSize="12" FontWeight="Medium" Foreground="#E0E0E8" VerticalAlignment="Center"/>
+                                                <Border x:Name="BadgeToggle" Background="#2A2A38" CornerRadius="4" Padding="6,2" Margin="6,0,0,0">
+                                                    <TextBlock x:Name="PreviewToggleText" Text="Alt + M" FontSize="11" FontWeight="SemiBold" Foreground="#4E75FF"/>
+                                                </Border>
+                                            </StackPanel>
+                                        </DockPanel>
 
                                         <ComboBox x:Name="ToggleModifierBox" Grid.Row="1" Grid.Column="0" Margin="0,0,6,0" SelectionChanged="OnHotkeyInputsChanged"/>
                                         <ComboBox x:Name="ToggleKeyBox" Grid.Row="1" Grid.Column="1" Margin="6,0,0,0" SelectionChanged="OnHotkeyInputsChanged"/>
@@ -589,17 +591,19 @@
                                                 <ColumnDefinition Width="*"/>
                                             </Grid.ColumnDefinitions>
 
-                                            <StackPanel Grid.Row="0" Grid.ColumnSpan="2" Orientation="Horizontal" Margin="0,0,0,6">
-                                                <TextBlock Text="Пауза / Воспроизведение: " FontSize="12" FontWeight="Medium" Foreground="#E0E0E8" VerticalAlignment="Center"/>
-                                                <Border x:Name="BadgePlayPause" Background="#2A2A38" CornerRadius="4" Padding="6,2" Margin="6,0,0,0">
-                                                    <TextBlock x:Name="PreviewPlayPauseText" Text="Alt + Space" FontSize="11" FontWeight="SemiBold" Foreground="#4E75FF"/>
-                                                </Border>
-                                                <Button Style="{StaticResource MiniClearButtonStyle}"
+                                            <DockPanel Grid.Row="0" Grid.ColumnSpan="2" Margin="0,0,0,6">
+                                                <Button DockPanel.Dock="Right"
+                                                        Style="{StaticResource MiniClearButtonStyle}"
                                                         Content="Очистить"
-                                                        Margin="8,0,0,0"
                                                         ToolTip="Очистить горячую клавишу"
                                                         Click="OnClearPlayPauseClick"/>
-                                            </StackPanel>
+                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <TextBlock Text="Пауза / Воспроизведение: " FontSize="12" FontWeight="Medium" Foreground="#E0E0E8" VerticalAlignment="Center"/>
+                                                    <Border x:Name="BadgePlayPause" Background="#2A2A38" CornerRadius="4" Padding="6,2" Margin="6,0,0,0">
+                                                        <TextBlock x:Name="PreviewPlayPauseText" Text="Alt + Space" FontSize="11" FontWeight="SemiBold" Foreground="#4E75FF"/>
+                                                    </Border>
+                                                </StackPanel>
+                                            </DockPanel>
 
                                             <ComboBox x:Name="PlayPauseModifierBox" Grid.Row="1" Grid.Column="0" Margin="0,0,6,0" SelectionChanged="OnHotkeyInputsChanged"/>
                                             <ComboBox x:Name="PlayPauseKeyBox" Grid.Row="1" Grid.Column="1" Margin="6,0,0,0" SelectionChanged="OnHotkeyInputsChanged"/>
@@ -618,17 +622,19 @@
                                                 <ColumnDefinition Width="*"/>
                                             </Grid.ColumnDefinitions>
 
-                                            <StackPanel Grid.Row="0" Grid.ColumnSpan="2" Orientation="Horizontal" Margin="0,0,0,6">
-                                                <TextBlock Text="Следующий трек: " FontSize="12" FontWeight="Medium" Foreground="#E0E0E8" VerticalAlignment="Center"/>
-                                                <Border x:Name="BadgeNext" Background="#2A2A38" CornerRadius="4" Padding="6,2" Margin="6,0,0,0">
-                                                    <TextBlock x:Name="PreviewNextText" Text="Alt + Right" FontSize="11" FontWeight="SemiBold" Foreground="#4E75FF"/>
-                                                </Border>
-                                                <Button Style="{StaticResource MiniClearButtonStyle}"
+                                            <DockPanel Grid.Row="0" Grid.ColumnSpan="2" Margin="0,0,0,6">
+                                                <Button DockPanel.Dock="Right"
+                                                        Style="{StaticResource MiniClearButtonStyle}"
                                                         Content="Очистить"
-                                                        Margin="8,0,0,0"
                                                         ToolTip="Очистить горячую клавишу"
                                                         Click="OnClearNextClick"/>
-                                            </StackPanel>
+                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <TextBlock Text="Следующий трек: " FontSize="12" FontWeight="Medium" Foreground="#E0E0E8" VerticalAlignment="Center"/>
+                                                    <Border x:Name="BadgeNext" Background="#2A2A38" CornerRadius="4" Padding="6,2" Margin="6,0,0,0">
+                                                        <TextBlock x:Name="PreviewNextText" Text="Alt + Right" FontSize="11" FontWeight="SemiBold" Foreground="#4E75FF"/>
+                                                    </Border>
+                                                </StackPanel>
+                                            </DockPanel>
 
                                             <ComboBox x:Name="NextModifierBox" Grid.Row="1" Grid.Column="0" Margin="0,0,6,0" SelectionChanged="OnHotkeyInputsChanged"/>
                                             <ComboBox x:Name="NextKeyBox" Grid.Row="1" Grid.Column="1" Margin="6,0,0,0" SelectionChanged="OnHotkeyInputsChanged"/>
@@ -647,17 +653,19 @@
                                                 <ColumnDefinition Width="*"/>
                                             </Grid.ColumnDefinitions>
 
-                                            <StackPanel Grid.Row="0" Grid.ColumnSpan="2" Orientation="Horizontal" Margin="0,0,0,6">
-                                                <TextBlock Text="Предыдущий трек: " FontSize="12" FontWeight="Medium" Foreground="#E0E0E8" VerticalAlignment="Center"/>
-                                                <Border x:Name="BadgePrev" Background="#2A2A38" CornerRadius="4" Padding="6,2" Margin="6,0,0,0">
-                                                    <TextBlock x:Name="PreviewPrevText" Text="Alt + Left" FontSize="11" FontWeight="SemiBold" Foreground="#4E75FF"/>
-                                                </Border>
-                                                <Button Style="{StaticResource MiniClearButtonStyle}"
+                                            <DockPanel Grid.Row="0" Grid.ColumnSpan="2" Margin="0,0,0,6">
+                                                <Button DockPanel.Dock="Right"
+                                                        Style="{StaticResource MiniClearButtonStyle}"
                                                         Content="Очистить"
-                                                        Margin="8,0,0,0"
                                                         ToolTip="Очистить горячую клавишу"
                                                         Click="OnClearPrevClick"/>
-                                            </StackPanel>
+                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <TextBlock Text="Предыдущий трек: " FontSize="12" FontWeight="Medium" Foreground="#E0E0E8" VerticalAlignment="Center"/>
+                                                    <Border x:Name="BadgePrev" Background="#2A2A38" CornerRadius="4" Padding="6,2" Margin="6,0,0,0">
+                                                        <TextBlock x:Name="PreviewPrevText" Text="Alt + Left" FontSize="11" FontWeight="SemiBold" Foreground="#4E75FF"/>
+                                                    </Border>
+                                                </StackPanel>
+                                            </DockPanel>
 
                                             <ComboBox x:Name="PrevModifierBox" Grid.Row="1" Grid.Column="0" Margin="0,0,6,0" SelectionChanged="OnHotkeyInputsChanged"/>
                                             <ComboBox x:Name="PrevKeyBox" Grid.Row="1" Grid.Column="1" Margin="6,0,0,0" SelectionChanged="OnHotkeyInputsChanged"/>

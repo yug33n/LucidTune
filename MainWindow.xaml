@@ -20,6 +20,9 @@
         <Geometry x:Key="PauseGeometry">M3,2 L6,2 L6,14 L3,14 Z M10,2 L13,2 L13,14 L10,14 Z</Geometry>
         <Geometry x:Key="PrevGeometry">M11,2 L4,7 L11,12 Z M3,2 L1,2 L1,12 L3,12 Z</Geometry>
         <Geometry x:Key="NextGeometry">M1,2 L8,7 L1,12 Z M9,2 L11,2 L11,12 L9,12 Z</Geometry>
+        <Geometry x:Key="VolumeHighGeometry">M14,3.23V5.29C16.89,6.15 19,8.83 19,12C19,15.17 16.89,17.85 14,18.71V20.77C18.01,19.86 21,16.28 21,12C21,7.72 18.01,4.14 14,3.23M16.5,12C16.5,10.23 15.5,8.71 14,7.97V16.02C15.5,15.29 16.5,13.77 16.5,12M3,9V15H7L12,20V4L7,9H3Z</Geometry>
+        <Geometry x:Key="VolumeLowGeometry">M3,9V15H7L12,20V4L7,9H3M16.5,12C16.5,10.23 15.5,8.71 14,7.97V16.02C15.5,15.29 16.5,13.77 16.5,12Z</Geometry>
+        <Geometry x:Key="VolumeMutedGeometry">M3,9H7L12,4V20L7,15H3V9M16.59,12L14,9.41L15.41,8L18,10.59L20.59,8L22,9.41L19.41,12L22,14.59L20.59,16L18,13.41L15.41,16L14,14.59L16.59,12Z</Geometry>
 
         <!-- Nav Icon Button Style (Prev / Next) with Smooth 120ms Hover -->
         <Style x:Key="NavButtonStyle" TargetType="Button">
@@ -161,12 +164,99 @@
                 </Setter.Value>
             </Setter>
         </Style>
+
+        <!-- Volume Slider Style with Distinct Circular Thumb Dot -->
+        <Style x:Key="VolumeSliderStyle" TargetType="Slider">
+            <Setter Property="Stylus.IsPressAndHoldEnabled" Value="False"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#4E75FF"/>
+            <Setter Property="Height" Value="16"/>
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Slider">
+                        <Grid VerticalAlignment="Center">
+                            <!-- Background Unfilled Track -->
+                            <Border Height="3"
+                                    CornerRadius="1.5"
+                                    Background="#25FFFFFF"
+                                    Margin="6,0,6,0"
+                                    VerticalAlignment="Center"/>
+
+                            <Track x:Name="PART_Track">
+                                <Track.DecreaseRepeatButton>
+                                    <RepeatButton Command="{x:Static Slider.DecreaseLarge}">
+                                        <RepeatButton.Template>
+                                            <ControlTemplate TargetType="RepeatButton">
+                                                <Border Height="3"
+                                                        CornerRadius="1.5"
+                                                        Background="#4E75FF"
+                                                        Margin="6,0,0,0"
+                                                        VerticalAlignment="Center"/>
+                                            </ControlTemplate>
+                                        </RepeatButton.Template>
+                                    </RepeatButton>
+                                </Track.DecreaseRepeatButton>
+                                <Track.Thumb>
+                                    <Thumb Cursor="Hand">
+                                        <Thumb.Template>
+                                            <ControlTemplate TargetType="Thumb">
+                                                <Grid Width="16" Height="16" Background="Transparent">
+                                                    <!-- Outer circular white thumb with drop shadow -->
+                                                    <Ellipse x:Name="ThumbGlow"
+                                                             Width="11" Height="11"
+                                                             Fill="#FFFFFF"
+                                                             HorizontalAlignment="Center"
+                                                             VerticalAlignment="Center">
+                                                        <Ellipse.Effect>
+                                                            <DropShadowEffect BlurRadius="4" ShadowDepth="1" Opacity="0.4" Color="#000000"/>
+                                                        </Ellipse.Effect>
+                                                    </Ellipse>
+                                                    <!-- Inner accent dot for clear grab affordance -->
+                                                    <Ellipse x:Name="ThumbDot"
+                                                             Width="4" Height="4"
+                                                             Fill="#4E75FF"
+                                                             HorizontalAlignment="Center"
+                                                             VerticalAlignment="Center"/>
+                                                </Grid>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter TargetName="ThumbGlow" Property="Width" Value="13"/>
+                                                        <Setter TargetName="ThumbGlow" Property="Height" Value="13"/>
+                                                        <Setter TargetName="ThumbDot" Property="Fill" Value="#3860F5"/>
+                                                    </Trigger>
+                                                    <Trigger Property="IsDragging" Value="True">
+                                                        <Setter TargetName="ThumbGlow" Property="Width" Value="14"/>
+                                                        <Setter TargetName="ThumbGlow" Property="Height" Value="14"/>
+                                                        <Setter TargetName="ThumbDot" Property="Width" Value="5"/>
+                                                        <Setter TargetName="ThumbDot" Property="Height" Value="5"/>
+                                                    </Trigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </Thumb.Template>
+                                    </Thumb>
+                                </Track.Thumb>
+                                <Track.IncreaseRepeatButton>
+                                    <RepeatButton Command="{x:Static Slider.IncreaseLarge}">
+                                        <RepeatButton.Template>
+                                            <ControlTemplate TargetType="RepeatButton">
+                                                <Border Background="Transparent" Height="14"/>
+                                            </ControlTemplate>
+                                        </RepeatButton.Template>
+                                    </RepeatButton>
+                                </Track.IncreaseRepeatButton>
+                            </Track>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </Window.Resources>
 
     <Grid Background="Transparent" MouseLeftButtonDown="OnRootMouseLeftButtonDown">
         <!-- Animated Island Container with bottom anchor for smooth taskbar minimize -->
         <Grid x:Name="IslandContainer"
-              Width="310" Height="74"
+              Width="310" Height="92"
               HorizontalAlignment="Center"
               VerticalAlignment="Top"
               Margin="0,20,0,0"
@@ -221,8 +311,15 @@
                               Data="M1,2 L6,7 L11,2"/>
                     </Button>
 
-                    <!-- Content Layout -->
-                    <Grid VerticalAlignment="Center">
+                    <!-- Content Layout: Media Row + Centered Volume Slider Row -->
+                    <Grid VerticalAlignment="Center" Margin="0,5,0,7">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- Row 0: Media controls -->
+                        <Grid Grid.Row="0" VerticalAlignment="Center">
                         <Grid.ColumnDefinitions>
                             <!-- Left: Album Art (12px margin + 50px art) -->
                             <ColumnDefinition x:Name="ArtColumn" Width="62"/>
@@ -354,6 +451,43 @@
                                       Data="{StaticResource NextGeometry}"/>
                             </Button>
                         </StackPanel>
+                        </Grid>
+
+                        <!-- Row 1: Volume Control Row (Centered Horizontally Relative to Entire Widget) -->
+                        <Grid Grid.Row="1"
+                              HorizontalAlignment="Center"
+                              VerticalAlignment="Center"
+                              Margin="0,5,0,0">
+                            <StackPanel Orientation="Horizontal"
+                                        VerticalAlignment="Center">
+                                <!-- Speaker / Mute Button -->
+                                <Button x:Name="VolumeMuteButton"
+                                        Style="{StaticResource NavButtonStyle}"
+                                        Width="18" Height="18"
+                                        Margin="0,0,6,0"
+                                        VerticalAlignment="Center"
+                                        Click="OnVolumeMuteButtonClick"
+                                        ToolTip="Звук / Без звука">
+                                    <Path x:Name="VolumeIconPath"
+                                          Width="11" Height="11"
+                                          Stretch="Uniform"
+                                          Fill="#8E8E98"
+                                          Data="{StaticResource VolumeHighGeometry}"/>
+                                </Button>
+
+                                <!-- Volume Slider with Circular Thumb -->
+                                <Slider x:Name="VolumeSlider"
+                                        Style="{StaticResource VolumeSliderStyle}"
+                                        Width="140"
+                                        Minimum="0"
+                                        Maximum="100"
+                                        SmallChange="2"
+                                        LargeChange="5"
+                                        PreviewMouseWheel="OnVolumeSliderMouseWheel"
+                                        ValueChanged="OnVolumeSliderValueChanged"
+                                        ToolTip="Громкость системы"/>
+                            </StackPanel>
+                        </Grid>
                     </Grid>
                 </Grid>
             </Border>
