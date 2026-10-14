@@ -522,14 +522,25 @@
                                     <ComboBox x:Name="AccentComboBox"
                                               Grid.Column="1"
                                               Height="30"
+                                              MaxDropDownHeight="320"
                                               SelectionChanged="OnAccentSelectionChanged">
-                                        <ComboBoxItem Content="🟡  Жёлтый" Tag="Yellow"/>
-                                        <ComboBoxItem Content="🔵  Синий" Tag="Blue"/>
-                                        <ComboBoxItem Content="🟣  Фиолетовый" Tag="Purple"/>
-                                        <ComboBoxItem Content="🟢  Зелёный" Tag="Green"/>
-                                        <ComboBoxItem Content="🟠  Оранжевый" Tag="Orange"/>
-                                        <ComboBoxItem Content="🔴  Красный" Tag="Red"/>
-                                        <ComboBoxItem Content="🌸  Розовый" Tag="Pink"/>
+                                        <ComboBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <Border Width="12" Height="12" CornerRadius="6"
+                                                            Background="{Binding ColorBrush}"
+                                                            BorderBrush="{DynamicResource SettingsBorderBrush}"
+                                                            BorderThickness="1"
+                                                            Margin="1,0,9,0"
+                                                            VerticalAlignment="Center"
+                                                            SnapsToDevicePixels="True"/>
+                                                    <TextBlock Text="{Binding Name}"
+                                                               FontSize="12"
+                                                               VerticalAlignment="Center"
+                                                               SnapsToDevicePixels="True"/>
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </ComboBox.ItemTemplate>
                                     </ComboBox>
                                 </Grid>
 

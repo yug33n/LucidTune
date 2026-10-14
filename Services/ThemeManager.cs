@@ -17,6 +17,33 @@ namespace LucidTune.Services
         public const string AccentRed = "Red";
         public const string AccentPink = "Pink";
 
+        public sealed class AccentOption
+        {
+            public string Key { get; }
+            public string Name { get; }
+            public SolidColorBrush ColorBrush { get; }
+
+            public AccentOption(string key, string name, Color color)
+            {
+                Key = key;
+                Name = name;
+                var brush = new SolidColorBrush(color);
+                brush.Freeze();
+                ColorBrush = brush;
+            }
+        }
+
+        public static readonly System.Collections.Generic.IReadOnlyList<AccentOption> AvailableAccents = new System.Collections.Generic.List<AccentOption>
+        {
+            new(AccentYellow, "Жёлтый", Color.FromRgb(0xFF, 0xB8, 0x00)),
+            new(AccentBlue, "Синий", Color.FromRgb(0x4E, 0x75, 0xFF)),
+            new(AccentPurple, "Фиолетовый", Color.FromRgb(0x8B, 0x5C, 0xF6)),
+            new(AccentGreen, "Зелёный", Color.FromRgb(0x10, 0xB9, 0x81)),
+            new(AccentOrange, "Оранжевый", Color.FromRgb(0xF9, 0x73, 0x16)),
+            new(AccentRed, "Красный", Color.FromRgb(0xEF, 0x44, 0x44)),
+            new(AccentPink, "Розовый", Color.FromRgb(0xEC, 0x48, 0x99)),
+        }.AsReadOnly();
+
         public static string CurrentTheme { get; private set; } = DarkTheme;
         public static string CurrentAccent { get; private set; } = AccentYellow;
         public static bool IsDark => CurrentTheme == DarkTheme;

@@ -58,6 +58,8 @@ namespace LucidTune.UI
 
         private void PopulateAllBoxes()
         {
+            AccentComboBox.ItemsSource = ThemeManager.AvailableAccents;
+
             SetupComboBox(ToggleModifierBox, ToggleKeyBox);
             SetupComboBox(PlayPauseModifierBox, PlayPauseKeyBox);
             SetupComboBox(NextModifierBox, NextKeyBox);
@@ -135,11 +137,11 @@ namespace LucidTune.UI
 
         private void SelectAccentItem(string accent)
         {
-            foreach (ComboBoxItem item in AccentComboBox.Items)
+            foreach (var opt in ThemeManager.AvailableAccents)
             {
-                if (string.Equals(item.Tag?.ToString(), accent, StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(opt.Key, accent, StringComparison.OrdinalIgnoreCase))
                 {
-                    AccentComboBox.SelectedItem = item;
+                    AccentComboBox.SelectedItem = opt;
                     return;
                 }
             }
@@ -153,17 +155,16 @@ namespace LucidTune.UI
         {
             if (_isInitializing || ThemeComboBox.SelectedItem is not ComboBoxItem item) return;
             string theme = item.Tag?.ToString() ?? ThemeManager.DarkTheme;
-            string accent = (AccentComboBox?.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? ThemeManager.CurrentAccent;
+            string accent = (AccentComboBox?.SelectedItem as ThemeManager.AccentOption)?.Key ?? ThemeManager.CurrentAccent;
             ThemeManager.ApplyTheme(theme, accent);
             UpdateAllPreviews();
         }
 
         private void OnAccentSelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (_isInitializing || AccentComboBox.SelectedItem is not ComboBoxItem item) return;
-            string accent = item.Tag?.ToString() ?? ThemeManager.AccentYellow;
+            if (_isInitializing || AccentComboBox.SelectedItem is not ThemeManager.AccentOption opt) return;
             string theme = (ThemeComboBox?.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? ThemeManager.CurrentTheme;
-            ThemeManager.ApplyTheme(theme, accent);
+            ThemeManager.ApplyTheme(theme, opt.Key);
             UpdateAllPreviews();
         }
 
@@ -190,9 +191,80 @@ namespace LucidTune.UI
             if (box.Items.Count > 0) box.SelectedIndex = 0;
         }
 
+        private ComboBox? GetOpenComboBox()
+        {
+            if (ThemeComboBox?.IsDropDownOpen == true) return ThemeComboBox;
+            if (AccentComboBox?.IsDropDownOpen == true) return AccentComboBox;
+            if (ToggleModifierBox?.IsDropDownOpen == true) return ToggleModifierBox;
+            if (ToggleKeyBox?.IsDropDownOpen == true) return ToggleKeyBox;
+            if (PlayPauseModifierBox?.IsDropDownOpen == true) return PlayPauseModifierBox;
+            if (PlayPauseKeyBox?.IsDropDownOpen == true) return PlayPauseKeyBox;
+            if (NextModifierBox?.IsDropDownOpen == true) return NextModifierBox;
+            if (NextKeyBox?.IsDropDownOpen == true) return NextKeyBox;
+            if (PrevModifierBox?.IsDropDownOpen == true) return PrevModifierBox;
+            if (PrevKeyBox?.IsDropDownOpen == true) return PrevKeyBox;
+            return null;
+        }
+
+        private static T? FindVisualChild<T>(DependencyObject? parent) where T : DependencyObject
+        {
+            if (parent == null) return null;
+            int childCount = VisualTreeHelper.GetChildrenCount(parent);
+            for (int i = 0; i < childCount; i++)
+            {
+                var child = VisualTreeHelper.GetChild(parent, i);
+                if (child is T typedChild)
+                {
+                    return typedChild;
+                }
+                var result = FindVisualChild<T>(child);
+                if (result != null)
+                {
+                    return result;
+                }
+            }
+            return null;
+        }
+
         private void OnContentScrollViewerPreviewMouseWheel(object sender, MouseWheelEventArgs e)
         {
             if (ContentScrollViewer == null) return;
+
+            var openCombo = GetOpenComboBox();
+            if (openCombo != null)
+            {
+                if (openCombo.Template.FindName("Popup", openCombo) is System.Windows.Controls.Primitives.Popup popup &&
+                    popup.IsOpen &&
+                    popup.Child is FrameworkElement dropDown)
+                {
+                    bool isOver = dropDown.IsMouseOver;
+                    if (!isOver)
+                    {
+                        try
+                        {
+                            Point p = Mouse.GetPosition(dropDown);
+                            isOver = p.X >= 0 && p.Y >= 0 && p.X <= dropDown.ActualWidth && p.Y <= dropDown.ActualHeight;
+                        }
+                        catch
+                        {
+                            // Ignore coordinate mapping error
+                        }
+                    }
+
+                    if (isOver)
+                    {
+                        e.Handled = true;
+                        var sv = FindVisualChild<ScrollViewer>(dropDown);
+                        if (sv != null)
+                        {
+                            double step = (e.Delta / 120.0) * 32.0;
+                            sv.ScrollToVerticalOffset(sv.VerticalOffset - step);
+                        }
+                        return;
+                    }
+                }
+            }
+
             e.Handled = true;
 
             double deltaLines = (double)e.Delta / Mouse.MouseWheelDeltaForOneLine;
@@ -416,7 +488,7 @@ namespace LucidTune.UI
             _mainWindow.ApplyCompactMode(cfg.CompactMode);
 
             cfg.Theme = (ThemeComboBox.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? ThemeManager.DarkTheme;
-            cfg.AccentColor = (AccentComboBox.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? ThemeManager.AccentYellow;
+            cfg.AccentColor = (AccentComboBox.SelectedItem as ThemeManager.AccentOption)?.Key ?? ThemeManager.AccentYellow;
             ThemeManager.ApplyTheme(cfg.Theme, cfg.AccentColor);
 
             _configManager.Save(cfg);
