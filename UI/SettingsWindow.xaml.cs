@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Media.Animation;
 using LucidTune.Config;
 using LucidTune.Services;
 
@@ -13,13 +15,14 @@ namespace LucidTune.UI
         private readonly MainWindow _mainWindow;
         private readonly ConfigManager _configManager;
         private bool _isInitializing = true;
+        private double _targetVerticalOffset;
+        private bool _isSmoothScrolling;
 
-        private static readonly string[] ModifiersList = ["Alt", "Ctrl", "Shift", "Ctrl+Alt", "Win"];
-        private static readonly List<string> CommonKeys = [];
+        private static readonly string[] ModifiersList = ["Alt", "Ctrl", "Shift", "Ctrl+Alt", "Win", "None"];
+        private static readonly List<string> CommonKeys = ["None", "Space", "Right", "Left", "Up", "Down", "M", "P", "L", "J", "Tab", "Enter"];
 
         static SettingsWindow()
         {
-            CommonKeys.AddRange(["Space", "Right", "Left", "Up", "Down", "M", "P", "L", "J", "Tab", "Enter"]);
             for (char c = 'A'; c <= 'Z'; c++)
             {
                 string s = c.ToString();
@@ -44,14 +47,20 @@ namespace LucidTune.UI
             _mainWindow.OverlayVisibilityChanged += OnOverlayVisibilityChanged;
             Closed += (s, e) =>
             {
+                StopSmoothScroll();
                 _mainWindow.OverlayVisibilityChanged -= OnOverlayVisibilityChanged;
                 _mainWindow.ApplyWidgetOpacity(_configManager.CurrentConfig.WidgetOpacity);
+                _mainWindow.ApplyCompactMode(_configManager.CurrentConfig.CompactMode);
+                _mainWindow.ApplyVolumeControl(_configManager.CurrentConfig.ShowVolumeControl);
+                ThemeManager.ApplyTheme(_configManager.CurrentConfig.Theme, _configManager.CurrentConfig.AccentColor);
             };
             UpdateOverlayStatus(_mainWindow.IsOverlayVisible);
         }
 
         private void PopulateAllBoxes()
         {
+            AccentComboBox.ItemsSource = ThemeManager.AvailableAccents;
+
             SetupComboBox(ToggleModifierBox, ToggleKeyBox);
             SetupComboBox(PlayPauseModifierBox, PlayPauseKeyBox);
             SetupComboBox(NextModifierBox, NextKeyBox);
@@ -76,6 +85,9 @@ namespace LucidTune.UI
         private void LoadCurrentSettings()
         {
             var cfg = _configManager.CurrentConfig;
+
+            SelectThemeItem(cfg.Theme);
+            SelectAccentItem(cfg.AccentColor);
 
             SelectBoxItem(ToggleModifierBox, cfg.HotkeyModifiers, "Alt");
             SelectBoxItem(ToggleKeyBox, cfg.HotkeyKey, "M");
@@ -103,6 +115,58 @@ namespace LucidTune.UI
             OpacitySlider.Value = opacityPercent;
             OpacityValueText.Text = $"{opacityPercent}%";
 
+            CompactModeCheckBox.IsChecked = cfg.CompactMode;
+            ShowVolumeCheckBox.IsChecked = cfg.ShowVolumeControl;
+
+            UpdateAllPreviews();
+        }
+
+        private void SelectThemeItem(string theme)
+        {
+            foreach (ComboBoxItem item in ThemeComboBox.Items)
+            {
+                if (string.Equals(item.Tag?.ToString(), theme, StringComparison.OrdinalIgnoreCase))
+                {
+                    ThemeComboBox.SelectedItem = item;
+                    return;
+                }
+            }
+            if (ThemeComboBox.Items.Count > 0)
+            {
+                ThemeComboBox.SelectedIndex = 0;
+            }
+        }
+
+        private void SelectAccentItem(string accent)
+        {
+            foreach (var opt in ThemeManager.AvailableAccents)
+            {
+                if (string.Equals(opt.Key, accent, StringComparison.OrdinalIgnoreCase))
+                {
+                    AccentComboBox.SelectedItem = opt;
+                    return;
+                }
+            }
+            if (AccentComboBox.Items.Count > 0)
+            {
+                AccentComboBox.SelectedIndex = 0;
+            }
+        }
+
+        private void OnThemeSelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (_isInitializing || ThemeComboBox.SelectedItem is not ComboBoxItem item) return;
+            string theme = item.Tag?.ToString() ?? ThemeManager.DarkTheme;
+            string accent = (AccentComboBox?.SelectedItem as ThemeManager.AccentOption)?.Key ?? ThemeManager.CurrentAccent;
+            ThemeManager.ApplyTheme(theme, accent);
+            UpdateAllPreviews();
+        }
+
+        private void OnAccentSelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (_isInitializing || AccentComboBox.SelectedItem is not ThemeManager.AccentOption opt) return;
+            string theme = (ThemeComboBox?.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? ThemeManager.CurrentTheme;
+            ThemeManager.ApplyTheme(theme, opt.Key);
             UpdateAllPreviews();
         }
 
@@ -129,6 +193,162 @@ namespace LucidTune.UI
             if (box.Items.Count > 0) box.SelectedIndex = 0;
         }
 
+        private ComboBox? GetOpenComboBox()
+        {
+            if (ThemeComboBox?.IsDropDownOpen == true) return ThemeComboBox;
+            if (AccentComboBox?.IsDropDownOpen == true) return AccentComboBox;
+            if (ToggleModifierBox?.IsDropDownOpen == true) return ToggleModifierBox;
+            if (ToggleKeyBox?.IsDropDownOpen == true) return ToggleKeyBox;
+            if (PlayPauseModifierBox?.IsDropDownOpen == true) return PlayPauseModifierBox;
+            if (PlayPauseKeyBox?.IsDropDownOpen == true) return PlayPauseKeyBox;
+            if (NextModifierBox?.IsDropDownOpen == true) return NextModifierBox;
+            if (NextKeyBox?.IsDropDownOpen == true) return NextKeyBox;
+            if (PrevModifierBox?.IsDropDownOpen == true) return PrevModifierBox;
+            if (PrevKeyBox?.IsDropDownOpen == true) return PrevKeyBox;
+            return null;
+        }
+
+        private static T? FindVisualChild<T>(DependencyObject? parent) where T : DependencyObject
+        {
+            if (parent == null) return null;
+            int childCount = VisualTreeHelper.GetChildrenCount(parent);
+            for (int i = 0; i < childCount; i++)
+            {
+                var child = VisualTreeHelper.GetChild(parent, i);
+                if (child is T typedChild)
+                {
+                    return typedChild;
+                }
+                var result = FindVisualChild<T>(child);
+                if (result != null)
+                {
+                    return result;
+                }
+            }
+            return null;
+        }
+
+        private void CloseAllDropDowns()
+        {
+            if (ThemeComboBox != null && ThemeComboBox.IsDropDownOpen) ThemeComboBox.IsDropDownOpen = false;
+            if (AccentComboBox != null && AccentComboBox.IsDropDownOpen) AccentComboBox.IsDropDownOpen = false;
+            if (ToggleModifierBox != null && ToggleModifierBox.IsDropDownOpen) ToggleModifierBox.IsDropDownOpen = false;
+            if (ToggleKeyBox != null && ToggleKeyBox.IsDropDownOpen) ToggleKeyBox.IsDropDownOpen = false;
+            if (PlayPauseModifierBox != null && PlayPauseModifierBox.IsDropDownOpen) PlayPauseModifierBox.IsDropDownOpen = false;
+            if (PlayPauseKeyBox != null && PlayPauseKeyBox.IsDropDownOpen) PlayPauseKeyBox.IsDropDownOpen = false;
+            if (NextModifierBox != null && NextModifierBox.IsDropDownOpen) NextModifierBox.IsDropDownOpen = false;
+            if (NextKeyBox != null && NextKeyBox.IsDropDownOpen) NextKeyBox.IsDropDownOpen = false;
+            if (PrevModifierBox != null && PrevModifierBox.IsDropDownOpen) PrevModifierBox.IsDropDownOpen = false;
+            if (PrevKeyBox != null && PrevKeyBox.IsDropDownOpen) PrevKeyBox.IsDropDownOpen = false;
+        }
+
+        private void OnContentScrollViewerPreviewMouseWheel(object sender, MouseWheelEventArgs e)
+        {
+            if (ContentScrollViewer == null) return;
+
+            var openCombo = GetOpenComboBox();
+            if (openCombo != null)
+            {
+                bool isOver = false;
+                if (openCombo.Template.FindName("Popup", openCombo) is System.Windows.Controls.Primitives.Popup popup &&
+                    popup.IsOpen &&
+                    popup.Child is FrameworkElement dropDown)
+                {
+                    isOver = dropDown.IsMouseOver;
+                    if (!isOver)
+                    {
+                        try
+                        {
+                            Point p = Mouse.GetPosition(dropDown);
+                            isOver = p.X >= 0 && p.Y >= 0 && p.X <= dropDown.ActualWidth && p.Y <= dropDown.ActualHeight;
+                        }
+                        catch
+                        {
+                            // Ignore coordinate mapping error
+                        }
+                    }
+
+                    if (isOver)
+                    {
+                        e.Handled = true;
+                        var sv = FindVisualChild<ScrollViewer>(dropDown);
+                        if (sv != null && sv.ScrollableHeight > 0)
+                        {
+                            double step = (e.Delta / 120.0) * 32.0;
+                            sv.ScrollToVerticalOffset(sv.VerticalOffset - step);
+                        }
+                        // Consume the wheel event over the dropdown so background settings never scroll
+                        return;
+                    }
+                }
+
+                // If wheel rolled outside the open dropdown, close it immediately
+                CloseAllDropDowns();
+            }
+
+            e.Handled = true;
+
+            double deltaLines = (double)e.Delta / Mouse.MouseWheelDeltaForOneLine;
+            double scrollStep = -deltaLines * 45.0;
+
+            double current = ContentScrollViewer.VerticalOffset;
+            if (Math.Abs(current - _targetVerticalOffset) > 150)
+            {
+                _targetVerticalOffset = current;
+            }
+
+            _targetVerticalOffset = Math.Clamp(_targetVerticalOffset + scrollStep, 0, ContentScrollViewer.ScrollableHeight);
+
+            if (!_isSmoothScrolling)
+            {
+                _isSmoothScrolling = true;
+                CompositionTarget.Rendering += OnSmoothScrollTick;
+            }
+        }
+
+        private void OnSmoothScrollTick(object? sender, EventArgs e)
+        {
+            if (ContentScrollViewer == null)
+            {
+                StopSmoothScroll();
+                return;
+            }
+
+            double current = ContentScrollViewer.VerticalOffset;
+            double diff = _targetVerticalOffset - current;
+
+            if (Math.Abs(diff) < 0.5)
+            {
+                ContentScrollViewer.ScrollToVerticalOffset(_targetVerticalOffset);
+                StopSmoothScroll();
+                return;
+            }
+
+            ContentScrollViewer.ScrollToVerticalOffset(current + diff * 0.28);
+        }
+
+        private void StopSmoothScroll()
+        {
+            if (_isSmoothScrolling)
+            {
+                CompositionTarget.Rendering -= OnSmoothScrollTick;
+                _isSmoothScrolling = false;
+            }
+        }
+
+        private void OnContentScrollViewerScrollChanged(object sender, ScrollChangedEventArgs e)
+        {
+            if (e.VerticalChange != 0)
+            {
+                CloseAllDropDowns();
+            }
+
+            if (ContentScrollViewer != null && !_isSmoothScrolling && e.VerticalChange != 0)
+            {
+                _targetVerticalOffset = ContentScrollViewer.VerticalOffset;
+            }
+        }
+
         private void OnMediaHotkeysToggle(object sender, RoutedEventArgs e)
         {
             if (_isInitializing) return;
@@ -143,18 +363,81 @@ namespace LucidTune.UI
             UpdateAllPreviews();
         }
 
+        private void OnClearToggleClick(object sender, RoutedEventArgs e)
+        {
+            SelectBoxItem(ToggleModifierBox, "None", "None");
+            SelectBoxItem(ToggleKeyBox, "None", "None");
+            UpdateAllPreviews();
+        }
+
+        private void OnClearPlayPauseClick(object sender, RoutedEventArgs e)
+        {
+            SelectBoxItem(PlayPauseModifierBox, "None", "None");
+            SelectBoxItem(PlayPauseKeyBox, "None", "None");
+            UpdateAllPreviews();
+        }
+
+        private void OnClearNextClick(object sender, RoutedEventArgs e)
+        {
+            SelectBoxItem(NextModifierBox, "None", "None");
+            SelectBoxItem(NextKeyBox, "None", "None");
+            UpdateAllPreviews();
+        }
+
+        private void OnClearPrevClick(object sender, RoutedEventArgs e)
+        {
+            SelectBoxItem(PrevModifierBox, "None", "None");
+            SelectBoxItem(PrevKeyBox, "None", "None");
+            UpdateAllPreviews();
+        }
+
         private void UpdateAllPreviews()
         {
-            if (PreviewToggleText == null || PreviewPlayPauseText == null || 
-                PreviewNextText == null || PreviewPrevText == null)
-            {
-                return;
-            }
+            UpdatePreview(PreviewToggleText, BadgeToggle, ToggleModifierBox, ToggleKeyBox);
+            UpdatePreview(PreviewPlayPauseText, BadgePlayPause, PlayPauseModifierBox, PlayPauseKeyBox);
+            UpdatePreview(PreviewNextText, BadgeNext, NextModifierBox, NextKeyBox);
+            UpdatePreview(PreviewPrevText, BadgePrev, PrevModifierBox, PrevKeyBox);
+        }
 
-            PreviewToggleText.Text = $"{ToggleModifierBox?.SelectedItem} + {ToggleKeyBox?.SelectedItem}";
-            PreviewPlayPauseText.Text = $"{PlayPauseModifierBox?.SelectedItem} + {PlayPauseKeyBox?.SelectedItem}";
-            PreviewNextText.Text = $"{NextModifierBox?.SelectedItem} + {NextKeyBox?.SelectedItem}";
-            PreviewPrevText.Text = $"{PrevModifierBox?.SelectedItem} + {PrevKeyBox?.SelectedItem}";
+        private static void UpdatePreview(TextBlock? textBlock, Border? badgeBorder, ComboBox? modBox, ComboBox? keyBox)
+        {
+            if (textBlock == null || badgeBorder == null) return;
+
+            string mod = modBox?.SelectedItem?.ToString() ?? "None";
+            string key = keyBox?.SelectedItem?.ToString() ?? "None";
+
+            if (string.IsNullOrWhiteSpace(key) || key.Equals("None", StringComparison.OrdinalIgnoreCase))
+            {
+                textBlock.Text = "Не назначено";
+                textBlock.SetResourceReference(TextBlock.ForegroundProperty, "SettingsTextMutedBrush");
+                badgeBorder.SetResourceReference(Border.BackgroundProperty, "SettingsButtonSecondaryBackgroundBrush");
+            }
+            else if (string.IsNullOrWhiteSpace(mod) || mod.Equals("None", StringComparison.OrdinalIgnoreCase))
+            {
+                textBlock.Text = key;
+                textBlock.SetResourceReference(TextBlock.ForegroundProperty, "SettingsBadgeTextBrush");
+                badgeBorder.SetResourceReference(Border.BackgroundProperty, "SettingsBadgeBackgroundBrush");
+            }
+            else
+            {
+                textBlock.Text = $"{mod} + {key}";
+                textBlock.SetResourceReference(TextBlock.ForegroundProperty, "SettingsBadgeTextBrush");
+                badgeBorder.SetResourceReference(Border.BackgroundProperty, "SettingsBadgeBackgroundBrush");
+            }
+        }
+
+        private void OnCompactModeChanged(object sender, RoutedEventArgs e)
+        {
+            if (_isInitializing) return;
+            bool isCompact = CompactModeCheckBox.IsChecked == true;
+            _mainWindow.ApplyCompactMode(isCompact);
+        }
+
+        private void OnShowVolumeChanged(object sender, RoutedEventArgs e)
+        {
+            if (_isInitializing) return;
+            bool showVolume = ShowVolumeCheckBox.IsChecked == true;
+            _mainWindow.ApplyVolumeControl(showVolume);
         }
 
         private void OnTitleBarMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -234,6 +517,16 @@ namespace LucidTune.UI
             cfg.WidgetOpacity = OpacitySlider.Value / 100.0;
             _mainWindow.ApplyWidgetOpacity(cfg.WidgetOpacity);
 
+            cfg.CompactMode = CompactModeCheckBox.IsChecked == true;
+            _mainWindow.ApplyCompactMode(cfg.CompactMode);
+
+            cfg.ShowVolumeControl = ShowVolumeCheckBox.IsChecked == true;
+            _mainWindow.ApplyVolumeControl(cfg.ShowVolumeControl);
+
+            cfg.Theme = (ThemeComboBox.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? ThemeManager.DarkTheme;
+            cfg.AccentColor = (AccentComboBox.SelectedItem as ThemeManager.AccentOption)?.Key ?? ThemeManager.AccentYellow;
+            ThemeManager.ApplyTheme(cfg.Theme, cfg.AccentColor);
+
             _configManager.Save(cfg);
 
             AutoStartupService.SetAutoStart(autoStart);
@@ -253,6 +546,9 @@ namespace LucidTune.UI
         private void OnCloseClick(object sender, RoutedEventArgs e)
         {
             _mainWindow.ApplyWidgetOpacity(_configManager.CurrentConfig.WidgetOpacity);
+            _mainWindow.ApplyCompactMode(_configManager.CurrentConfig.CompactMode);
+            _mainWindow.ApplyVolumeControl(_configManager.CurrentConfig.ShowVolumeControl);
+            ThemeManager.ApplyTheme(_configManager.CurrentConfig.Theme, _configManager.CurrentConfig.AccentColor);
             Close();
         }
     }

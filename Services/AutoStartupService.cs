@@ -33,7 +33,7 @@ namespace LucidTune.Services
                     var exePath = Environment.ProcessPath;
                     if (!string.IsNullOrEmpty(exePath))
                     {
-                        key.SetValue(AppName, $"\"{exePath}\"");
+                        key.SetValue(AppName, $"\"{exePath}\" --autostart");
                     }
                 }
                 else

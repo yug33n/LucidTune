@@ -12,6 +12,7 @@ namespace LucidTune.Models
         public bool HasActiveSession { get; set; }
         public TimeSpan Position { get; set; } = TimeSpan.Zero;
         public TimeSpan Duration { get; set; } = TimeSpan.Zero;
+        public string? SourceAppUserModelId { get; set; }
 
         public double Progress
         {

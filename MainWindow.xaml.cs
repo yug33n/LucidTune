@@ -20,6 +20,9 @@ namespace LucidTune
         private readonly Geometry _playGeometry;
         private readonly Geometry _pauseGeometry;
 
+        private readonly AudioVolumeService _volumeService = new();
+        private bool _isUpdatingVolumeFromSystem;
+
         private TrayIconManager? _trayManager;
         private double _currentProgress;
         private bool _isWindowVisible = true;
@@ -56,6 +59,9 @@ namespace LucidTune
         {
             ApplySavedPosition();
             ApplyWidgetOpacity(_configManager.CurrentConfig.WidgetOpacity);
+            ApplyCompactMode(_configManager.CurrentConfig.CompactMode);
+            ApplyVolumeControl(_configManager.CurrentConfig.ShowVolumeControl);
+            SyncVolumeFromSystem();
 
             var hwnd = new WindowInteropHelper(this).Handle;
             _hotkeyService.Initialize(hwnd);
@@ -69,7 +75,12 @@ namespace LucidTune
 
             await _mediaService.InitializeAsync();
 
-            if (_configManager.CurrentConfig.ShowSettingsOnStartup)
+            if (_configManager.CurrentConfig.AutoStart)
+            {
+                AutoStartupService.SetAutoStart(true);
+            }
+
+            if (!App.IsAutoStartLaunch && _configManager.CurrentConfig.ShowSettingsOnStartup)
             {
                 OpenSettingsWindow();
             }
@@ -85,6 +96,31 @@ namespace LucidTune
         public void ApplyWidgetOpacity(double opacity)
         {
             Opacity = Math.Clamp(opacity, 0.2, 1.0);
+        }
+
+        public void ApplyCompactMode(bool isCompact)
+        {
+            if (isCompact)
+            {
+                ArtColumn.Width = new GridLength(0);
+                ArtBlock.Visibility = Visibility.Collapsed;
+                TrackInfoGrid.Margin = new Thickness(14, 0, 8, 0);
+                IslandContainer.Width = 248;
+            }
+            else
+            {
+                ArtColumn.Width = new GridLength(62);
+                ArtBlock.Visibility = Visibility.Visible;
+                TrackInfoGrid.Margin = new Thickness(10, 0, 8, 0);
+                IslandContainer.Width = 310;
+            }
+        }
+
+        public void ApplyVolumeControl(bool showVolume)
+        {
+            VolumeControlRow.Visibility = showVolume ? Visibility.Visible : Visibility.Collapsed;
+            IslandContainer.Height = showVolume ? 92 : 66;
+            ContentLayoutGrid.Margin = showVolume ? new Thickness(0, 5, 0, 7) : new Thickness(0, 7, 0, 7);
         }
 
         public void ToggleVisibility()
@@ -314,6 +350,9 @@ namespace LucidTune
                 PrevButton.IsEnabled = controlsEnabled;
                 PlayPauseButton.IsEnabled = controlsEnabled;
                 NextButton.IsEnabled = controlsEnabled;
+
+                _volumeService.SetTargetApp(track.SourceAppUserModelId);
+                SyncVolumeFromSystem();
             });
         }
 
@@ -354,6 +393,7 @@ namespace LucidTune
         {
             if (!_isWindowVisible || _isAnimating) return;
 
+            SyncVolumeFromSystem();
             HideButton.IsHitTestVisible = true;
 
             var duration = TimeSpan.FromMilliseconds(220);
@@ -388,6 +428,77 @@ namespace LucidTune
             HideButton.BeginAnimation(UIElement.OpacityProperty, opacityAnim);
             HideButtonScale.BeginAnimation(ScaleTransform.ScaleXProperty, scaleAnim);
             HideButtonScale.BeginAnimation(ScaleTransform.ScaleYProperty, scaleAnim);
+        }
+
+        private void SyncVolumeFromSystem()
+        {
+            if (_isUpdatingVolumeFromSystem || VolumeSlider == null) return;
+            try
+            {
+                _isUpdatingVolumeFromSystem = true;
+                float vol = _volumeService.GetVolume();
+                bool muted = _volumeService.IsMuted();
+                VolumeSlider.Value = Math.Round(vol * 100);
+                UpdateVolumeVisuals(muted, VolumeSlider.Value);
+            }
+            catch
+            {
+                // Ignore volume query errors
+            }
+            finally
+            {
+                _isUpdatingVolumeFromSystem = false;
+            }
+        }
+
+        private void UpdateVolumeVisuals(bool isMuted, double volume)
+        {
+            if (VolumeIconPath == null) return;
+
+            if (isMuted || volume <= 0.5)
+            {
+                VolumeIconPath.Data = (Geometry)FindResource("VolumeMutedGeometry");
+                VolumeIconPath.Opacity = 0.55;
+            }
+            else if (volume < 50)
+            {
+                VolumeIconPath.Data = (Geometry)FindResource("VolumeLowGeometry");
+                VolumeIconPath.Opacity = 0.85;
+            }
+            else
+            {
+                VolumeIconPath.Data = (Geometry)FindResource("VolumeHighGeometry");
+                VolumeIconPath.Opacity = 1.0;
+            }
+
+            if (VolumeSlider != null)
+            {
+                string? target = _volumeService.TargetAppDisplayName;
+                VolumeSlider.ToolTip = !string.IsNullOrEmpty(target) ? $"Громкость: {target}" : "Громкость (Windows)";
+            }
+        }
+
+        private void OnVolumeSliderValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            if (_isUpdatingVolumeFromSystem) return;
+
+            float level = (float)(e.NewValue / 100.0);
+            _volumeService.SetVolume(level);
+            UpdateVolumeVisuals(_volumeService.IsMuted(), e.NewValue);
+        }
+
+        private void OnVolumeMuteButtonClick(object sender, RoutedEventArgs e)
+        {
+            e.Handled = true;
+            _volumeService.ToggleMute();
+            UpdateVolumeVisuals(_volumeService.IsMuted(), VolumeSlider.Value);
+        }
+
+        private void OnVolumeSliderMouseWheel(object sender, MouseWheelEventArgs e)
+        {
+            e.Handled = true;
+            double step = (e.Delta > 0) ? 2.0 : -2.0;
+            VolumeSlider.Value = Math.Clamp(VolumeSlider.Value + step, 0, 100);
         }
 
         private async void OnPlayPauseButtonClick(object sender, RoutedEventArgs e)
