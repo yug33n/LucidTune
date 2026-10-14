@@ -73,8 +73,6 @@ namespace LucidTune
             _trayManager = new TrayIconManager(_configManager, ToggleVisibility, OpenSettingsWindow, () => _isWindowVisible);
             _trayManager.Initialize(hwnd);
 
-            await _mediaService.InitializeAsync();
-
             if (_configManager.CurrentConfig.AutoStart)
             {
                 AutoStartupService.SetAutoStart(true);
@@ -84,6 +82,8 @@ namespace LucidTune
             {
                 OpenSettingsWindow();
             }
+
+            await _mediaService.InitializeAsync();
         }
 
         private void ApplySavedPosition()
