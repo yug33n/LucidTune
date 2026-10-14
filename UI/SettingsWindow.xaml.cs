@@ -226,6 +226,20 @@ namespace LucidTune.UI
             return null;
         }
 
+        private void CloseAllDropDowns()
+        {
+            if (ThemeComboBox != null && ThemeComboBox.IsDropDownOpen) ThemeComboBox.IsDropDownOpen = false;
+            if (AccentComboBox != null && AccentComboBox.IsDropDownOpen) AccentComboBox.IsDropDownOpen = false;
+            if (ToggleModifierBox != null && ToggleModifierBox.IsDropDownOpen) ToggleModifierBox.IsDropDownOpen = false;
+            if (ToggleKeyBox != null && ToggleKeyBox.IsDropDownOpen) ToggleKeyBox.IsDropDownOpen = false;
+            if (PlayPauseModifierBox != null && PlayPauseModifierBox.IsDropDownOpen) PlayPauseModifierBox.IsDropDownOpen = false;
+            if (PlayPauseKeyBox != null && PlayPauseKeyBox.IsDropDownOpen) PlayPauseKeyBox.IsDropDownOpen = false;
+            if (NextModifierBox != null && NextModifierBox.IsDropDownOpen) NextModifierBox.IsDropDownOpen = false;
+            if (NextKeyBox != null && NextKeyBox.IsDropDownOpen) NextKeyBox.IsDropDownOpen = false;
+            if (PrevModifierBox != null && PrevModifierBox.IsDropDownOpen) PrevModifierBox.IsDropDownOpen = false;
+            if (PrevKeyBox != null && PrevKeyBox.IsDropDownOpen) PrevKeyBox.IsDropDownOpen = false;
+        }
+
         private void OnContentScrollViewerPreviewMouseWheel(object sender, MouseWheelEventArgs e)
         {
             if (ContentScrollViewer == null) return;
@@ -233,11 +247,12 @@ namespace LucidTune.UI
             var openCombo = GetOpenComboBox();
             if (openCombo != null)
             {
+                bool isOver = false;
                 if (openCombo.Template.FindName("Popup", openCombo) is System.Windows.Controls.Primitives.Popup popup &&
                     popup.IsOpen &&
                     popup.Child is FrameworkElement dropDown)
                 {
-                    bool isOver = dropDown.IsMouseOver;
+                    isOver = dropDown.IsMouseOver;
                     if (!isOver)
                     {
                         try
@@ -255,14 +270,18 @@ namespace LucidTune.UI
                     {
                         e.Handled = true;
                         var sv = FindVisualChild<ScrollViewer>(dropDown);
-                        if (sv != null)
+                        if (sv != null && sv.ScrollableHeight > 0)
                         {
                             double step = (e.Delta / 120.0) * 32.0;
                             sv.ScrollToVerticalOffset(sv.VerticalOffset - step);
                         }
+                        // Consume the wheel event over the dropdown so background settings never scroll
                         return;
                     }
                 }
+
+                // If wheel rolled outside the open dropdown, close it immediately
+                CloseAllDropDowns();
             }
 
             e.Handled = true;
@@ -317,6 +336,11 @@ namespace LucidTune.UI
 
         private void OnContentScrollViewerScrollChanged(object sender, ScrollChangedEventArgs e)
         {
+            if (e.VerticalChange != 0)
+            {
+                CloseAllDropDowns();
+            }
+
             if (ContentScrollViewer != null && !_isSmoothScrolling && e.VerticalChange != 0)
             {
                 _targetVerticalOffset = ContentScrollViewer.VerticalOffset;
