@@ -120,7 +120,7 @@
         <Style x:Key="VolumeSliderStyle" TargetType="Slider">
             <Setter Property="Stylus.IsPressAndHoldEnabled" Value="False"/>
             <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Foreground" Value="#4E75FF"/>
+            <Setter Property="Foreground" Value="{DynamicResource AccentBrush}"/>
             <Setter Property="Height" Value="16"/>
             <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
             <Setter Property="Template">
@@ -141,7 +141,7 @@
                                             <ControlTemplate TargetType="RepeatButton">
                                                 <Border Height="3"
                                                         CornerRadius="1.5"
-                                                        Background="#4E75FF"
+                                                        Background="{DynamicResource AccentBrush}"
                                                         Margin="6,0,0,0"
                                                         VerticalAlignment="Center"/>
                                             </ControlTemplate>
@@ -166,7 +166,7 @@
                                                     <!-- Inner accent dot for clear grab affordance -->
                                                     <Ellipse x:Name="ThumbDot"
                                                              Width="4" Height="4"
-                                                             Fill="#4E75FF"
+                                                             Fill="{DynamicResource AccentBrush}"
                                                              HorizontalAlignment="Center"
                                                              VerticalAlignment="Center"/>
                                                 </Grid>
@@ -174,7 +174,7 @@
                                                     <Trigger Property="IsMouseOver" Value="True">
                                                         <Setter TargetName="ThumbGlow" Property="Width" Value="13"/>
                                                         <Setter TargetName="ThumbGlow" Property="Height" Value="13"/>
-                                                        <Setter TargetName="ThumbDot" Property="Fill" Value="#3860F5"/>
+                                                        <Setter TargetName="ThumbDot" Property="Fill" Value="{DynamicResource AccentHoverBrush}"/>
                                                     </Trigger>
                                                     <Trigger Property="IsDragging" Value="True">
                                                         <Setter TargetName="ThumbGlow" Property="Width" Value="14"/>
@@ -347,7 +347,7 @@
                                         Height="3"
                                         HorizontalAlignment="Left"
                                         Width="0"
-                                        Background="#4E75FF"
+                                        Background="{DynamicResource AccentBrush}"
                                         CornerRadius="1.5"/>
                             </Border>
                         </Grid>

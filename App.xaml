@@ -61,7 +61,7 @@
                                       Grid.Column="0"
                                       Visibility="Collapsed"
                                       Data="M 2 6 L 6 10 L 13 2"
-                                      Stroke="#4E75FF"
+                                      Stroke="{DynamicResource AccentBrush}"
                                       StrokeThickness="2"
                                       StrokeStartLineCap="Round"
                                       StrokeEndLineCap="Round"

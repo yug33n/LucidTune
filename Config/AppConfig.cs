@@ -29,5 +29,6 @@ namespace LucidTune.Config
         public double WidgetOpacity { get; set; } = 1.0;
         public bool CompactMode { get; set; } = false;
         public string Theme { get; set; } = "Dark";
+        public string AccentColor { get; set; } = "Yellow";
     }
 }

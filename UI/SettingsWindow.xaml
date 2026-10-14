@@ -110,7 +110,7 @@
                         <Ellipse x:Name="ThumbEllipse"
                                  Width="16" Height="16"
                                  Fill="#FFFFFF"
-                                 Stroke="#4E75FF"
+                                 Stroke="{DynamicResource AccentBrush}"
                                  StrokeThickness="2"
                                  SnapsToDevicePixels="True">
                             <Ellipse.Effect>
@@ -119,12 +119,12 @@
                         </Ellipse>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="ThumbEllipse" Property="Fill" Value="#E0EBFF"/>
+                                <Setter TargetName="ThumbEllipse" Property="Fill" Value="{DynamicResource SettingsBadgeBackgroundBrush}"/>
                                 <Setter TargetName="ThumbEllipse" Property="Width" Value="18"/>
                                 <Setter TargetName="ThumbEllipse" Property="Height" Value="18"/>
                             </Trigger>
                             <Trigger Property="IsDragging" Value="True">
-                                <Setter TargetName="ThumbEllipse" Property="Fill" Value="#4E75FF"/>
+                                <Setter TargetName="ThumbEllipse" Property="Fill" Value="{DynamicResource AccentBrush}"/>
                                 <Setter TargetName="ThumbEllipse" Property="Stroke" Value="#FFFFFF"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
@@ -282,12 +282,12 @@
             </Border>
             <ControlTemplate.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter TargetName="Border" Property="BorderBrush" Value="#4E75FF"/>
+                    <Setter TargetName="Border" Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
                     <Setter TargetName="Arrow" Property="Stroke" Value="{DynamicResource SettingsTextPrimaryBrush}"/>
                 </Trigger>
                 <Trigger Property="IsChecked" Value="True">
-                    <Setter TargetName="Border" Property="BorderBrush" Value="#4E75FF"/>
-                    <Setter TargetName="Arrow" Property="Stroke" Value="#4E75FF"/>
+                    <Setter TargetName="Border" Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+                    <Setter TargetName="Arrow" Property="Stroke" Value="{DynamicResource AccentBrush}"/>
                 </Trigger>
             </ControlTemplate.Triggers>
         </ControlTemplate>
@@ -422,8 +422,8 @@
                     <Grid Margin="16,0,12,0">
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                             <!-- Logo Icon -->
-                            <Border Width="24" Height="24" CornerRadius="6" Background="#4E75FF" Margin="0,0,10,0">
-                                <Path Width="12" Height="12" Fill="#FFFFFF" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"
+                            <Border Width="24" Height="24" CornerRadius="6" Background="{DynamicResource AccentBrush}" Margin="0,0,10,0">
+                                <Path Width="12" Height="12" Fill="{DynamicResource AccentTextBrush}" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"
                                       Data="M12,3V13.55A4,4 0 1,0 14,17V7H18V3H12Z"/>
                             </Border>
 
@@ -504,6 +504,32 @@
                                               SelectionChanged="OnThemeSelectionChanged">
                                         <ComboBoxItem Content="Тёмная" Tag="Dark"/>
                                         <ComboBoxItem Content="Светлая" Tag="Light"/>
+                                    </ComboBox>
+                                </Grid>
+
+                                <Rectangle Height="1" Fill="{DynamicResource SettingsSeparatorBrush}" Margin="0,2,0,10"/>
+
+                                <!-- Accent Color Selection -->
+                                <Grid Margin="0,0,0,10">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="140"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,10,0">
+                                        <TextBlock Text="Основной цвет" FontWeight="SemiBold" FontSize="13" Foreground="{DynamicResource SettingsTextPrimaryBrush}"/>
+                                        <TextBlock Text="Цветовой акцент для кнопок, ползунков и бейджей." FontSize="11.5" Foreground="{DynamicResource SettingsTextSecondaryBrush}" Margin="0,2,0,0"/>
+                                    </StackPanel>
+                                    <ComboBox x:Name="AccentComboBox"
+                                              Grid.Column="1"
+                                              Height="30"
+                                              SelectionChanged="OnAccentSelectionChanged">
+                                        <ComboBoxItem Content="🟡  Жёлтый" Tag="Yellow"/>
+                                        <ComboBoxItem Content="🔵  Синий" Tag="Blue"/>
+                                        <ComboBoxItem Content="🟣  Фиолетовый" Tag="Purple"/>
+                                        <ComboBoxItem Content="🟢  Зелёный" Tag="Green"/>
+                                        <ComboBoxItem Content="🟠  Оранжевый" Tag="Orange"/>
+                                        <ComboBoxItem Content="🔴  Красный" Tag="Red"/>
+                                        <ComboBoxItem Content="🌸  Розовый" Tag="Pink"/>
                                     </ComboBox>
                                 </Grid>
 
@@ -762,8 +788,8 @@
 
                         <Button Style="{StaticResource ActionButtonStyle}"
                                 Width="150"
-                                Background="#4E75FF"
-                                Foreground="#FFFFFF"
+                                Background="{DynamicResource AccentBrush}"
+                                Foreground="{DynamicResource AccentTextBrush}"
                                 Content="Сохранить настройки"
                                 Click="OnSaveClick"/>
                     </StackPanel>

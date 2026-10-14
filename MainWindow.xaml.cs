@@ -74,7 +74,12 @@ namespace LucidTune
 
             await _mediaService.InitializeAsync();
 
-            if (_configManager.CurrentConfig.ShowSettingsOnStartup)
+            if (_configManager.CurrentConfig.AutoStart)
+            {
+                AutoStartupService.SetAutoStart(true);
+            }
+
+            if (!App.IsAutoStartLaunch && _configManager.CurrentConfig.ShowSettingsOnStartup)
             {
                 OpenSettingsWindow();
             }

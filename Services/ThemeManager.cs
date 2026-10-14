@@ -9,25 +9,61 @@ namespace LucidTune.Services
         public const string DarkTheme = "Dark";
         public const string LightTheme = "Light";
 
+        public const string AccentYellow = "Yellow";
+        public const string AccentBlue = "Blue";
+        public const string AccentPurple = "Purple";
+        public const string AccentGreen = "Green";
+        public const string AccentOrange = "Orange";
+        public const string AccentRed = "Red";
+        public const string AccentPink = "Pink";
+
         public static string CurrentTheme { get; private set; } = DarkTheme;
+        public static string CurrentAccent { get; private set; } = AccentYellow;
         public static bool IsDark => CurrentTheme == DarkTheme;
 
-        public static event Action<string>? ThemeChanged;
+        public static event Action<string, string>? ThemeChanged;
 
-        public static void ApplyTheme(string? theme)
+        public static void ApplyTheme(string? theme, string? accent = null)
         {
-            if (string.Equals(theme, LightTheme, StringComparison.OrdinalIgnoreCase))
+            if (!string.IsNullOrWhiteSpace(theme))
             {
-                ApplyLightPalette();
-                CurrentTheme = LightTheme;
+                CurrentTheme = string.Equals(theme, LightTheme, StringComparison.OrdinalIgnoreCase)
+                    ? LightTheme
+                    : DarkTheme;
+            }
+
+            if (!string.IsNullOrWhiteSpace(accent))
+            {
+                CurrentAccent = NormalizeAccent(accent);
+            }
+
+            if (IsDark)
+            {
+                ApplyDarkPalette();
             }
             else
             {
-                ApplyDarkPalette();
-                CurrentTheme = DarkTheme;
+                ApplyLightPalette();
             }
 
-            ThemeChanged?.Invoke(CurrentTheme);
+            ApplyAccentPalette(CurrentAccent, IsDark);
+
+            ThemeChanged?.Invoke(CurrentTheme, CurrentAccent);
+        }
+
+        private static string NormalizeAccent(string accent)
+        {
+            return accent.ToLowerInvariant() switch
+            {
+                "yellow" or "жёлтый" or "желтый" => AccentYellow,
+                "blue" or "синий" => AccentBlue,
+                "purple" or "фиолетовый" => AccentPurple,
+                "green" or "зелёный" or "зеленый" => AccentGreen,
+                "orange" or "оранжевый" => AccentOrange,
+                "red" or "красный" => AccentRed,
+                "pink" or "розовый" => AccentPink,
+                _ => AccentYellow
+            };
         }
 
         private static void SetBrush(string key, Color color)
@@ -73,8 +109,6 @@ namespace LucidTune.Services
             SetBrush("SettingsTextMutedBrush", Color.FromRgb(0x6C, 0x6C, 0x78));
             SetBrush("SettingsInputBackgroundBrush", Color.FromRgb(0x1C, 0x1C, 0x26));
             SetBrush("SettingsInputBorderBrush", Color.FromRgb(0x28, 0x28, 0x38));
-            SetBrush("SettingsBadgeBackgroundBrush", Color.FromRgb(0x2A, 0x2A, 0x38));
-            SetBrush("SettingsBadgeTextBrush", Color.FromRgb(0x4E, 0x75, 0xFF));
             SetBrush("SettingsButtonSecondaryBackgroundBrush", Color.FromRgb(0x28, 0x28, 0x36));
             SetBrush("SettingsButtonSecondaryTextBrush", Color.FromRgb(0xE0, 0xE0, 0xE6));
             SetBrush("SettingsScrollBarThumbBrush", Color.FromRgb(0x3A, 0x3A, 0x4D));
@@ -113,13 +147,133 @@ namespace LucidTune.Services
             SetBrush("SettingsTextMutedBrush", Color.FromRgb(0x9C, 0xA3, 0xAF));
             SetBrush("SettingsInputBackgroundBrush", Color.FromRgb(0xFF, 0xFF, 0xFF));
             SetBrush("SettingsInputBorderBrush", Color.FromRgb(0xD1, 0xD5, 0xDB));
-            SetBrush("SettingsBadgeBackgroundBrush", Color.FromRgb(0xE0, 0xE7, 0xFF));
-            SetBrush("SettingsBadgeTextBrush", Color.FromRgb(0x1D, 0x4E, 0xD8));
             SetBrush("SettingsButtonSecondaryBackgroundBrush", Color.FromRgb(0xE5, 0xE7, 0xEB));
             SetBrush("SettingsButtonSecondaryTextBrush", Color.FromRgb(0x1F, 0x29, 0x37));
             SetBrush("SettingsScrollBarThumbBrush", Color.FromRgb(0xD1, 0xD5, 0xDB));
             SetBrush("SettingsSliderTrackBrush", Color.FromRgb(0xE5, 0xE7, 0xEB));
             SetBrush("SettingsSeparatorBrush", Color.FromRgb(0xE5, 0xE7, 0xEB));
+        }
+
+        private static void ApplyAccentPalette(string accent, bool isDark)
+        {
+            switch (accent)
+            {
+                case AccentYellow:
+                    SetBrush("AccentBrush", Color.FromRgb(0xFF, 0xB8, 0x00)); // Vivid Amber Yellow
+                    SetBrush("AccentHoverBrush", Color.FromRgb(0xFF, 0xC7, 0x2C));
+                    SetBrush("AccentTextBrush", Color.FromRgb(0x14, 0x14, 0x16)); // High contrast dark text on yellow
+                    if (isDark)
+                    {
+                        SetBrush("SettingsBadgeBackgroundBrush", Color.FromRgb(0x36, 0x2C, 0x12));
+                        SetBrush("SettingsBadgeTextBrush", Color.FromRgb(0xFF, 0xC7, 0x2C));
+                    }
+                    else
+                    {
+                        SetBrush("SettingsBadgeBackgroundBrush", Color.FromRgb(0xFE, 0xF3, 0xC7));
+                        SetBrush("SettingsBadgeTextBrush", Color.FromRgb(0xB4, 0x53, 0x09));
+                    }
+                    break;
+
+                case AccentBlue:
+                    SetBrush("AccentBrush", Color.FromRgb(0x4E, 0x75, 0xFF));
+                    SetBrush("AccentHoverBrush", Color.FromRgb(0x66, 0x88, 0xFF));
+                    SetBrush("AccentTextBrush", Color.FromRgb(0xFF, 0xFF, 0xFF));
+                    if (isDark)
+                    {
+                        SetBrush("SettingsBadgeBackgroundBrush", Color.FromRgb(0x2A, 0x2A, 0x38));
+                        SetBrush("SettingsBadgeTextBrush", Color.FromRgb(0x6B, 0x8E, 0xFF));
+                    }
+                    else
+                    {
+                        SetBrush("SettingsBadgeBackgroundBrush", Color.FromRgb(0xE0, 0xE7, 0xFF));
+                        SetBrush("SettingsBadgeTextBrush", Color.FromRgb(0x1D, 0x4E, 0xD8));
+                    }
+                    break;
+
+                case AccentPurple:
+                    SetBrush("AccentBrush", Color.FromRgb(0x8B, 0x5C, 0xF6));
+                    SetBrush("AccentHoverBrush", Color.FromRgb(0xA7, 0x8B, 0xFA));
+                    SetBrush("AccentTextBrush", Color.FromRgb(0xFF, 0xFF, 0xFF));
+                    if (isDark)
+                    {
+                        SetBrush("SettingsBadgeBackgroundBrush", Color.FromRgb(0x2D, 0x20, 0x3C));
+                        SetBrush("SettingsBadgeTextBrush", Color.FromRgb(0xA7, 0x8B, 0xFA));
+                    }
+                    else
+                    {
+                        SetBrush("SettingsBadgeBackgroundBrush", Color.FromRgb(0xF3, 0xE8, 0xFF));
+                        SetBrush("SettingsBadgeTextBrush", Color.FromRgb(0x6D, 0x28, 0xD9));
+                    }
+                    break;
+
+                case AccentGreen:
+                    SetBrush("AccentBrush", Color.FromRgb(0x10, 0xB9, 0x81));
+                    SetBrush("AccentHoverBrush", Color.FromRgb(0x34, 0xD3, 0x99));
+                    SetBrush("AccentTextBrush", Color.FromRgb(0xFF, 0xFF, 0xFF));
+                    if (isDark)
+                    {
+                        SetBrush("SettingsBadgeBackgroundBrush", Color.FromRgb(0x16, 0x2E, 0x23));
+                        SetBrush("SettingsBadgeTextBrush", Color.FromRgb(0x34, 0xD3, 0x99));
+                    }
+                    else
+                    {
+                        SetBrush("SettingsBadgeBackgroundBrush", Color.FromRgb(0xD1, 0xFA, 0xE5));
+                        SetBrush("SettingsBadgeTextBrush", Color.FromRgb(0x04, 0x78, 0x57));
+                    }
+                    break;
+
+                case AccentOrange:
+                    SetBrush("AccentBrush", Color.FromRgb(0xF9, 0x73, 0x16));
+                    SetBrush("AccentHoverBrush", Color.FromRgb(0xFB, 0x92, 0x3C));
+                    SetBrush("AccentTextBrush", Color.FromRgb(0xFF, 0xFF, 0xFF));
+                    if (isDark)
+                    {
+                        SetBrush("SettingsBadgeBackgroundBrush", Color.FromRgb(0x34, 0x20, 0x14));
+                        SetBrush("SettingsBadgeTextBrush", Color.FromRgb(0xFB, 0x92, 0x3C));
+                    }
+                    else
+                    {
+                        SetBrush("SettingsBadgeBackgroundBrush", Color.FromRgb(0xFF, 0xED, 0xD5));
+                        SetBrush("SettingsBadgeTextBrush", Color.FromRgb(0xC2, 0x41, 0x0C));
+                    }
+                    break;
+
+                case AccentRed:
+                    SetBrush("AccentBrush", Color.FromRgb(0xEF, 0x44, 0x44));
+                    SetBrush("AccentHoverBrush", Color.FromRgb(0xF8, 0x71, 0x71));
+                    SetBrush("AccentTextBrush", Color.FromRgb(0xFF, 0xFF, 0xFF));
+                    if (isDark)
+                    {
+                        SetBrush("SettingsBadgeBackgroundBrush", Color.FromRgb(0x36, 0x1A, 0x20));
+                        SetBrush("SettingsBadgeTextBrush", Color.FromRgb(0xF8, 0x71, 0x71));
+                    }
+                    else
+                    {
+                        SetBrush("SettingsBadgeBackgroundBrush", Color.FromRgb(0xFE, 0xE2, 0xE2));
+                        SetBrush("SettingsBadgeTextBrush", Color.FromRgb(0xB9, 0x1C, 0x1C));
+                    }
+                    break;
+
+                case AccentPink:
+                    SetBrush("AccentBrush", Color.FromRgb(0xEC, 0x48, 0x99));
+                    SetBrush("AccentHoverBrush", Color.FromRgb(0xF4, 0x72, 0xB6));
+                    SetBrush("AccentTextBrush", Color.FromRgb(0xFF, 0xFF, 0xFF));
+                    if (isDark)
+                    {
+                        SetBrush("SettingsBadgeBackgroundBrush", Color.FromRgb(0x36, 0x1A, 0x2B));
+                        SetBrush("SettingsBadgeTextBrush", Color.FromRgb(0xF4, 0x72, 0xB6));
+                    }
+                    else
+                    {
+                        SetBrush("SettingsBadgeBackgroundBrush", Color.FromRgb(0xFC, 0xE7, 0xF3));
+                        SetBrush("SettingsBadgeTextBrush", Color.FromRgb(0xBE, 0x18, 0x5D));
+                    }
+                    break;
+
+                default:
+                    ApplyAccentPalette(AccentYellow, isDark);
+                    break;
+            }
         }
     }
 }

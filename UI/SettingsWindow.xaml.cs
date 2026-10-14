@@ -51,7 +51,7 @@ namespace LucidTune.UI
                 _mainWindow.OverlayVisibilityChanged -= OnOverlayVisibilityChanged;
                 _mainWindow.ApplyWidgetOpacity(_configManager.CurrentConfig.WidgetOpacity);
                 _mainWindow.ApplyCompactMode(_configManager.CurrentConfig.CompactMode);
-                ThemeManager.ApplyTheme(_configManager.CurrentConfig.Theme);
+                ThemeManager.ApplyTheme(_configManager.CurrentConfig.Theme, _configManager.CurrentConfig.AccentColor);
             };
             UpdateOverlayStatus(_mainWindow.IsOverlayVisible);
         }
@@ -84,6 +84,7 @@ namespace LucidTune.UI
             var cfg = _configManager.CurrentConfig;
 
             SelectThemeItem(cfg.Theme);
+            SelectAccentItem(cfg.AccentColor);
 
             SelectBoxItem(ToggleModifierBox, cfg.HotkeyModifiers, "Alt");
             SelectBoxItem(ToggleKeyBox, cfg.HotkeyKey, "M");
@@ -132,11 +133,37 @@ namespace LucidTune.UI
             }
         }
 
+        private void SelectAccentItem(string accent)
+        {
+            foreach (ComboBoxItem item in AccentComboBox.Items)
+            {
+                if (string.Equals(item.Tag?.ToString(), accent, StringComparison.OrdinalIgnoreCase))
+                {
+                    AccentComboBox.SelectedItem = item;
+                    return;
+                }
+            }
+            if (AccentComboBox.Items.Count > 0)
+            {
+                AccentComboBox.SelectedIndex = 0;
+            }
+        }
+
         private void OnThemeSelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (_isInitializing || ThemeComboBox.SelectedItem is not ComboBoxItem item) return;
             string theme = item.Tag?.ToString() ?? ThemeManager.DarkTheme;
-            ThemeManager.ApplyTheme(theme);
+            string accent = (AccentComboBox?.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? ThemeManager.CurrentAccent;
+            ThemeManager.ApplyTheme(theme, accent);
+            UpdateAllPreviews();
+        }
+
+        private void OnAccentSelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (_isInitializing || AccentComboBox.SelectedItem is not ComboBoxItem item) return;
+            string accent = item.Tag?.ToString() ?? ThemeManager.AccentYellow;
+            string theme = (ThemeComboBox?.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? ThemeManager.CurrentTheme;
+            ThemeManager.ApplyTheme(theme, accent);
             UpdateAllPreviews();
         }
 
@@ -389,7 +416,8 @@ namespace LucidTune.UI
             _mainWindow.ApplyCompactMode(cfg.CompactMode);
 
             cfg.Theme = (ThemeComboBox.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? ThemeManager.DarkTheme;
-            ThemeManager.ApplyTheme(cfg.Theme);
+            cfg.AccentColor = (AccentComboBox.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? ThemeManager.AccentYellow;
+            ThemeManager.ApplyTheme(cfg.Theme, cfg.AccentColor);
 
             _configManager.Save(cfg);
 
@@ -411,7 +439,7 @@ namespace LucidTune.UI
         {
             _mainWindow.ApplyWidgetOpacity(_configManager.CurrentConfig.WidgetOpacity);
             _mainWindow.ApplyCompactMode(_configManager.CurrentConfig.CompactMode);
-            ThemeManager.ApplyTheme(_configManager.CurrentConfig.Theme);
+            ThemeManager.ApplyTheme(_configManager.CurrentConfig.Theme, _configManager.CurrentConfig.AccentColor);
             Close();
         }
     }
