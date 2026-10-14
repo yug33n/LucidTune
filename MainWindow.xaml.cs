@@ -60,6 +60,7 @@ namespace LucidTune
             ApplySavedPosition();
             ApplyWidgetOpacity(_configManager.CurrentConfig.WidgetOpacity);
             ApplyCompactMode(_configManager.CurrentConfig.CompactMode);
+            ApplyVolumeControl(_configManager.CurrentConfig.ShowVolumeControl);
             SyncVolumeFromSystem();
 
             var hwnd = new WindowInteropHelper(this).Handle;
@@ -113,6 +114,13 @@ namespace LucidTune
                 TrackInfoGrid.Margin = new Thickness(10, 0, 8, 0);
                 IslandContainer.Width = 310;
             }
+        }
+
+        public void ApplyVolumeControl(bool showVolume)
+        {
+            VolumeControlRow.Visibility = showVolume ? Visibility.Visible : Visibility.Collapsed;
+            IslandContainer.Height = showVolume ? 92 : 66;
+            ContentLayoutGrid.Margin = showVolume ? new Thickness(0, 5, 0, 7) : new Thickness(0, 7, 0, 7);
         }
 
         public void ToggleVisibility()

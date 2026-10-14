@@ -51,6 +51,7 @@ namespace LucidTune.UI
                 _mainWindow.OverlayVisibilityChanged -= OnOverlayVisibilityChanged;
                 _mainWindow.ApplyWidgetOpacity(_configManager.CurrentConfig.WidgetOpacity);
                 _mainWindow.ApplyCompactMode(_configManager.CurrentConfig.CompactMode);
+                _mainWindow.ApplyVolumeControl(_configManager.CurrentConfig.ShowVolumeControl);
                 ThemeManager.ApplyTheme(_configManager.CurrentConfig.Theme, _configManager.CurrentConfig.AccentColor);
             };
             UpdateOverlayStatus(_mainWindow.IsOverlayVisible);
@@ -115,6 +116,7 @@ namespace LucidTune.UI
             OpacityValueText.Text = $"{opacityPercent}%";
 
             CompactModeCheckBox.IsChecked = cfg.CompactMode;
+            ShowVolumeCheckBox.IsChecked = cfg.ShowVolumeControl;
 
             UpdateAllPreviews();
         }
@@ -431,6 +433,13 @@ namespace LucidTune.UI
             _mainWindow.ApplyCompactMode(isCompact);
         }
 
+        private void OnShowVolumeChanged(object sender, RoutedEventArgs e)
+        {
+            if (_isInitializing) return;
+            bool showVolume = ShowVolumeCheckBox.IsChecked == true;
+            _mainWindow.ApplyVolumeControl(showVolume);
+        }
+
         private void OnTitleBarMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
             if (e.ButtonState == MouseButtonState.Pressed)
@@ -511,6 +520,9 @@ namespace LucidTune.UI
             cfg.CompactMode = CompactModeCheckBox.IsChecked == true;
             _mainWindow.ApplyCompactMode(cfg.CompactMode);
 
+            cfg.ShowVolumeControl = ShowVolumeCheckBox.IsChecked == true;
+            _mainWindow.ApplyVolumeControl(cfg.ShowVolumeControl);
+
             cfg.Theme = (ThemeComboBox.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? ThemeManager.DarkTheme;
             cfg.AccentColor = (AccentComboBox.SelectedItem as ThemeManager.AccentOption)?.Key ?? ThemeManager.AccentYellow;
             ThemeManager.ApplyTheme(cfg.Theme, cfg.AccentColor);
@@ -535,6 +547,7 @@ namespace LucidTune.UI
         {
             _mainWindow.ApplyWidgetOpacity(_configManager.CurrentConfig.WidgetOpacity);
             _mainWindow.ApplyCompactMode(_configManager.CurrentConfig.CompactMode);
+            _mainWindow.ApplyVolumeControl(_configManager.CurrentConfig.ShowVolumeControl);
             ThemeManager.ApplyTheme(_configManager.CurrentConfig.Theme, _configManager.CurrentConfig.AccentColor);
             Close();
         }

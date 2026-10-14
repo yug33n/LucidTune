@@ -591,6 +591,17 @@
                                         <TextBlock Text="Скрывает изображение альбома, делая оверлей меньше и компактнее." FontSize="11" Foreground="{DynamicResource SettingsTextSecondaryBrush}" Margin="0,2,0,0"/>
                                     </StackPanel>
                                 </CheckBox>
+
+                                <!-- Show Volume Checkbox -->
+                                <CheckBox x:Name="ShowVolumeCheckBox"
+                                          Style="{StaticResource DarkCheckBoxStyle}"
+                                          Checked="OnShowVolumeChanged"
+                                          Unchecked="OnShowVolumeChanged">
+                                    <StackPanel Margin="6,0,0,0">
+                                        <TextBlock Text="Показывать регулировку громкости" FontSize="12.5" FontWeight="Medium" Foreground="{DynamicResource SettingsTextPrimaryBrush}"/>
+                                        <TextBlock Text="Отображает иконку и полоску управления громкостью внизу виджета." FontSize="11" Foreground="{DynamicResource SettingsTextSecondaryBrush}" Margin="0,2,0,0"/>
+                                    </StackPanel>
+                                </CheckBox>
                             </StackPanel>
                         </Border>
 
