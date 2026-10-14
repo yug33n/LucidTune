@@ -198,7 +198,8 @@ namespace LucidTune.Services
                             isSystem = control2.IsSystemSoundsSession();
                         }
 
-                        if (isSystem != 0) continue; // Skip Windows system sounds
+                        // S_OK (0) means this IS a Windows system sounds session. S_FALSE (1) means regular app session.
+                        if (isSystem == 0 || pid == 0) continue;
 
                         string procName = GetProcessName(pid);
 
