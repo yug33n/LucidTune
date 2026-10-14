@@ -8,10 +8,16 @@
     <UseWPF>true</UseWPF>
     <RootNamespace>LucidTune</RootNamespace>
     <AssemblyName>LucidTune</AssemblyName>
+<<<<<<< Updated upstream
     <ApplicationIcon>Resources\app.ico</ApplicationIcon>
     <Version>1.0.0</Version>
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
     <FileVersion>1.0.0.0</FileVersion>
+=======
+    <Version>1.0.2</Version>
+    <AssemblyVersion>1.0.2.0</AssemblyVersion>
+    <FileVersion>1.0.2.0</FileVersion>
+>>>>>>> Stashed changes
     <Product>LucidTune</Product>
     <Description>Lightweight Windows Desktop Media Overlay Widget</Description>
     <Authors>LucidTune Team</Authors>
