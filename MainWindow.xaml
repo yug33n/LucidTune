@@ -5,7 +5,6 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
         Title="LucidTune"
-        Icon="Resources/app.ico"
         Width="360" Height="170"
         WindowStyle="None"
         AllowsTransparency="True"

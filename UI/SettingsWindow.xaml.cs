@@ -37,6 +37,7 @@ namespace LucidTune.UI
         public SettingsWindow(MainWindow mainWindow, ConfigManager configManager)
         {
             InitializeComponent();
+            MainWindow.TrySetWindowIcon(this);
             _mainWindow = mainWindow;
             _configManager = configManager;
 

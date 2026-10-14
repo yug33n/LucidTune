@@ -1,9 +1,11 @@
 using System;
+using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
+using System.Windows.Media.Imaging;
 using LucidTune.Config;
 using LucidTune.Models;
 using LucidTune.Services;
@@ -36,6 +38,7 @@ namespace LucidTune
         public MainWindow()
         {
             InitializeComponent();
+            TrySetWindowIcon(this);
 
             _playGeometry = (Geometry)FindResource("PlayGeometry");
             _pauseGeometry = (Geometry)FindResource("PauseGeometry");
@@ -57,33 +60,40 @@ namespace LucidTune
 
         private async void OnMainWindowLoaded(object sender, RoutedEventArgs e)
         {
-            ApplySavedPosition();
-            ApplyWidgetOpacity(_configManager.CurrentConfig.WidgetOpacity);
-            ApplyCompactMode(_configManager.CurrentConfig.CompactMode);
-            ApplyVolumeControl(_configManager.CurrentConfig.ShowVolumeControl);
-            SyncVolumeFromSystem();
-
-            var hwnd = new WindowInteropHelper(this).Handle;
-            _hotkeyService.Initialize(hwnd);
-            RegisterAllConfiguredHotkeys();
-            _hotkeyService.HotkeyTriggered += OnHotkeyTriggered;
-
-            _fullscreenService.Start(hwnd);
-
-            _trayManager = new TrayIconManager(_configManager, ToggleVisibility, OpenSettingsWindow, () => _isWindowVisible);
-            _trayManager.Initialize(hwnd);
-
-            if (_configManager.CurrentConfig.AutoStart)
+            try
             {
-                AutoStartupService.SetAutoStart(true);
-            }
+                ApplySavedPosition();
+                ApplyWidgetOpacity(_configManager.CurrentConfig.WidgetOpacity);
+                ApplyCompactMode(_configManager.CurrentConfig.CompactMode);
+                ApplyVolumeControl(_configManager.CurrentConfig.ShowVolumeControl);
+                SyncVolumeFromSystem();
 
-            if (!App.IsAutoStartLaunch && _configManager.CurrentConfig.ShowSettingsOnStartup)
+                var hwnd = new WindowInteropHelper(this).Handle;
+                _hotkeyService.Initialize(hwnd);
+                RegisterAllConfiguredHotkeys();
+                _hotkeyService.HotkeyTriggered += OnHotkeyTriggered;
+
+                _fullscreenService.Start(hwnd);
+
+                _trayManager = new TrayIconManager(_configManager, ToggleVisibility, OpenSettingsWindow, () => _isWindowVisible);
+                _trayManager.Initialize(hwnd);
+
+                if (_configManager.CurrentConfig.AutoStart)
+                {
+                    AutoStartupService.SetAutoStart(true);
+                }
+
+                if (!App.IsAutoStartLaunch && _configManager.CurrentConfig.ShowSettingsOnStartup)
+                {
+                    OpenSettingsWindow();
+                }
+
+                await _mediaService.InitializeAsync();
+            }
+            catch (Exception ex)
             {
-                OpenSettingsWindow();
+                System.Diagnostics.Debug.WriteLine($"[OnMainWindowLoaded Exception] {ex}");
             }
-
-            await _mediaService.InitializeAsync();
         }
 
         private void ApplySavedPosition()
@@ -526,6 +536,40 @@ namespace LucidTune
             _fullscreenService.Dispose();
             _trayManager?.Dispose();
             _mediaService.Dispose();
+        }
+
+        [DllImport("shell32.dll", CharSet = CharSet.Auto)]
+        private static extern uint ExtractIconEx(string szFileName, int nIconIndex, out IntPtr phiconLarge, out IntPtr phiconSmall, uint nIcons);
+
+        [DllImport("user32.dll")]
+        private static extern bool DestroyIcon(IntPtr hIcon);
+
+        public static void TrySetWindowIcon(Window window)
+        {
+            try
+            {
+                var procPath = Environment.ProcessPath;
+                if (!string.IsNullOrEmpty(procPath) && System.IO.File.Exists(procPath))
+                {
+                    if (ExtractIconEx(procPath, 0, out var hLarge, out _, 1) > 0 && hLarge != IntPtr.Zero)
+                    {
+                        window.Icon = Imaging.CreateBitmapSourceFromHIcon(hLarge, Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions());
+                        DestroyIcon(hLarge);
+                        return;
+                    }
+                }
+            }
+            catch { }
+
+            try
+            {
+                var iconPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources", "app.ico");
+                if (System.IO.File.Exists(iconPath))
+                {
+                    window.Icon = BitmapFrame.Create(new Uri(iconPath, UriKind.Absolute));
+                }
+            }
+            catch { }
         }
 
         private void SaveCurrentPosition()

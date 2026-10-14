@@ -15,6 +15,7 @@ namespace LucidTune.UI
         public HotkeySettingsWindow(ConfigManager configManager)
         {
             InitializeComponent();
+            MainWindow.TrySetWindowIcon(this);
             _configManager = configManager;
 
             PopulateKeys();
