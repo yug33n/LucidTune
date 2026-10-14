@@ -63,10 +63,10 @@ namespace LucidTune
                 // Proceed if named event cannot be created
             }
 
-            base.OnStartup(e);
-
             var config = new ConfigManager().CurrentConfig;
             ThemeManager.ApplyTheme(config.Theme, config.AccentColor);
+
+            base.OnStartup(e);
         }
 
         private void StartSignalListener()

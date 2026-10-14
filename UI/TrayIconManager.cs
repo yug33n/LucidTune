@@ -57,11 +57,20 @@ namespace LucidTune.UI
         [DllImport("user32.dll", CharSet = CharSet.Auto)]
         private static extern IntPtr LoadImage(IntPtr hinst, string lpszName, uint uType, int cxDesired, int cyDesired, uint fuLoad);
 
+        [DllImport("user32.dll", CharSet = CharSet.Auto)]
+        private static extern IntPtr LoadImage(IntPtr hinst, IntPtr uId, uint uType, int cxDesired, int cyDesired, uint fuLoad);
+
         [DllImport("user32.dll")]
         private static extern IntPtr LoadIcon(IntPtr hInstance, IntPtr lpIconName);
 
         [DllImport("user32.dll")]
         private static extern bool DestroyIcon(IntPtr hIcon);
+
+        [DllImport("kernel32.dll", CharSet = CharSet.Auto)]
+        private static extern IntPtr GetModuleHandle(string? lpModuleName);
+
+        [DllImport("shell32.dll", CharSet = CharSet.Auto)]
+        private static extern uint ExtractIconEx(string szFileName, int nIconIndex, out IntPtr phiconLarge, out IntPtr phiconSmall, uint nIcons);
 
         private IntPtr _hWnd;
         private HwndSource? _hwndSource;
@@ -101,11 +110,33 @@ namespace LucidTune.UI
         {
             try
             {
+                // 1. Try loading from file next to exe (portable / unpacked mode)
                 var iconPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources", "app.ico");
                 if (File.Exists(iconPath))
                 {
                     IntPtr hLoaded = LoadImage(IntPtr.Zero, iconPath, 1, 16, 16, 0x00000010);
                     if (hLoaded != IntPtr.Zero) return hLoaded;
+                }
+
+                // 2. Try extracting from current executable (works in standalone single-file mode)
+                var procPath = Environment.ProcessPath;
+                if (!string.IsNullOrEmpty(procPath) && File.Exists(procPath))
+                {
+                    if (ExtractIconEx(procPath, 0, out _, out var hSmall, 1) > 0 && hSmall != IntPtr.Zero)
+                    {
+                        return hSmall;
+                    }
+                }
+
+                // 3. Try loading icon resource from the current module
+                IntPtr hModule = GetModuleHandle(null);
+                if (hModule != IntPtr.Zero)
+                {
+                    IntPtr hModIcon = LoadImage(hModule, (IntPtr)1, 1, 16, 16, 0);
+                    if (hModIcon != IntPtr.Zero) return hModIcon;
+
+                    IntPtr hModIcon32512 = LoadImage(hModule, (IntPtr)32512, 1, 16, 16, 0);
+                    if (hModIcon32512 != IntPtr.Zero) return hModIcon32512;
                 }
             }
             catch
