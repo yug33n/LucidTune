@@ -120,7 +120,6 @@ namespace LucidTune.UI
             ShowVolumeCheckBox.IsChecked = cfg.ShowVolumeControl;
 
             EnableDiscordRpcCheckBox.IsChecked = cfg.DiscordRpcEnabled;
-            DiscordAppIdTextBox.Text = string.IsNullOrWhiteSpace(cfg.DiscordApplicationId) ? "1560410469112750100" : cfg.DiscordApplicationId;
 
             UpdateAllPreviews();
         }
@@ -532,7 +531,6 @@ namespace LucidTune.UI
             ThemeManager.ApplyTheme(cfg.Theme, cfg.AccentColor);
 
             cfg.DiscordRpcEnabled = EnableDiscordRpcCheckBox.IsChecked == true;
-            cfg.DiscordApplicationId = string.IsNullOrWhiteSpace(DiscordAppIdTextBox.Text) ? "1560410469112750100" : DiscordAppIdTextBox.Text.Trim();
 
             _configManager.Save(cfg);
 

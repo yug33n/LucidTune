@@ -8,6 +8,7 @@ namespace LucidTune.Models
         public string Title { get; set; } = "Нет активного трека";
         public string Artist { get; set; } = "Запустите музыку";
         public BitmapImage? Thumbnail { get; set; }
+        public byte[]? ThumbnailBytes { get; set; }
         public bool IsPlaying { get; set; }
         public bool HasActiveSession { get; set; }
         public TimeSpan Position { get; set; } = TimeSpan.Zero;

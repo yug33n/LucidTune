@@ -103,7 +103,7 @@ namespace LucidTune.Services
             {
                 try
                 {
-                    string? coverUrl = await CoverArtService.GetCoverUrlAsync(track.Artist, track.Title, ct);
+                    string? coverUrl = await CoverArtService.GetCoverUrlAsync(track.Artist, track.Title, track.ThumbnailBytes, ct);
                     if (ct.IsCancellationRequested) return;
 
                     SendPresencePayload(track, coverUrl);
