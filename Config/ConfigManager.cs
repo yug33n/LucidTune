@@ -13,13 +13,18 @@ namespace LucidTune.Config
         };
 
         private readonly string _configFilePath;
+        private readonly string? _legacyConfigFilePath;
 
         public AppConfig CurrentConfig { get; private set; }
 
         public ConfigManager(string? fileName = "config.json")
         {
+            var appDataDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "LucidTune");
+            _configFilePath = Path.Combine(appDataDir, fileName ?? "config.json");
+
             var baseDir = AppDomain.CurrentDomain.BaseDirectory;
-            _configFilePath = Path.Combine(baseDir, fileName ?? "config.json");
+            _legacyConfigFilePath = Path.Combine(baseDir, fileName ?? "config.json");
+
             CurrentConfig = Load();
         }
 
@@ -33,6 +38,33 @@ namespace LucidTune.Config
                     var config = JsonSerializer.Deserialize<AppConfig>(json, JsonOptions);
                     if (config != null)
                     {
+                        TryCleanLegacyFile();
+                        return config;
+                    }
+                }
+
+                // Check legacy path (e.g. desktop or next to executable) if AppData file does not exist yet
+                if (!string.IsNullOrEmpty(_legacyConfigFilePath) && File.Exists(_legacyConfigFilePath))
+                {
+                    var json = File.ReadAllText(_legacyConfigFilePath);
+                    var config = JsonSerializer.Deserialize<AppConfig>(json, JsonOptions);
+                    if (config != null)
+                    {
+                        Save(config);
+                        TryCleanLegacyFile();
+                        return config;
+                    }
+                }
+
+                var desktopConfig = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "config.json");
+                if (File.Exists(desktopConfig))
+                {
+                    var json = File.ReadAllText(desktopConfig);
+                    var config = JsonSerializer.Deserialize<AppConfig>(json, JsonOptions);
+                    if (config != null)
+                    {
+                        Save(config);
+                        TryCleanLegacyFile();
                         return config;
                     }
                 }
@@ -50,12 +82,43 @@ namespace LucidTune.Config
             CurrentConfig = config;
             try
             {
+                var dir = Path.GetDirectoryName(_configFilePath);
+                if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
+                {
+                    Directory.CreateDirectory(dir);
+                }
+
                 var json = JsonSerializer.Serialize(config, JsonOptions);
                 File.WriteAllText(_configFilePath, json);
+
+                TryCleanLegacyFile();
             }
             catch
             {
                 // Suppress file write issues
+            }
+        }
+
+        private void TryCleanLegacyFile()
+        {
+            try
+            {
+                if (!string.IsNullOrEmpty(_legacyConfigFilePath) &&
+                    !string.Equals(_legacyConfigFilePath, _configFilePath, StringComparison.OrdinalIgnoreCase) &&
+                    File.Exists(_legacyConfigFilePath))
+                {
+                    File.Delete(_legacyConfigFilePath);
+                }
+
+                var desktopConfig = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "config.json");
+                if (File.Exists(desktopConfig))
+                {
+                    File.Delete(desktopConfig);
+                }
+            }
+            catch
+            {
+                // Suppress file delete issues
             }
         }
 

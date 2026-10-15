@@ -108,9 +108,9 @@ dotnet publish LucidTune.csproj -c Release -r win-x64 --self-contained false -p:
 
 ---
 
-## 📁 Структура конфигурации (`config.json`)
+## 📁 Структура конфигурации (`%APPDATA%\LucidTune\config.json`)
 
-Файл конфигурации создается автоматически рядом с исполняемым файлом или в рабочем каталоге:
+Файл конфигурации автоматически сохраняется в папке пользователя `%APPDATA%\LucidTune\config.json`:
 ```json
 {
   "WindowX": 780.0,

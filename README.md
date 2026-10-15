@@ -108,9 +108,9 @@ dotnet publish LucidTune.csproj -c Release -r win-x64 --self-contained false -p:
 
 ---
 
-## 📁 Configuration File (`config.json`)
+## 📁 Configuration File (`%APPDATA%\LucidTune\config.json`)
 
-Settings are stored in `config.json` alongside the executable or working directory:
+Settings are stored in `%APPDATA%\LucidTune\config.json`:
 ```json
 {
   "WindowX": 780.0,
