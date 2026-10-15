@@ -766,6 +766,36 @@
                             </StackPanel>
                         </Border>
 
+                        <!-- Discord Rich Presence Section -->
+                        <Border Background="{DynamicResource SettingsCardBackgroundBrush}" CornerRadius="10" Padding="14,12" Margin="0,0,0,14" BorderBrush="{DynamicResource SettingsBorderBrush}" BorderThickness="1">
+                            <StackPanel>
+                                <TextBlock Text="Discord Rich Presence" FontWeight="SemiBold" FontSize="13" Foreground="{DynamicResource SettingsTextPrimaryBrush}"/>
+                                <TextBlock Text="Трансляция текущей музыки и прогресса трека в статус профиля Discord." FontSize="11.5" Foreground="{DynamicResource SettingsTextSecondaryBrush}" Margin="0,2,0,8"/>
+
+                                <CheckBox x:Name="EnableDiscordRpcCheckBox"
+                                          Style="{StaticResource DarkCheckBoxStyle}"
+                                          Content="Включить статус в Discord (Rich Presence)"/>
+
+                                <Grid Margin="0,6,0,0">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+                                    <TextBlock Grid.Row="0" Text="Application ID (Client ID):" FontSize="11.5" Foreground="{DynamicResource SettingsTextSecondaryBrush}" Margin="0,0,0,4"/>
+                                    <TextBox x:Name="DiscordAppIdTextBox"
+                                             Grid.Row="1"
+                                             Height="30"
+                                             Padding="8,5"
+                                             FontSize="12"
+                                             VerticalContentAlignment="Center"
+                                             Foreground="{DynamicResource SettingsTextPrimaryBrush}"
+                                             Background="{DynamicResource SettingsSubCardBackgroundBrush}"
+                                             BorderBrush="{DynamicResource SettingsSubCardBorderBrush}"
+                                             BorderThickness="1"/>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
                         <!-- Positioning and Reset Section -->
                         <Border Background="{DynamicResource SettingsCardBackgroundBrush}" CornerRadius="10" Padding="14,12" BorderBrush="{DynamicResource SettingsBorderBrush}" BorderThickness="1">
                             <Grid>

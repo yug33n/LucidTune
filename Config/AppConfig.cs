@@ -31,5 +31,9 @@ namespace LucidTune.Config
         public bool ShowVolumeControl { get; set; } = true;
         public string Theme { get; set; } = "Dark";
         public string AccentColor { get; set; } = "Yellow";
+
+        // Discord Rich Presence
+        public bool DiscordRpcEnabled { get; set; } = true;
+        public string DiscordApplicationId { get; set; } = "1560410469112750100";
     }
 }

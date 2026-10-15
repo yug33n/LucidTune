@@ -19,6 +19,7 @@ namespace LucidTune
         private readonly ConfigManager _configManager;
         private readonly HotkeyService _hotkeyService;
         private readonly FullscreenDetectorService _fullscreenService;
+        private readonly DiscordRpcService _discordRpcService;
         private readonly Geometry _playGeometry;
         private readonly Geometry _pauseGeometry;
 
@@ -47,9 +48,12 @@ namespace LucidTune
             _mediaService = new SmtcMediaService();
             _hotkeyService = new HotkeyService();
             _fullscreenService = new FullscreenDetectorService();
+            _discordRpcService = new DiscordRpcService(_configManager);
 
             _mediaService.TrackInfoChanged += OnTrackInfoChanged;
+            _mediaService.TrackInfoChanged += _discordRpcService.OnTrackInfoChanged;
             _mediaService.ProgressUpdated += OnProgressUpdated;
+            _mediaService.ProgressUpdated += _discordRpcService.OnProgressUpdated;
             _hotkeyService.HotkeyPressed += OnHotkeyPressed;
             _fullscreenService.FullscreenStateChanged += OnFullscreenStateChanged;
 
@@ -532,10 +536,16 @@ namespace LucidTune
         private void OnMainWindowClosing(object? sender, System.ComponentModel.CancelEventArgs e)
         {
             SaveCurrentPosition();
+            _discordRpcService.Dispose();
             _hotkeyService.Dispose();
             _fullscreenService.Dispose();
             _trayManager?.Dispose();
             _mediaService.Dispose();
+        }
+
+        public void UpdateDiscordRpcState()
+        {
+            _discordRpcService.UpdateClientState();
         }
 
         [DllImport("shell32.dll", CharSet = CharSet.Auto)]

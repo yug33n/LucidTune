@@ -119,6 +119,9 @@ namespace LucidTune.UI
             CompactModeCheckBox.IsChecked = cfg.CompactMode;
             ShowVolumeCheckBox.IsChecked = cfg.ShowVolumeControl;
 
+            EnableDiscordRpcCheckBox.IsChecked = cfg.DiscordRpcEnabled;
+            DiscordAppIdTextBox.Text = string.IsNullOrWhiteSpace(cfg.DiscordApplicationId) ? "1560410469112750100" : cfg.DiscordApplicationId;
+
             UpdateAllPreviews();
         }
 
@@ -528,10 +531,14 @@ namespace LucidTune.UI
             cfg.AccentColor = (AccentComboBox.SelectedItem as ThemeManager.AccentOption)?.Key ?? ThemeManager.AccentYellow;
             ThemeManager.ApplyTheme(cfg.Theme, cfg.AccentColor);
 
+            cfg.DiscordRpcEnabled = EnableDiscordRpcCheckBox.IsChecked == true;
+            cfg.DiscordApplicationId = string.IsNullOrWhiteSpace(DiscordAppIdTextBox.Text) ? "1560410469112750100" : DiscordAppIdTextBox.Text.Trim();
+
             _configManager.Save(cfg);
 
             AutoStartupService.SetAutoStart(autoStart);
             _mainWindow.RegisterAllConfiguredHotkeys();
+            _mainWindow.UpdateDiscordRpcState();
 
             Close();
         }
