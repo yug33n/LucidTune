@@ -132,11 +132,11 @@ namespace LucidTune.Services
                 {
                     Type = ActivityType.Listening,
                     Details = title,
-                    State = track.IsPlaying ? stateText : $"[Пауза] {stateText}",
+                    State = stateText,
                     Assets = new Assets
                     {
                         LargeImageKey = !string.IsNullOrEmpty(coverUrl) ? coverUrl : "logo",
-                        LargeImageText = title,
+                        LargeImageText = null,
                         SmallImageKey = "logo",
                         SmallImageText = "LucidTune"
                     },

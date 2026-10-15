@@ -42,6 +42,33 @@ namespace LucidTune.Services
 
             try
             {
+                // 1. Try Deezer Search API (fuzzy matching, accurate album art)
+                var deezerUrl = $"https://api.deezer.com/search?q={encodedQuery}&limit=1";
+                using var deezerResp = await HttpClient.GetAsync(deezerUrl, ct);
+                if (deezerResp.IsSuccessStatusCode)
+                {
+                    var json = await deezerResp.Content.ReadAsStringAsync(ct);
+                    using var doc = JsonDocument.Parse(json);
+                    if (doc.RootElement.TryGetProperty("data", out var data) && data.GetArrayLength() > 0)
+                    {
+                        var first = data[0];
+                        if (first.TryGetProperty("album", out var album) && album.TryGetProperty("cover_big", out var coverBig))
+                        {
+                            var url = coverBig.GetString();
+                            if (!string.IsNullOrEmpty(url))
+                            {
+                                Cache[cacheKey] = url;
+                                return url;
+                            }
+                        }
+                    }
+                }
+            }
+            catch { }
+
+            try
+            {
+                // 2. Fallback to iTunes Search API
                 var itunesUrl = $"https://itunes.apple.com/search?term={encodedQuery}&entity=song&limit=1";
                 using var response = await HttpClient.GetAsync(itunesUrl, ct);
                 if (response.IsSuccessStatusCode)
