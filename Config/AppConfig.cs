@@ -35,5 +35,8 @@ namespace LucidTune.Config
         // Discord Rich Presence
         public bool DiscordRpcEnabled { get; set; } = true;
         public string DiscordApplicationId { get; set; } = "1560410469112750100";
+        public string? DiscordYandexMusicAppId { get; set; }
+        public string? DiscordSpotifyAppId { get; set; }
+        public string? DiscordSoundCloudAppId { get; set; }
     }
 }
