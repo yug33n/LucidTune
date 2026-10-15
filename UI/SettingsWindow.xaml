@@ -613,7 +613,7 @@
 
                                 <CheckBox x:Name="EnableDiscordRpcCheckBox"
                                           Style="{StaticResource DarkCheckBoxStyle}"
-                                          Content="Включить статус в Discord (Rich Presence)"/>
+                                          Content="Включить статус в Discord"/>
                             </StackPanel>
                         </Border>
 
