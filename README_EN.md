@@ -5,7 +5,7 @@
 [![Platform: Windows](https://img.shields.io/badge/Platform-Windows%2010%20%7C%2011-0078D6.svg?logo=windows)](https://microsoft.com/windows)
 [![.NET 9.0](https://img.shields.io/badge/.NET-9.0%20WPF-512BD4.svg?logo=dotnet)](https://dotnet.microsoft.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Release: v1.0.0](https://img.shields.io/badge/Release-v1.0.0-4E75FF.svg)](https://github.com/yug33n/LucidTune/releases)
+[![Release: v1.0.3](https://img.shields.io/badge/Release-v1.0.3-4E75FF.svg)](https://github.com/yug33n/LucidTune/releases)
 
 **LucidTune** is an ultra-lightweight, customizable desktop overlay widget (Dynamic Island style) for Windows 10 and 11. It brings real-time media metadata, album artwork, track playback progress, and media controls directly above your apps and games with a frosted glass aesthetic and customizable global hotkeys.
 
@@ -18,6 +18,11 @@
 - Automatically captures media sessions from **Spotify, YouTube Music / Chrome, Edge, Firefox, Telegram, VLC, Yandex Music, AIMP**, and any other SMTC-compatible media player.
 - Live track titles, artist details, dynamic progress bar, and crisp album art with an elegant vector fallback.
 - Rapid track switching safety guards (debounce protection preventing null-reference crashes).
+
+### 🎮 Discord Rich Presence Integration
+- **Live Status in Profile**: Broadcasts current listening status, track title, artist, cover art, and real-time timeline directly to your Discord profile.
+- **Universal Streaming & Local Artwork Support**: Multi-engine cover art resolution via Yandex Music, Spotify (Deezer), Apple Music (iTunes), SoundCloud (Genius), plus direct cloud upload for local audio files.
+- **Project Link Button**: Includes a direct "View App on Website" button linking to your portfolio project page.
 
 ### 🎛️ Elegant Dynamic Island Overlay
 - **Frosted Glass Island Design**: Modern deep dark glass palette (`#D9111114`), smooth 18px corner radius, and neon blue accents (`#4E75FF`).
