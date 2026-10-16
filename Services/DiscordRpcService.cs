@@ -196,7 +196,7 @@ namespace LucidTune.Services
                         new Button
                         {
                             Label = "Скачать LucidTune",
-                            Url = "https://github.com/yug33n/LucidTune"
+                            Url = "https://yug33n.github.io/#projects-deck"
                         }
                     }
                 };
