@@ -129,10 +129,11 @@ namespace LucidTune.Services
 
                 var mediaProperties = await session.TryGetMediaPropertiesAsync();
                 BitmapImage? artwork = null;
+                byte[]? thumbnailBytes = null;
 
                 if (mediaProperties?.Thumbnail != null)
                 {
-                    artwork = await LoadThumbnailAsync(mediaProperties.Thumbnail);
+                    (artwork, thumbnailBytes) = await LoadThumbnailAsync(mediaProperties.Thumbnail);
                 }
 
                 UpdateTimelineState();
@@ -142,6 +143,7 @@ namespace LucidTune.Services
                     Title = string.IsNullOrWhiteSpace(mediaProperties?.Title) ? "Нет активного трека" : mediaProperties.Title.Trim(),
                     Artist = string.IsNullOrWhiteSpace(mediaProperties?.Artist) ? "Неизвестный исполнитель" : mediaProperties.Artist.Trim(),
                     Thumbnail = artwork,
+                    ThumbnailBytes = thumbnailBytes,
                     IsPlaying = _isPlaying,
                     HasActiveSession = playbackStatus != GlobalSystemMediaTransportControlsSessionPlaybackStatus.Closed,
                     Position = _lastReportedPosition,
@@ -220,13 +222,13 @@ namespace LucidTune.Services
             ProgressUpdated?.Invoke(currentPos, _trackDuration, progress);
         }
 
-        private static async Task<BitmapImage?> LoadThumbnailAsync(IRandomAccessStreamReference streamRef)
+        private static async Task<(BitmapImage? Image, byte[]? Bytes)> LoadThumbnailAsync(IRandomAccessStreamReference streamRef)
         {
             try
             {
                 using var readStream = await streamRef.OpenReadAsync();
                 var size = (int)readStream.Size;
-                if (size <= 0) return null;
+                if (size <= 0) return (null, null);
 
                 var bytes = new byte[size];
                 using var dataReader = new DataReader(readStream);
@@ -240,11 +242,11 @@ namespace LucidTune.Services
                 bitmap.EndInit();
                 bitmap.Freeze();
 
-                return bitmap;
+                return (bitmap, bytes);
             }
             catch
             {
-                return null;
+                return (null, null);
             }
         }
 

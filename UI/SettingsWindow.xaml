@@ -605,6 +605,18 @@
                             </StackPanel>
                         </Border>
 
+                        <!-- Discord Rich Presence Section -->
+                        <Border Background="{DynamicResource SettingsCardBackgroundBrush}" CornerRadius="10" Padding="14,12" Margin="0,0,0,14" BorderBrush="{DynamicResource SettingsBorderBrush}" BorderThickness="1">
+                            <StackPanel>
+                                <TextBlock Text="Интеграция с Discord" FontWeight="SemiBold" FontSize="13" Foreground="{DynamicResource SettingsTextPrimaryBrush}"/>
+                                <TextBlock Text="Отображение текущей песни, обложки и прогресса в профиле Discord." FontSize="11.5" Foreground="{DynamicResource SettingsTextSecondaryBrush}" Margin="0,2,0,8"/>
+
+                                <CheckBox x:Name="EnableDiscordRpcCheckBox"
+                                          Style="{StaticResource DarkCheckBoxStyle}"
+                                          Content="Включить статус в Discord"/>
+                            </StackPanel>
+                        </Border>
+
                         <!-- Hotkeys Section -->
                         <Border Background="{DynamicResource SettingsCardBackgroundBrush}" CornerRadius="10" Padding="14,12" Margin="0,0,0,14" BorderBrush="{DynamicResource SettingsBorderBrush}" BorderThickness="1">
                             <StackPanel>
