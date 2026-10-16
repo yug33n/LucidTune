@@ -195,7 +195,7 @@ namespace LucidTune.Services
                     {
                         new Button
                         {
-                            Label = "View on Website",
+                            Label = "View App on Website",
                             Url = "https://yug33n.github.io/#projects-deck"
                         }
                     }
