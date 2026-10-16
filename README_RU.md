@@ -5,7 +5,7 @@
 [![Platform: Windows](https://img.shields.io/badge/Platform-Windows%2010%20%7C%2011-0078D6.svg?logo=windows)](https://microsoft.com/windows)
 [![.NET 9.0](https://img.shields.io/badge/.NET-9.0%20WPF-512BD4.svg?logo=dotnet)](https://dotnet.microsoft.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Release: v1.0.0](https://img.shields.io/badge/Release-v1.0.0-4E75FF.svg)](https://github.com/yug33n/LucidTune/releases)
+[![Release: v1.0.3](https://img.shields.io/badge/Release-v1.0.3-4E75FF.svg)](https://github.com/yug33n/LucidTune/releases)
 
 **LucidTune** — это лёгкий, стильный и высокопроизводительный плавающий медиа-виджет (Dynamic Island) для Windows 10 и 11. Он отображает текущий трек, обложку альбома, автора и шкалу прогресса прямо поверх окон и игр, а также предоставляет удобное управление воспроизведением и гибкую настройку горячих клавиш.
 
@@ -18,6 +18,11 @@
 - Поддерживает любые популярные плееры и браузеры: **Spotify, Яндекс Музыка, VK Музыка, Chrome, Edge, Firefox, Telegram, VLC, AIMP** и др.
 - Отображает название трека, исполнителя, актуальную обложку альбома (с запасной векторной заглушкой) и живой прогресс трека.
 - Защита от сбоев при быстром переключении треков (debounce и проверка сессий).
+
+### 🎮 Интеграция с Discord (Rich Presence)
+- **Синхронизация музыки в профиле**: транслирует статус прослушивания, название песни, автора, обложку и шкалу прогресса в профиль Discord.
+- **Поддержка стримингов и локальных файлов**: автоопределение обложек через Яндекс Музыку, Spotify (Deezer), Apple Music (iTunes), SoundCloud (Genius) и прямая загрузка обложек для локальных MP3.
+- **Кнопка перехода на сайт**: стильная кнопка «View App on Website» с переходом к карточке проекта на сайте.
 
 ### 🎛️ Элегантный плавающий оверлей
 - **Дизайн в стиле тёмного матового стекла**: минималистичные скруглённые формы, мягкие тени и гармоничная неоново-синяя акцентная палитра (`#4E75FF`).
