@@ -531,8 +531,10 @@ namespace LucidTune
                     PlaceholderArt.Visibility = Visibility.Visible;
                 }
 
-                // ONLY update Adaptive Accent & Palette if the song actually changed!
-                if (isNewTrack)
+                // ONLY update Adaptive Accent & Palette if the song changed OR palette hasn't been extracted for this thumbnail yet
+                bool needsPaletteUpdate = isNewTrack || (_currentPalette == null && track.Thumbnail != null);
+
+                if (needsPaletteUpdate)
                 {
                     _currentTrackKey = newTrackKey;
 
@@ -581,13 +583,24 @@ namespace LucidTune
                         _configManager.CurrentConfig.AdaptiveBackgroundShimmer &&
                         _currentPalette != null)
                     {
-                        if (track.IsPlaying)
+                        if (AmbientShimmerLayer != null && AmbientShimmerLayer.Opacity < 0.1)
+                        {
+                            ApplyShimmerPalette(_currentPalette);
+                        }
+                        else if (track.IsPlaying)
                         {
                             StartShimmerAnimation();
                         }
                         else
                         {
                             StopShimmerAnimation();
+                        }
+                    }
+                    else
+                    {
+                        if (AmbientShimmerLayer != null && AmbientShimmerLayer.Opacity > 0.0)
+                        {
+                            ResetShimmerPalette();
                         }
                     }
                 }

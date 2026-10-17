@@ -228,9 +228,9 @@ namespace LucidTune.Services
                 {
                     PrimaryAccent = primaryColor,
                     SecondaryAccent = secondaryColor,
-                    AmbientShimmer1 = Color.FromArgb(0x40, primaryColor.R, primaryColor.G, primaryColor.B),
-                    AmbientShimmer2 = Color.FromArgb(0x28, secondaryColor.R, secondaryColor.G, secondaryColor.B),
-                    AmbientShimmer3 = Color.FromArgb(0x18, primaryColor.R, primaryColor.G, primaryColor.B)
+                    AmbientShimmer1 = Color.FromArgb(0x48, primaryColor.R, primaryColor.G, primaryColor.B),
+                    AmbientShimmer2 = Color.FromArgb(0x30, secondaryColor.R, secondaryColor.G, secondaryColor.B),
+                    AmbientShimmer3 = Color.FromArgb(0x1E, primaryColor.R, primaryColor.G, primaryColor.B)
                 };
             }
             catch (Exception ex)

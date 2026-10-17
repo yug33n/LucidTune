@@ -243,7 +243,7 @@
                             Opacity="0"
                             IsHitTestVisible="False">
                         <Border.Background>
-                            <LinearGradientBrush x:Name="ShimmerGradient" StartPoint="0.0,0.0" EndPoint="1.0,1.0" SpreadMethod="Pad">
+                            <LinearGradientBrush x:Name="ShimmerGradient" StartPoint="0.0,0.0" EndPoint="1.0,1.0" SpreadMethod="Reflect">
                                 <LinearGradientBrush.Transform>
                                     <TranslateTransform x:Name="ShimmerTranslate" X="0" Y="0"/>
                                 </LinearGradientBrush.Transform>
