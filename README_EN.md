@@ -5,13 +5,35 @@
 [![Platform: Windows](https://img.shields.io/badge/Platform-Windows%2010%20%7C%2011-0078D6.svg?logo=windows)](https://microsoft.com/windows)
 [![.NET 9.0](https://img.shields.io/badge/.NET-9.0%20WPF-512BD4.svg?logo=dotnet)](https://dotnet.microsoft.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Release: v1.0.3](https://img.shields.io/badge/Release-v1.0.3-4E75FF.svg)](https://github.com/yug33n/LucidTune/releases)
+[![Release: v2.0.0](https://img.shields.io/badge/Release-v2.0.0-4E75FF.svg)](https://github.com/yug33n/LucidTune/releases)
 
 **LucidTune** is an ultra-lightweight, customizable desktop overlay widget (Dynamic Island style) for Windows 10 and 11. It brings real-time media metadata, album artwork, track playback progress, and media controls directly above your apps and games with a frosted glass aesthetic and customizable global hotkeys.
 
 ---
 
-## ✨ Features
+## ✨ Features in v2.0.0
+
+### 🌈 Adaptive Palette (Cover Art Dynamic Color)
+- **Automatic Color Extraction**: Dynamically samples the dominant and vibrant hues from current album art and applies them in real time across widget accents, buttons, and badges.
+- **Graceful Fallback**: Automatically reverts to user's chosen static accent theme when cover art is missing or feature is disabled. Enabled by default.
+
+### 💿 Vinyl Record Sleeve Mode
+- **Realistic Vinyl Disc**: Album cover acts as a stylish record sleeve; a micro-grooved vinyl record peeks out and spins smoothly during playback.
+- **Adaptive Width**: Expands widget width gracefully when active and pauses rotation on track pause. Fully toggleable in Settings.
+
+### 🧲 Screen Edge & Center Snapping
+- **Magnetic Docking**: While dragging the widget across the screen, it gently snaps to monitor boundaries (with an aesthetic floating dock padding) and to the horizontal center.
+- Can be disabled in Settings for freeform pixel-level positioning.
+
+### 👻 Streamer Mode (Anti-Screen Capture for OBS & Discord)
+- **Invisible to Stream Captures**: Utilizes Win32 `WDA_EXCLUDEFROMCAPTURE` technology so the overlay is visible on your monitor but completely invisible to OBS Studio, Discord Screen Share, and screenshot capture tools.
+- Perfect for streamers, gamers, and content creators.
+
+### 🔔 Quiet GitHub Update Checker
+- **Unobtrusive Release Alerts**: Silently queries the GitHub Releases API and displays a banner inside Settings when a new version is available, complete with a one-click download button.
+
+### ✨ Redesigned UI Controls & Checkboxes
+- **Modern Dark Checkboxes**: Handcrafted dark frosted glass checkboxes with smooth rounded corners, vector checkmarks, and accent glow replacing standard Windows controls.
 
 ### 🎶 Windows Media (SMTC) Integration
 - Seamlessly synchronizes with Windows **System Media Transport Controls**.
@@ -22,17 +44,17 @@
 ### 🎮 Discord Rich Presence Integration
 - **Live Status in Profile**: Broadcasts current listening status, track title, artist, cover art, and real-time timeline directly to your Discord profile.
 - **Universal Streaming & Local Artwork Support**: Multi-engine cover art resolution via Yandex Music, Spotify (Deezer), Apple Music (iTunes), SoundCloud (Genius), plus direct cloud upload for local audio files.
+- **Browser Video Filtering**: Automatically filters out video streaming sites (YouTube, Twitch, Netflix) from cluttering Discord status.
 - **Project Link Button**: Includes a direct "View App on Website" button linking to your portfolio project page.
 
 ### 🎛️ Elegant Dynamic Island Overlay
-- **Frosted Glass Island Design**: Modern deep dark glass palette (`#D9111114`), smooth 18px corner radius, and neon blue accents (`#4E75FF`).
+- **Frosted Glass Island Design**: Modern deep dark glass palette (`#D9111114`), smooth 18px corner radius, and dynamic accents.
 - **Balanced Playback Controls**: Pixel-perfect Previous, Play/Pause, and Next buttons with matching stroke weights and fluid hover states.
 - **Cinematic Taskbar Minimize Animation**: Smooth slide-down & scale transition when hiding into the taskbar, and an upward slide reveal when showing.
-- **Hover-Reveal Close Button**: Floating circular button emerges gracefully from the darkness when hovering over the widget and disappears when unhovered.
 - **Real-Time Opacity Slider**: Adjust widget transparency from 20% to 100% with live overlay feedback.
 
 ### ⚙️ Rich Configuration Window
-- **Position Presets**: Instantly dock the widget to Top Left, Top Center, Top Right, Bottom Left, Bottom Center, Bottom Right, or Custom coordinates with automated display boundary clamping.
+- **Center Reset**: One-click button to reset widget position to bottom-center.
 - **Global Hotkey Customization**:
   - Show / Hide widget (defaults to `Alt + M`).
   - Play / Pause.
