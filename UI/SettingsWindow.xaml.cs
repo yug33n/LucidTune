@@ -582,7 +582,7 @@ namespace LucidTune.UI
                 else
                 {
                     UpdateBanner.Visibility = Visibility.Collapsed;
-                    CheckUpdatesButton.Content = "Актуально ✓";
+                    CheckUpdatesButton.Content = "Актуально";
                     await Task.Delay(2500);
                 }
             }
