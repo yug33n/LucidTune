@@ -47,11 +47,16 @@ namespace LucidTune.Services
         public static string CurrentTheme { get; private set; } = DarkTheme;
         public static string CurrentAccent { get; private set; } = AccentYellow;
         public static bool IsDark => CurrentTheme == DarkTheme;
+        public static bool IsDynamicAccentActive { get; private set; }
+        public static Color? CurrentDynamicAccentColor { get; private set; }
 
         public static event Action<string, string>? ThemeChanged;
 
         public static void ApplyTheme(string? theme, string? accent = null)
         {
+            IsDynamicAccentActive = false;
+            CurrentDynamicAccentColor = null;
+
             if (!string.IsNullOrWhiteSpace(theme))
             {
                 CurrentTheme = string.Equals(theme, LightTheme, StringComparison.OrdinalIgnoreCase)
@@ -75,6 +80,49 @@ namespace LucidTune.Services
 
             ApplyAccentPalette(CurrentAccent, IsDark);
 
+            ThemeChanged?.Invoke(CurrentTheme, CurrentAccent);
+        }
+
+        public static void ApplyDynamicAccent(Color accentColor)
+        {
+            CurrentDynamicAccentColor = accentColor;
+            IsDynamicAccentActive = true;
+
+            SetBrush("AccentBrush", accentColor);
+
+            var hoverColor = Color.FromRgb(
+                (byte)Math.Min(255, accentColor.R + 25),
+                (byte)Math.Min(255, accentColor.G + 25),
+                (byte)Math.Min(255, accentColor.B + 25)
+            );
+            SetBrush("AccentHoverBrush", hoverColor);
+
+            double luminance = (0.299 * accentColor.R + 0.587 * accentColor.G + 0.114 * accentColor.B) / 255.0;
+            Color textColor = luminance > 0.65 ? Color.FromRgb(0x14, 0x14, 0x16) : Color.FromRgb(0xFF, 0xFF, 0xFF);
+            SetBrush("AccentTextBrush", textColor);
+
+            if (IsDark)
+            {
+                SetBrush("SettingsBadgeBackgroundBrush", Color.FromArgb(0x40, accentColor.R, accentColor.G, accentColor.B));
+                SetBrush("SettingsBadgeTextBrush", hoverColor);
+            }
+            else
+            {
+                SetBrush("SettingsBadgeBackgroundBrush", Color.FromArgb(0x30, accentColor.R, accentColor.G, accentColor.B));
+                SetBrush("SettingsBadgeTextBrush", accentColor);
+            }
+
+            ThemeChanged?.Invoke(CurrentTheme, "Dynamic");
+        }
+
+        public static void RestoreStaticAccent()
+        {
+            if (!IsDynamicAccentActive) return;
+
+            IsDynamicAccentActive = false;
+            CurrentDynamicAccentColor = null;
+
+            ApplyAccentPalette(CurrentAccent, IsDark);
             ThemeChanged?.Invoke(CurrentTheme, CurrentAccent);
         }
 

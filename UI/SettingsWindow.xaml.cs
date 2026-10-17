@@ -17,6 +17,7 @@ namespace LucidTune.UI
         private bool _isInitializing = true;
         private double _targetVerticalOffset;
         private bool _isSmoothScrolling;
+        private string? _latestReleaseUrl;
 
         private static readonly string[] ModifiersList = ["Alt", "Ctrl", "Shift", "Ctrl+Alt", "Win", "None"];
         private static readonly List<string> CommonKeys = ["None", "Space", "Right", "Left", "Up", "Down", "M", "P", "L", "J", "Tab", "Enter"];
@@ -53,9 +54,30 @@ namespace LucidTune.UI
                 _mainWindow.ApplyWidgetOpacity(_configManager.CurrentConfig.WidgetOpacity);
                 _mainWindow.ApplyCompactMode(_configManager.CurrentConfig.CompactMode);
                 _mainWindow.ApplyVolumeControl(_configManager.CurrentConfig.ShowVolumeControl);
+                _mainWindow.ApplyCaptureAffinity(_configManager.CurrentConfig.ExcludeFromCapture);
                 ThemeManager.ApplyTheme(_configManager.CurrentConfig.Theme, _configManager.CurrentConfig.AccentColor);
+                _mainWindow.ApplyAdaptiveColor(_configManager.CurrentConfig.AdaptiveColorEnabled);
+                _mainWindow.ApplyBackgroundShimmer(_configManager.CurrentConfig.AdaptiveBackgroundShimmer);
             };
             UpdateOverlayStatus(_mainWindow.IsOverlayVisible);
+
+            Loaded += async (s, e) =>
+            {
+                try
+                {
+                    var result = await UpdateCheckService.CheckForUpdatesAsync();
+                    if (result.IsUpdateAvailable && !string.IsNullOrEmpty(result.ReleaseUrl))
+                    {
+                        _latestReleaseUrl = result.ReleaseUrl;
+                        UpdateTitleText.Text = $"Доступна новая версия LucidTune v{result.LatestVersion}!";
+                        UpdateBanner.Visibility = Visibility.Visible;
+                    }
+                }
+                catch
+                {
+                    // Ignore background update check failures
+                }
+            };
         }
 
         private void PopulateAllBoxes()
@@ -119,7 +141,16 @@ namespace LucidTune.UI
             CompactModeCheckBox.IsChecked = cfg.CompactMode;
             ShowVolumeCheckBox.IsChecked = cfg.ShowVolumeControl;
 
+            AdaptiveColorCheckBox.IsChecked = cfg.AdaptiveColorEnabled;
+            AdaptiveShimmerCheckBox.IsChecked = cfg.AdaptiveBackgroundShimmer;
+            AdaptiveShimmerCheckBox.IsEnabled = cfg.AdaptiveColorEnabled;
+            AdaptiveShimmerCheckBox.Opacity = cfg.AdaptiveColorEnabled ? 1.0 : 0.45;
+
+            SnapToEdgesCheckBox.IsChecked = cfg.SnapToScreenEdges;
+            ExcludeFromCaptureCheckBox.IsChecked = cfg.ExcludeFromCapture;
+
             EnableDiscordRpcCheckBox.IsChecked = cfg.DiscordRpcEnabled;
+            IgnoreBrowserVideosCheckBox.IsChecked = cfg.DiscordIgnoreBrowserVideos;
 
             UpdateAllPreviews();
         }
@@ -497,6 +528,82 @@ namespace LucidTune.UI
             _configManager.Save(cfg);
         }
 
+        private void OnAdaptiveColorChanged(object sender, RoutedEventArgs e)
+        {
+            if (_isInitializing) return;
+            bool isAdaptive = AdaptiveColorCheckBox.IsChecked == true;
+            AdaptiveShimmerCheckBox.IsEnabled = isAdaptive;
+            AdaptiveShimmerCheckBox.Opacity = isAdaptive ? 1.0 : 0.45;
+            _mainWindow.ApplyAdaptiveColor(isAdaptive);
+        }
+
+        private void OnAdaptiveShimmerChanged(object sender, RoutedEventArgs e)
+        {
+            if (_isInitializing) return;
+            bool isShimmer = AdaptiveShimmerCheckBox.IsChecked == true;
+            _mainWindow.ApplyBackgroundShimmer(isShimmer);
+        }
+
+        private void OnDownloadUpdateClick(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                if (!string.IsNullOrEmpty(_latestReleaseUrl))
+                {
+                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                    {
+                        FileName = _latestReleaseUrl,
+                        UseShellExecute = true
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[OnDownloadUpdateClick Exception] {ex.Message}");
+            }
+        }
+
+        private async void OnCheckUpdatesClick(object sender, RoutedEventArgs e)
+        {
+            if (CheckUpdatesButton == null) return;
+            CheckUpdatesButton.IsEnabled = false;
+            CheckUpdatesButton.Content = "Проверка...";
+
+            try
+            {
+                var result = await UpdateCheckService.CheckForUpdatesAsync();
+                if (result.IsUpdateAvailable && !string.IsNullOrEmpty(result.ReleaseUrl))
+                {
+                    _latestReleaseUrl = result.ReleaseUrl;
+                    UpdateTitleText.Text = $"Доступна новая версия LucidTune v{result.LatestVersion}!";
+                    UpdateBanner.Visibility = Visibility.Visible;
+                    CheckUpdatesButton.Content = "Обновление!";
+                }
+                else
+                {
+                    UpdateBanner.Visibility = Visibility.Collapsed;
+                    CheckUpdatesButton.Content = "Актуально";
+                    await Task.Delay(2500);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[OnCheckUpdatesClick Exception] {ex.Message}");
+                CheckUpdatesButton.Content = "Ошибка";
+                await Task.Delay(2000);
+            }
+            finally
+            {
+                CheckUpdatesButton.IsEnabled = true;
+                CheckUpdatesButton.Content = "Обновления";
+            }
+        }
+
+        private void OnDismissUpdateClick(object sender, RoutedEventArgs e)
+        {
+            UpdateBanner.Visibility = Visibility.Collapsed;
+        }
+
         private void OnSaveClick(object sender, RoutedEventArgs e)
         {
             var cfg = _configManager.CurrentConfig;
@@ -520,17 +627,29 @@ namespace LucidTune.UI
             cfg.WidgetOpacity = OpacitySlider.Value / 100.0;
             _mainWindow.ApplyWidgetOpacity(cfg.WidgetOpacity);
 
-            cfg.CompactMode = CompactModeCheckBox.IsChecked == true;
-            _mainWindow.ApplyCompactMode(cfg.CompactMode);
+            bool compact = CompactModeCheckBox.IsChecked == true;
+            cfg.CompactMode = compact;
+            _mainWindow.ApplyCompactMode(compact);
 
             cfg.ShowVolumeControl = ShowVolumeCheckBox.IsChecked == true;
             _mainWindow.ApplyVolumeControl(cfg.ShowVolumeControl);
 
+            cfg.AdaptiveColorEnabled = AdaptiveColorCheckBox.IsChecked == true;
+            cfg.AdaptiveBackgroundShimmer = AdaptiveShimmerCheckBox.IsChecked == true;
+
+            cfg.SnapToScreenEdges = SnapToEdgesCheckBox.IsChecked == true;
+
+            cfg.ExcludeFromCapture = ExcludeFromCaptureCheckBox.IsChecked == true;
+            _mainWindow.ApplyCaptureAffinity(cfg.ExcludeFromCapture);
+
             cfg.Theme = (ThemeComboBox.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? ThemeManager.DarkTheme;
             cfg.AccentColor = (AccentComboBox.SelectedItem as ThemeManager.AccentOption)?.Key ?? ThemeManager.AccentYellow;
             ThemeManager.ApplyTheme(cfg.Theme, cfg.AccentColor);
+            _mainWindow.ApplyAdaptiveColor(cfg.AdaptiveColorEnabled);
+            _mainWindow.ApplyBackgroundShimmer(cfg.AdaptiveBackgroundShimmer);
 
             cfg.DiscordRpcEnabled = EnableDiscordRpcCheckBox.IsChecked == true;
+            cfg.DiscordIgnoreBrowserVideos = IgnoreBrowserVideosCheckBox.IsChecked ?? true;
 
             _configManager.Save(cfg);
 
@@ -554,7 +673,10 @@ namespace LucidTune.UI
             _mainWindow.ApplyWidgetOpacity(_configManager.CurrentConfig.WidgetOpacity);
             _mainWindow.ApplyCompactMode(_configManager.CurrentConfig.CompactMode);
             _mainWindow.ApplyVolumeControl(_configManager.CurrentConfig.ShowVolumeControl);
+            _mainWindow.ApplyCaptureAffinity(_configManager.CurrentConfig.ExcludeFromCapture);
             ThemeManager.ApplyTheme(_configManager.CurrentConfig.Theme, _configManager.CurrentConfig.AccentColor);
+            _mainWindow.ApplyAdaptiveColor(_configManager.CurrentConfig.AdaptiveColorEnabled);
+            _mainWindow.ApplyBackgroundShimmer(_configManager.CurrentConfig.AdaptiveBackgroundShimmer);
             Close();
         }
     }

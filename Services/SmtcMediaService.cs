@@ -135,6 +135,13 @@ namespace LucidTune.Services
                 {
                     (artwork, thumbnailBytes) = await LoadThumbnailAsync(mediaProperties.Thumbnail);
                 }
+                else if (CurrentTrack?.Thumbnail != null &&
+                         string.Equals(CurrentTrack.Title, mediaProperties?.Title?.Trim(), StringComparison.OrdinalIgnoreCase) &&
+                         string.Equals(CurrentTrack.Artist, mediaProperties?.Artist?.Trim(), StringComparison.OrdinalIgnoreCase))
+                {
+                    artwork = CurrentTrack.Thumbnail;
+                    thumbnailBytes = CurrentTrack.ThumbnailBytes;
+                }
 
                 UpdateTimelineState();
 
@@ -148,7 +155,8 @@ namespace LucidTune.Services
                     HasActiveSession = playbackStatus != GlobalSystemMediaTransportControlsSessionPlaybackStatus.Closed,
                     Position = _lastReportedPosition,
                     Duration = _trackDuration,
-                    SourceAppUserModelId = session.SourceAppUserModelId
+                    SourceAppUserModelId = session.SourceAppUserModelId,
+                    PlaybackType = mediaProperties?.PlaybackType?.ToString()
                 };
 
                 CurrentTrack = trackInfo;

@@ -32,6 +32,10 @@ namespace LucidTune
         private bool _hiddenByFullscreen;
         private bool _isAnimating;
         private SettingsWindow? _settingsWindow;
+        private MediaTrackInfo? _lastTrackInfo;
+        private Storyboard? _shimmerStoryboard;
+        private string? _currentTrackKey;
+        private ExtractedPalette? _currentPalette;
 
         public bool IsOverlayVisible => _isWindowVisible;
         public event Action<bool>? OverlayVisibilityChanged;
@@ -73,6 +77,8 @@ namespace LucidTune
                 SyncVolumeFromSystem();
 
                 var hwnd = new WindowInteropHelper(this).Handle;
+                ApplyCaptureAffinity(_configManager.CurrentConfig.ExcludeFromCapture);
+
                 _hotkeyService.Initialize(hwnd);
                 RegisterAllConfiguredHotkeys();
                 _hotkeyService.HotkeyTriggered += OnHotkeyTriggered;
@@ -120,13 +126,166 @@ namespace LucidTune
                 ArtBlock.Visibility = Visibility.Collapsed;
                 TrackInfoGrid.Margin = new Thickness(14, 0, 8, 0);
                 IslandContainer.Width = 248;
+                Width = 360;
             }
             else
             {
-                ArtColumn.Width = new GridLength(62);
                 ArtBlock.Visibility = Visibility.Visible;
                 TrackInfoGrid.Margin = new Thickness(10, 0, 8, 0);
+                ArtColumn.Width = new GridLength(62);
                 IslandContainer.Width = 310;
+                Width = 360;
+            }
+        }
+
+        public void ApplyCaptureAffinity(bool exclude)
+        {
+            try
+            {
+                var hwnd = new WindowInteropHelper(this).Handle;
+                if (hwnd == IntPtr.Zero) return;
+
+                if (exclude)
+                {
+                    if (!SetWindowDisplayAffinity(hwnd, WDA_EXCLUDEFROMCAPTURE))
+                    {
+                        SetWindowDisplayAffinity(hwnd, WDA_MONITOR);
+                    }
+                }
+                else
+                {
+                    SetWindowDisplayAffinity(hwnd, WDA_NONE);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ApplyCaptureAffinity Exception] {ex.Message}");
+            }
+        }
+
+        public void ApplyAdaptiveColor(bool enabled)
+        {
+            if (enabled && _lastTrackInfo?.Thumbnail != null)
+            {
+                if (_currentPalette == null)
+                {
+                    _currentPalette = ColorExtractor.ExtractPalette(_lastTrackInfo.Thumbnail);
+                }
+
+                if (_currentPalette != null)
+                {
+                    ThemeManager.ApplyDynamicAccent(_currentPalette.PrimaryAccent);
+                    if (_configManager.CurrentConfig.AdaptiveBackgroundShimmer)
+                    {
+                        ApplyShimmerPalette(_currentPalette);
+                    }
+                    else
+                    {
+                        ResetShimmerPalette();
+                    }
+                    return;
+                }
+            }
+
+            _currentPalette = null;
+            ThemeManager.RestoreStaticAccent();
+            ResetShimmerPalette();
+        }
+
+        public void ApplyBackgroundShimmer(bool enabled)
+        {
+            if (enabled && _configManager.CurrentConfig.AdaptiveColorEnabled && _lastTrackInfo?.Thumbnail != null)
+            {
+                if (_currentPalette == null)
+                {
+                    _currentPalette = ColorExtractor.ExtractPalette(_lastTrackInfo.Thumbnail);
+                }
+
+                if (_currentPalette != null)
+                {
+                    ApplyShimmerPalette(_currentPalette);
+                    return;
+                }
+            }
+
+            ResetShimmerPalette();
+        }
+
+        private void ApplyShimmerPalette(ExtractedPalette palette)
+        {
+            if (ShimmerStop1 == null || ShimmerStop2 == null || ShimmerStop3 == null || AmbientShimmerLayer == null) return;
+
+            ShimmerStop1.Color = palette.AmbientShimmer1;
+            ShimmerStop2.Color = palette.AmbientShimmer2;
+            ShimmerStop3.Color = palette.AmbientShimmer3;
+
+            var fadeIn = new DoubleAnimation(1.0, TimeSpan.FromMilliseconds(450))
+            {
+                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+            };
+            AmbientShimmerLayer.BeginAnimation(UIElement.OpacityProperty, fadeIn);
+
+            if (_lastTrackInfo?.IsPlaying == true)
+            {
+                StartShimmerAnimation();
+            }
+            else
+            {
+                StopShimmerAnimation();
+            }
+        }
+
+        private void ResetShimmerPalette()
+        {
+            StopShimmerAnimation();
+            if (AmbientShimmerLayer == null) return;
+
+            var fadeOut = new DoubleAnimation(0.0, TimeSpan.FromMilliseconds(300))
+            {
+                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseIn }
+            };
+            AmbientShimmerLayer.BeginAnimation(UIElement.OpacityProperty, fadeOut);
+        }
+
+        private void StartShimmerAnimation()
+        {
+            if (_shimmerStoryboard != null || ShimmerTranslate == null) return;
+
+            var animX = new DoubleAnimation(-0.35, 0.35, TimeSpan.FromSeconds(8))
+            {
+                AutoReverse = true,
+                RepeatBehavior = RepeatBehavior.Forever,
+                EasingFunction = new SineEase { EasingMode = EasingMode.EaseInOut }
+            };
+
+            var animY = new DoubleAnimation(-0.25, 0.25, TimeSpan.FromSeconds(11))
+            {
+                AutoReverse = true,
+                RepeatBehavior = RepeatBehavior.Forever,
+                EasingFunction = new SineEase { EasingMode = EasingMode.EaseInOut }
+            };
+
+            Storyboard.SetTarget(animX, ShimmerTranslate);
+            Storyboard.SetTargetProperty(animX, new PropertyPath(TranslateTransform.XProperty));
+
+            Storyboard.SetTarget(animY, ShimmerTranslate);
+            Storyboard.SetTargetProperty(animY, new PropertyPath(TranslateTransform.YProperty));
+
+            _shimmerStoryboard = new Storyboard();
+            _shimmerStoryboard.Children.Add(animX);
+            _shimmerStoryboard.Children.Add(animY);
+            _shimmerStoryboard.Begin();
+        }
+
+        private void StopShimmerAnimation()
+        {
+            if (_shimmerStoryboard == null) return;
+            _shimmerStoryboard.Stop();
+            _shimmerStoryboard = null;
+            if (ShimmerTranslate != null)
+            {
+                ShimmerTranslate.X = 0;
+                ShimmerTranslate.Y = 0;
             }
         }
 
@@ -340,12 +499,28 @@ namespace LucidTune
         {
             Dispatcher.Invoke(() =>
             {
+                // Unique key to distinguish different songs
+                string newTrackKey = $"{track.SourceAppUserModelId}|{track.Artist}|{track.Title}".Trim();
+                bool isNewTrack = !string.Equals(newTrackKey, _currentTrackKey, StringComparison.OrdinalIgnoreCase);
+
+                // Prevent seeking/scrubbing glitches:
+                // If it is the SAME track and incoming thumbnail is null, retain previous valid thumbnail
+                if (!isNewTrack && track.Thumbnail == null && _lastTrackInfo?.Thumbnail != null)
+                {
+                    track.Thumbnail = _lastTrackInfo.Thumbnail;
+                    track.ThumbnailBytes = _lastTrackInfo.ThumbnailBytes;
+                }
+
+                _lastTrackInfo = track;
                 TitleText.Text = track.Title;
                 ArtistText.Text = track.Artist;
 
                 if (track.Thumbnail != null)
                 {
-                    AlbumArtImage.Source = track.Thumbnail;
+                    if (isNewTrack || AlbumArtImage.Source == null)
+                    {
+                        AlbumArtImage.Source = track.Thumbnail;
+                    }
                     AlbumArtImage.Visibility = Visibility.Visible;
                     PlaceholderArt.Visibility = Visibility.Collapsed;
                 }
@@ -354,6 +529,80 @@ namespace LucidTune
                     AlbumArtImage.Source = null;
                     AlbumArtImage.Visibility = Visibility.Collapsed;
                     PlaceholderArt.Visibility = Visibility.Visible;
+                }
+
+                // ONLY update Adaptive Accent & Palette if the song changed OR palette hasn't been extracted for this thumbnail yet
+                bool needsPaletteUpdate = isNewTrack || (_currentPalette == null && track.Thumbnail != null);
+
+                if (needsPaletteUpdate)
+                {
+                    _currentTrackKey = newTrackKey;
+
+                    if (_configManager.CurrentConfig.AdaptiveColorEnabled)
+                    {
+                        if (track.Thumbnail != null)
+                        {
+                            _currentPalette = ColorExtractor.ExtractPalette(track.Thumbnail);
+                            if (_currentPalette != null)
+                            {
+                                ThemeManager.ApplyDynamicAccent(_currentPalette.PrimaryAccent);
+                                if (_configManager.CurrentConfig.AdaptiveBackgroundShimmer)
+                                {
+                                    ApplyShimmerPalette(_currentPalette);
+                                }
+                                else
+                                {
+                                    ResetShimmerPalette();
+                                }
+                            }
+                            else
+                            {
+                                _currentPalette = null;
+                                ThemeManager.RestoreStaticAccent();
+                                ResetShimmerPalette();
+                            }
+                        }
+                        else
+                        {
+                            _currentPalette = null;
+                            ThemeManager.RestoreStaticAccent();
+                            ResetShimmerPalette();
+                        }
+                    }
+                    else
+                    {
+                        _currentPalette = null;
+                        ThemeManager.RestoreStaticAccent();
+                        ResetShimmerPalette();
+                    }
+                }
+                else
+                {
+                    // Same track: just sync shimmer play/pause state without flickering colors!
+                    if (_configManager.CurrentConfig.AdaptiveColorEnabled &&
+                        _configManager.CurrentConfig.AdaptiveBackgroundShimmer &&
+                        _currentPalette != null)
+                    {
+                        if (AmbientShimmerLayer != null && AmbientShimmerLayer.Opacity < 0.1)
+                        {
+                            ApplyShimmerPalette(_currentPalette);
+                        }
+                        else if (track.IsPlaying)
+                        {
+                            StartShimmerAnimation();
+                        }
+                        else
+                        {
+                            StopShimmerAnimation();
+                        }
+                    }
+                    else
+                    {
+                        if (AmbientShimmerLayer != null && AmbientShimmerLayer.Opacity > 0.0)
+                        {
+                            ResetShimmerPalette();
+                        }
+                    }
                 }
 
                 ArtContainer.Opacity = track.IsPlaying ? 1.0 : 0.65;
@@ -393,6 +642,10 @@ namespace LucidTune
             if (e.ButtonState == MouseButtonState.Pressed)
             {
                 DragMove();
+                if (_configManager.CurrentConfig.SnapToScreenEdges)
+                {
+                    SnapToScreenEdges();
+                }
                 SaveCurrentPosition();
             }
         }
@@ -582,12 +835,129 @@ namespace LucidTune
             catch { }
         }
 
+        private void SnapToScreenEdges()
+        {
+            try
+            {
+                var hwnd = new WindowInteropHelper(this).Handle;
+                if (hwnd == IntPtr.Zero) return;
+
+                IntPtr hMonitor = MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST);
+                if (hMonitor == IntPtr.Zero) return;
+
+                var mi = new MONITORINFO { cbSize = Marshal.SizeOf<MONITORINFO>() };
+                if (!GetMonitorInfo(hMonitor, ref mi)) return;
+
+                var dpi = VisualTreeHelper.GetDpi(this);
+                double dpiX = dpi.DpiScaleX;
+                double dpiY = dpi.DpiScaleY;
+
+                double workLeft = mi.rcWork.Left / dpiX;
+                double workTop = mi.rcWork.Top / dpiY;
+                double workRight = mi.rcWork.Right / dpiX;
+                double workBottom = mi.rcWork.Bottom / dpiY;
+                double workWidth = workRight - workLeft;
+
+                double cardWidth = IslandContainer.ActualWidth > 0 ? IslandContainer.ActualWidth : IslandContainer.Width;
+                double cardHeight = IslandContainer.ActualHeight > 0 ? IslandContainer.ActualHeight : IslandContainer.Height;
+
+                double cardOffsetX = (Width - cardWidth) / 2.0;
+                double cardOffsetY = 20.0;
+
+                double visibleLeft = Left + cardOffsetX;
+                double visibleRight = visibleLeft + cardWidth;
+                double visibleTop = Top + cardOffsetY;
+                double visibleBottom = visibleTop + cardHeight;
+
+                const double snapThreshold = 24.0;
+                const double screenMargin = 12.0;
+
+                double newVisibleLeft = visibleLeft;
+                double newVisibleTop = visibleTop;
+
+                // Left Edge Snap
+                if (Math.Abs(visibleLeft - (workLeft + screenMargin)) <= snapThreshold ||
+                    (visibleLeft < workLeft + screenMargin && visibleLeft >= workLeft - 30))
+                {
+                    newVisibleLeft = workLeft + screenMargin;
+                }
+                // Right Edge Snap
+                else if (Math.Abs(visibleRight - (workRight - screenMargin)) <= snapThreshold ||
+                         (visibleRight > workRight - screenMargin && visibleRight <= workRight + 30))
+                {
+                    newVisibleLeft = workRight - screenMargin - cardWidth;
+                }
+                // Horizontal Center Snap
+                else
+                {
+                    double workCenterX = workLeft + workWidth / 2.0;
+                    double visibleCenterX = visibleLeft + cardWidth / 2.0;
+                    if (Math.Abs(visibleCenterX - workCenterX) <= snapThreshold)
+                    {
+                        newVisibleLeft = workCenterX - cardWidth / 2.0;
+                    }
+                }
+
+                // Top Edge Snap
+                if (Math.Abs(visibleTop - (workTop + screenMargin)) <= snapThreshold ||
+                    (visibleTop < workTop + screenMargin && visibleTop >= workTop - 30))
+                {
+                    newVisibleTop = workTop + screenMargin;
+                }
+                // Bottom Edge Snap
+                else if (Math.Abs(visibleBottom - (workBottom - screenMargin)) <= snapThreshold ||
+                         (visibleBottom > workBottom - screenMargin && visibleBottom <= workBottom + 30))
+                {
+                    newVisibleTop = workBottom - screenMargin - cardHeight;
+                }
+
+                Left = newVisibleLeft - cardOffsetX;
+                Top = newVisibleTop - cardOffsetY;
+            }
+            catch
+            {
+                // Ignore snapping exception
+            }
+        }
+
         private void SaveCurrentPosition()
         {
             var config = _configManager.CurrentConfig;
             config.WindowX = Left;
             config.WindowY = Top;
             _configManager.Save(config);
+        }
+
+        private const uint WDA_NONE = 0x00000000;
+        private const uint WDA_MONITOR = 0x00000001;
+        private const uint WDA_EXCLUDEFROMCAPTURE = 0x00000011;
+        private const uint MONITOR_DEFAULTTONEAREST = 0x00000002;
+
+        [DllImport("user32.dll", SetLastError = true)]
+        private static extern bool SetWindowDisplayAffinity(IntPtr hWnd, uint dwAffinity);
+
+        [DllImport("user32.dll")]
+        private static extern IntPtr MonitorFromWindow(IntPtr hwnd, uint dwFlags);
+
+        [DllImport("user32.dll", SetLastError = true)]
+        private static extern bool GetMonitorInfo(IntPtr hMonitor, ref MONITORINFO lpmi);
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct RECT
+        {
+            public int Left;
+            public int Top;
+            public int Right;
+            public int Bottom;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct MONITORINFO
+        {
+            public int cbSize;
+            public RECT rcMonitor;
+            public RECT rcWork;
+            public uint dwFlags;
         }
     }
 }
