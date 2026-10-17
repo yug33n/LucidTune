@@ -15,8 +15,10 @@ namespace LucidTune.Services
 
     public static class UpdateCheckService
     {
-        public const string CurrentVersion = "2.0.0";
+        public const string CurrentVersion = "1.0.0";
+        public const string TargetReleaseVersion = "2.0.0";
         private const string ReleasesApiUrl = "https://api.github.com/repos/yug33n/LucidTune/releases/latest";
+        public const string FallbackReleaseUrl = "https://github.com/yug33n/LucidTune/releases";
         private static readonly HttpClient HttpClient = new()
         {
             Timeout = TimeSpan.FromSeconds(5)
@@ -32,36 +34,57 @@ namespace LucidTune.Services
             try
             {
                 using var response = await HttpClient.GetAsync(ReleasesApiUrl);
-                if (!response.IsSuccessStatusCode)
+                if (response.IsSuccessStatusCode)
                 {
-                    return new UpdateCheckResult { IsUpdateAvailable = false };
+                    var json = await response.Content.ReadAsStringAsync();
+                    using var doc = JsonDocument.Parse(json);
+                    var root = doc.RootElement;
+
+                    string tagName = root.TryGetProperty("tag_name", out var tagElem) ? (tagElem.GetString() ?? string.Empty) : string.Empty;
+                    string htmlUrl = root.TryGetProperty("html_url", out var urlElem) ? (urlElem.GetString() ?? string.Empty) : string.Empty;
+                    string releaseTitle = root.TryGetProperty("name", out var nameElem) ? (nameElem.GetString() ?? string.Empty) : string.Empty;
+
+                    if (!string.IsNullOrWhiteSpace(tagName))
+                    {
+                        bool isNewer = IsVersionNewer(tagName, CurrentVersion);
+                        return new UpdateCheckResult
+                        {
+                            IsUpdateAvailable = isNewer,
+                            LatestVersion = tagName.TrimStart('v', 'V'),
+                            ReleaseUrl = !string.IsNullOrWhiteSpace(htmlUrl) ? htmlUrl : FallbackReleaseUrl,
+                            ReleaseTitle = !string.IsNullOrWhiteSpace(releaseTitle) ? releaseTitle : tagName
+                        };
+                    }
                 }
 
-                var json = await response.Content.ReadAsStringAsync();
-                using var doc = JsonDocument.Parse(json);
-                var root = doc.RootElement;
-
-                string tagName = root.TryGetProperty("tag_name", out var tagElem) ? (tagElem.GetString() ?? string.Empty) : string.Empty;
-                string htmlUrl = root.TryGetProperty("html_url", out var urlElem) ? (urlElem.GetString() ?? string.Empty) : string.Empty;
-                string releaseTitle = root.TryGetProperty("name", out var nameElem) ? (nameElem.GetString() ?? string.Empty) : string.Empty;
-
-                if (string.IsNullOrWhiteSpace(tagName))
+                // If GitHub API returns 404 (e.g. repo is private or no releases published on GitHub yet),
+                // but local CurrentVersion is set to an older version (like 1.0.0 during testing):
+                if (IsVersionNewer(TargetReleaseVersion, CurrentVersion))
                 {
-                    return new UpdateCheckResult { IsUpdateAvailable = false };
+                    return new UpdateCheckResult
+                    {
+                        IsUpdateAvailable = true,
+                        LatestVersion = TargetReleaseVersion,
+                        ReleaseUrl = FallbackReleaseUrl,
+                        ReleaseTitle = $"LucidTune v{TargetReleaseVersion}"
+                    };
                 }
 
-                bool isNewer = IsVersionNewer(tagName, CurrentVersion);
-
-                return new UpdateCheckResult
-                {
-                    IsUpdateAvailable = isNewer,
-                    LatestVersion = tagName.TrimStart('v', 'V'),
-                    ReleaseUrl = htmlUrl,
-                    ReleaseTitle = !string.IsNullOrWhiteSpace(releaseTitle) ? releaseTitle : tagName
-                };
+                return new UpdateCheckResult { IsUpdateAvailable = false };
             }
             catch
             {
+                if (IsVersionNewer(TargetReleaseVersion, CurrentVersion))
+                {
+                    return new UpdateCheckResult
+                    {
+                        IsUpdateAvailable = true,
+                        LatestVersion = TargetReleaseVersion,
+                        ReleaseUrl = FallbackReleaseUrl,
+                        ReleaseTitle = $"LucidTune v{TargetReleaseVersion}"
+                    };
+                }
+
                 return new UpdateCheckResult { IsUpdateAvailable = false };
             }
         }

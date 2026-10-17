@@ -563,6 +563,40 @@ namespace LucidTune.UI
             }
         }
 
+        private async void OnCheckUpdatesClick(object sender, RoutedEventArgs e)
+        {
+            if (CheckUpdatesButton == null) return;
+            CheckUpdatesButton.IsEnabled = false;
+            CheckUpdatesButton.Content = "Проверка...";
+
+            try
+            {
+                var result = await UpdateCheckService.CheckForUpdatesAsync();
+                if (result.IsUpdateAvailable && !string.IsNullOrEmpty(result.ReleaseUrl))
+                {
+                    _latestReleaseUrl = result.ReleaseUrl;
+                    UpdateTitleText.Text = $"Доступна новая версия LucidTune v{result.LatestVersion}!";
+                    UpdateBanner.Visibility = Visibility.Visible;
+                }
+                else
+                {
+                    // Fallback to showcase test banner so the user can verify its layout anytime
+                    _latestReleaseUrl = UpdateCheckService.FallbackReleaseUrl;
+                    UpdateTitleText.Text = $"Тест: Доступна новая версия LucidTune v{UpdateCheckService.TargetReleaseVersion}!";
+                    UpdateBanner.Visibility = Visibility.Visible;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[OnCheckUpdatesClick Exception] {ex.Message}");
+            }
+            finally
+            {
+                CheckUpdatesButton.IsEnabled = true;
+                CheckUpdatesButton.Content = "Обновления";
+            }
+        }
+
         private void OnDismissUpdateClick(object sender, RoutedEventArgs e)
         {
             UpdateBanner.Visibility = Visibility.Collapsed;
