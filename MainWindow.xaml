@@ -282,34 +282,29 @@
 
                         <!-- Album Art Block -->
                         <Grid x:Name="ArtBlock" Grid.Column="0" Margin="12,0,0,0" Width="50" Height="50" HorizontalAlignment="Left" ClipToBounds="False">
-                            <!-- Spinning Vinyl Disc (Realistic LP emerging partially from sleeve) -->
+                            <!-- Spinning Vinyl Disc (Full complete disc emerging from sleeve) -->
                             <Grid x:Name="VinylDiscContainer"
-                                  Width="48" Height="48"
+                                  Width="50" Height="50"
                                   HorizontalAlignment="Left"
                                   VerticalAlignment="Center"
-                                  Margin="25,0,0,0"
+                                  Margin="38,0,0,0"
                                   Panel.ZIndex="1"
-                                  Visibility="Collapsed"
-                                  RenderTransformOrigin="0.5,0.5">
+                                  Visibility="Collapsed">
                                 <Grid.RenderTransform>
-                                    <RotateTransform x:Name="VinylDiscRotation" Angle="0"/>
+                                    <RotateTransform x:Name="VinylDiscRotation" Angle="0" CenterX="25" CenterY="25"/>
                                 </Grid.RenderTransform>
 
                                 <!-- Outer Vinyl Body with Distinct Realistic Vinyl Tone -->
-                                <Ellipse Width="48" Height="48"
+                                <Ellipse Width="50" Height="50"
                                          Fill="#24252F"
                                          Stroke="#5A5B6C"
-                                         StrokeThickness="1">
-                                    <Ellipse.Effect>
-                                        <DropShadowEffect BlurRadius="6" ShadowDepth="1" Opacity="0.45" Color="#000000"/>
-                                    </Ellipse.Effect>
-                                </Ellipse>
+                                         StrokeThickness="1"/>
 
                                 <!-- Concentric Grooves (Micro-tracks with realistic contrast) -->
-                                <Ellipse Width="42" Height="42" Stroke="#424354" StrokeThickness="0.8"/>
-                                <Ellipse Width="37" Height="37" Stroke="#56576C" StrokeThickness="0.6"/>
+                                <Ellipse Width="44" Height="44" Stroke="#424354" StrokeThickness="0.8"/>
+                                <Ellipse Width="38" Height="38" Stroke="#56576C" StrokeThickness="0.6"/>
                                 <Ellipse Width="32" Height="32" Stroke="#424354" StrokeThickness="0.8"/>
-                                <Ellipse Width="27" Height="27" Stroke="#56576C" StrokeThickness="0.6"/>
+                                <Ellipse Width="26" Height="26" Stroke="#56576C" StrokeThickness="0.6"/>
 
                                 <!-- Circular Center Label (Guaranteed 100% circle) -->
                                 <Ellipse x:Name="VinylCenterEllipse"

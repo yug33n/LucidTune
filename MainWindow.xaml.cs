@@ -154,9 +154,9 @@ namespace LucidTune
                 ArtBlock.Visibility = Visibility.Visible;
                 TrackInfoGrid.Margin = new Thickness(10, 0, 8, 0);
                 VinylDiscContainer.Visibility = Visibility.Visible;
-                ArtColumn.Width = new GridLength(88);
-                IslandContainer.Width = 336;
-                Width = 386;
+                ArtColumn.Width = new GridLength(104);
+                IslandContainer.Width = 352;
+                Width = 402;
 
                 UpdateVinylCenterArtwork(_lastTrackInfo?.Thumbnail);
 
