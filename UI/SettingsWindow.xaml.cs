@@ -55,8 +55,9 @@ namespace LucidTune.UI
                 _mainWindow.ApplyCompactMode(_configManager.CurrentConfig.CompactMode);
                 _mainWindow.ApplyVolumeControl(_configManager.CurrentConfig.ShowVolumeControl);
                 _mainWindow.ApplyCaptureAffinity(_configManager.CurrentConfig.ExcludeFromCapture);
-                _mainWindow.ApplyAdaptiveColor(_configManager.CurrentConfig.AdaptiveColorEnabled);
                 ThemeManager.ApplyTheme(_configManager.CurrentConfig.Theme, _configManager.CurrentConfig.AccentColor);
+                _mainWindow.ApplyAdaptiveColor(_configManager.CurrentConfig.AdaptiveColorEnabled);
+                _mainWindow.ApplyBackgroundShimmer(_configManager.CurrentConfig.AdaptiveBackgroundShimmer);
             };
             UpdateOverlayStatus(_mainWindow.IsOverlayVisible);
 
@@ -141,6 +142,9 @@ namespace LucidTune.UI
             ShowVolumeCheckBox.IsChecked = cfg.ShowVolumeControl;
 
             AdaptiveColorCheckBox.IsChecked = cfg.AdaptiveColorEnabled;
+            AdaptiveShimmerCheckBox.IsChecked = cfg.AdaptiveBackgroundShimmer;
+            AdaptiveShimmerCheckBox.IsEnabled = cfg.AdaptiveColorEnabled;
+            AdaptiveShimmerCheckBox.Opacity = cfg.AdaptiveColorEnabled ? 1.0 : 0.45;
 
             SnapToEdgesCheckBox.IsChecked = cfg.SnapToScreenEdges;
             ExcludeFromCaptureCheckBox.IsChecked = cfg.ExcludeFromCapture;
@@ -527,7 +531,17 @@ namespace LucidTune.UI
         private void OnAdaptiveColorChanged(object sender, RoutedEventArgs e)
         {
             if (_isInitializing) return;
-            _mainWindow.ApplyAdaptiveColor(AdaptiveColorCheckBox.IsChecked == true);
+            bool isAdaptive = AdaptiveColorCheckBox.IsChecked == true;
+            AdaptiveShimmerCheckBox.IsEnabled = isAdaptive;
+            AdaptiveShimmerCheckBox.Opacity = isAdaptive ? 1.0 : 0.45;
+            _mainWindow.ApplyAdaptiveColor(isAdaptive);
+        }
+
+        private void OnAdaptiveShimmerChanged(object sender, RoutedEventArgs e)
+        {
+            if (_isInitializing) return;
+            bool isShimmer = AdaptiveShimmerCheckBox.IsChecked == true;
+            _mainWindow.ApplyBackgroundShimmer(isShimmer);
         }
 
         private void OnDownloadUpdateClick(object sender, RoutedEventArgs e)
@@ -585,7 +599,7 @@ namespace LucidTune.UI
             _mainWindow.ApplyVolumeControl(cfg.ShowVolumeControl);
 
             cfg.AdaptiveColorEnabled = AdaptiveColorCheckBox.IsChecked == true;
-            _mainWindow.ApplyAdaptiveColor(cfg.AdaptiveColorEnabled);
+            cfg.AdaptiveBackgroundShimmer = AdaptiveShimmerCheckBox.IsChecked == true;
 
             cfg.SnapToScreenEdges = SnapToEdgesCheckBox.IsChecked == true;
 
@@ -595,6 +609,8 @@ namespace LucidTune.UI
             cfg.Theme = (ThemeComboBox.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? ThemeManager.DarkTheme;
             cfg.AccentColor = (AccentComboBox.SelectedItem as ThemeManager.AccentOption)?.Key ?? ThemeManager.AccentYellow;
             ThemeManager.ApplyTheme(cfg.Theme, cfg.AccentColor);
+            _mainWindow.ApplyAdaptiveColor(cfg.AdaptiveColorEnabled);
+            _mainWindow.ApplyBackgroundShimmer(cfg.AdaptiveBackgroundShimmer);
 
             cfg.DiscordRpcEnabled = EnableDiscordRpcCheckBox.IsChecked == true;
             cfg.DiscordIgnoreBrowserVideos = IgnoreBrowserVideosCheckBox.IsChecked ?? true;
@@ -622,8 +638,9 @@ namespace LucidTune.UI
             _mainWindow.ApplyCompactMode(_configManager.CurrentConfig.CompactMode);
             _mainWindow.ApplyVolumeControl(_configManager.CurrentConfig.ShowVolumeControl);
             _mainWindow.ApplyCaptureAffinity(_configManager.CurrentConfig.ExcludeFromCapture);
-            _mainWindow.ApplyAdaptiveColor(_configManager.CurrentConfig.AdaptiveColorEnabled);
             ThemeManager.ApplyTheme(_configManager.CurrentConfig.Theme, _configManager.CurrentConfig.AccentColor);
+            _mainWindow.ApplyAdaptiveColor(_configManager.CurrentConfig.AdaptiveColorEnabled);
+            _mainWindow.ApplyBackgroundShimmer(_configManager.CurrentConfig.AdaptiveBackgroundShimmer);
             Close();
         }
     }

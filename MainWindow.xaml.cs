@@ -33,6 +33,7 @@ namespace LucidTune
         private bool _isAnimating;
         private SettingsWindow? _settingsWindow;
         private MediaTrackInfo? _lastTrackInfo;
+        private Storyboard? _shimmerStoryboard;
 
         public bool IsOverlayVisible => _isWindowVisible;
         public event Action<bool>? OverlayVisibilityChanged;
@@ -164,15 +165,117 @@ namespace LucidTune
         {
             if (enabled && _lastTrackInfo?.Thumbnail != null)
             {
-                var accent = ColorExtractor.ExtractDominantAccentColor(_lastTrackInfo.Thumbnail);
-                if (accent.HasValue)
+                var palette = ColorExtractor.ExtractPalette(_lastTrackInfo.Thumbnail);
+                if (palette != null)
                 {
-                    ThemeManager.ApplyDynamicAccent(accent.Value);
+                    ThemeManager.ApplyDynamicAccent(palette.PrimaryAccent);
+                    if (_configManager.CurrentConfig.AdaptiveBackgroundShimmer)
+                    {
+                        ApplyShimmerPalette(palette);
+                    }
+                    else
+                    {
+                        ResetShimmerPalette();
+                    }
                     return;
                 }
             }
 
             ThemeManager.RestoreStaticAccent();
+            ResetShimmerPalette();
+        }
+
+        public void ApplyBackgroundShimmer(bool enabled)
+        {
+            if (enabled && _configManager.CurrentConfig.AdaptiveColorEnabled && _lastTrackInfo?.Thumbnail != null)
+            {
+                var palette = ColorExtractor.ExtractPalette(_lastTrackInfo.Thumbnail);
+                if (palette != null)
+                {
+                    ApplyShimmerPalette(palette);
+                    return;
+                }
+            }
+
+            ResetShimmerPalette();
+        }
+
+        private void ApplyShimmerPalette(ExtractedPalette palette)
+        {
+            if (ShimmerStop1 == null || ShimmerStop2 == null || ShimmerStop3 == null || AmbientShimmerLayer == null) return;
+
+            ShimmerStop1.Color = palette.AmbientShimmer1;
+            ShimmerStop2.Color = palette.AmbientShimmer2;
+            ShimmerStop3.Color = palette.AmbientShimmer3;
+
+            var fadeIn = new DoubleAnimation(1.0, TimeSpan.FromMilliseconds(450))
+            {
+                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+            };
+            AmbientShimmerLayer.BeginAnimation(UIElement.OpacityProperty, fadeIn);
+
+            if (_lastTrackInfo?.IsPlaying == true)
+            {
+                StartShimmerAnimation();
+            }
+            else
+            {
+                StopShimmerAnimation();
+            }
+        }
+
+        private void ResetShimmerPalette()
+        {
+            StopShimmerAnimation();
+            if (AmbientShimmerLayer == null) return;
+
+            var fadeOut = new DoubleAnimation(0.0, TimeSpan.FromMilliseconds(300))
+            {
+                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseIn }
+            };
+            AmbientShimmerLayer.BeginAnimation(UIElement.OpacityProperty, fadeOut);
+        }
+
+        private void StartShimmerAnimation()
+        {
+            if (_shimmerStoryboard != null || ShimmerTranslate == null) return;
+
+            var animX = new DoubleAnimation(-22, 22, TimeSpan.FromSeconds(8))
+            {
+                AutoReverse = true,
+                RepeatBehavior = RepeatBehavior.Forever,
+                EasingFunction = new SineEase { EasingMode = EasingMode.EaseInOut }
+            };
+
+            var animY = new DoubleAnimation(-8, 8, TimeSpan.FromSeconds(11))
+            {
+                AutoReverse = true,
+                RepeatBehavior = RepeatBehavior.Forever,
+                EasingFunction = new SineEase { EasingMode = EasingMode.EaseInOut }
+            };
+
+            Storyboard.SetTarget(animX, ShimmerTranslate);
+            Storyboard.SetTargetProperty(animX, new PropertyPath(TranslateTransform.XProperty));
+
+            Storyboard.SetTarget(animY, ShimmerTranslate);
+            Storyboard.SetTargetProperty(animY, new PropertyPath(TranslateTransform.YProperty));
+
+            _shimmerStoryboard = new Storyboard();
+            _shimmerStoryboard.Children.Add(animX);
+            _shimmerStoryboard.Children.Add(animY);
+            _shimmerStoryboard.Begin();
+        }
+
+        private void StopShimmerAnimation()
+        {
+            if (_shimmerStoryboard == null) return;
+            _shimmerStoryboard.Stop();
+            _shimmerStoryboard = null;
+            if (ShimmerTranslate != null)
+            {
+                ShimmerTranslate.X = 0;
+                ShimmerTranslate.Y = 0;
+            }
         }
 
         public void ApplyVolumeControl(bool showVolume)
@@ -402,24 +505,51 @@ namespace LucidTune
                     PlaceholderArt.Visibility = Visibility.Visible;
                 }
 
-                // Adaptive Accent Color
+                // Adaptive Accent Color & Background Shimmer
                 if (_configManager.CurrentConfig.AdaptiveColorEnabled)
                 {
                     if (track.Thumbnail != null)
                     {
-                        var dynamicAccent = ColorExtractor.ExtractDominantAccentColor(track.Thumbnail);
-                        if (dynamicAccent.HasValue)
+                        var palette = ColorExtractor.ExtractPalette(track.Thumbnail);
+                        if (palette != null)
                         {
-                            ThemeManager.ApplyDynamicAccent(dynamicAccent.Value);
+                            ThemeManager.ApplyDynamicAccent(palette.PrimaryAccent);
+                            if (_configManager.CurrentConfig.AdaptiveBackgroundShimmer)
+                            {
+                                ApplyShimmerPalette(palette);
+                            }
+                            else
+                            {
+                                ResetShimmerPalette();
+                            }
                         }
                         else
                         {
                             ThemeManager.RestoreStaticAccent();
+                            ResetShimmerPalette();
                         }
                     }
                     else
                     {
                         ThemeManager.RestoreStaticAccent();
+                        ResetShimmerPalette();
+                    }
+                }
+                else
+                {
+                    ThemeManager.RestoreStaticAccent();
+                    ResetShimmerPalette();
+                }
+
+                if (_configManager.CurrentConfig.AdaptiveColorEnabled && _configManager.CurrentConfig.AdaptiveBackgroundShimmer && AmbientShimmerLayer?.Opacity > 0.05)
+                {
+                    if (track.IsPlaying)
+                    {
+                        StartShimmerAnimation();
+                    }
+                    else
+                    {
+                        StopShimmerAnimation();
                     }
                 }
 

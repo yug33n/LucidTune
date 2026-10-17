@@ -674,6 +674,18 @@
                                     </StackPanel>
                                 </CheckBox>
 
+                                <!-- Sub-item: Background Ambient Cover Shimmer -->
+                                <CheckBox x:Name="AdaptiveShimmerCheckBox"
+                                          Style="{StaticResource DarkCheckBoxStyle}"
+                                          Margin="20,0,0,8"
+                                          Checked="OnAdaptiveShimmerChanged"
+                                          Unchecked="OnAdaptiveShimmerChanged">
+                                    <StackPanel>
+                                        <TextBlock Text="Перелив фона в цветах обложки" FontSize="12" FontWeight="Medium" Foreground="{DynamicResource SettingsTextPrimaryBrush}"/>
+                                        <TextBlock Text="Фон оверлея плавно переливается живым градиентом в оттенках текущей обложки." FontSize="11" Foreground="{DynamicResource SettingsTextSecondaryBrush}" Margin="0,2,0,0"/>
+                                    </StackPanel>
+                                </CheckBox>
+
                                 <Rectangle Height="1" Fill="{DynamicResource SettingsSeparatorBrush}" Margin="0,6,0,10"/>
 
                                 <Grid Margin="0,0,0,10">

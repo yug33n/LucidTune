@@ -5,10 +5,18 @@ using System.Windows.Media.Imaging;
 
 namespace LucidTune.Services
 {
+    public sealed class ExtractedPalette
+    {
+        public Color PrimaryAccent { get; set; }
+        public Color SecondaryAccent { get; set; }
+        public Color AmbientShimmer1 { get; set; }
+        public Color AmbientShimmer2 { get; set; }
+        public Color AmbientShimmer3 { get; set; }
+    }
+
     public static class ColorExtractor
     {
-        private const int SampleSize = 36;
-        private const int HueBucketCount = 18; // 20 degrees each
+        private const int HueBucketCount = 24; // 15 degrees per bucket
 
         private sealed class HueBucket
         {
@@ -21,24 +29,44 @@ namespace LucidTune.Services
 
         public static Color? ExtractDominantAccentColor(BitmapSource? source)
         {
+            return ExtractPalette(source)?.PrimaryAccent;
+        }
+
+        public static ExtractedPalette? ExtractPalette(BitmapSource? source)
+        {
             if (source == null) return null;
 
             try
             {
-                // Scale down to 36x36 for instant processing (<1ms)
-                var scaled = new TransformedBitmap(source, new ScaleTransform(
-                    (double)SampleSize / Math.Max(1, source.PixelWidth),
-                    (double)SampleSize / Math.Max(1, source.PixelHeight)
-                ));
+                int width = source.PixelWidth;
+                int height = source.PixelHeight;
+                if (width <= 0 || height <= 0) return null;
 
-                var formatted = new FormatConvertedBitmap(scaled, PixelFormats.Bgra32, null, 0);
-                formatted.Freeze();
+                // Format conversion to Bgra32 if necessary
+                BitmapSource bgraSource;
+                if (source.Format == PixelFormats.Bgra32)
+                {
+                    bgraSource = source;
+                }
+                else
+                {
+                    var converted = new FormatConvertedBitmap();
+                    converted.BeginInit();
+                    converted.Source = source;
+                    converted.DestinationFormat = PixelFormats.Bgra32;
+                    converted.EndInit();
+                    converted.Freeze();
+                    bgraSource = converted;
+                }
 
-                int width = formatted.PixelWidth;
-                int height = formatted.PixelHeight;
+                // Sample points across image (step size to inspect up to ~40x40 grid)
+                int sampleCount = 40;
+                int stepX = Math.Max(1, width / sampleCount);
+                int stepY = Math.Max(1, height / sampleCount);
+
                 int stride = width * 4;
-                var pixels = new byte[height * stride];
-                formatted.CopyPixels(pixels, stride, 0);
+                var rawPixels = new byte[height * stride];
+                bgraSource.CopyPixels(rawPixels, stride, 0);
 
                 var buckets = new HueBucket[HueBucketCount];
                 for (int i = 0; i < HueBucketCount; i++)
@@ -46,83 +74,168 @@ namespace LucidTune.Services
                     buckets[i] = new HueBucket();
                 }
 
+                double fallbackTotalR = 0;
+                double fallbackTotalG = 0;
+                double fallbackTotalB = 0;
+                int fallbackCount = 0;
+
                 int qualifiedPixels = 0;
 
-                for (int i = 0; i < pixels.Length; i += 4)
+                for (int y = 0; y < height; y += stepY)
                 {
-                    byte b = pixels[i];
-                    byte g = pixels[i + 1];
-                    byte r = pixels[i + 2];
-                    byte a = pixels[i + 3];
-
-                    if (a < 128) continue;
-
-                    RgbToHsl(r, g, b, out double h, out double s, out double l);
-
-                    // Skip near-black, near-white, or dull grays
-                    if (l < 0.16 || l > 0.88 || s < 0.22)
+                    int rowOffset = y * stride;
+                    for (int x = 0; x < width; x += stepX)
                     {
-                        continue;
+                        int index = rowOffset + x * 4;
+                        if (index + 3 >= rawPixels.Length) continue;
+
+                        byte b = rawPixels[index];
+                        byte g = rawPixels[index + 1];
+                        byte r = rawPixels[index + 2];
+                        byte a = rawPixels[index + 3];
+
+                        if (a < 128) continue;
+
+                        RgbToHsl(r, g, b, out double h, out double s, out double l);
+
+                        // Accumulate overall non-black fallback
+                        if (l > 0.08 && l < 0.96)
+                        {
+                            fallbackTotalR += r;
+                            fallbackTotalG += g;
+                            fallbackTotalB += b;
+                            fallbackCount++;
+                        }
+
+                        // Skip near-black, near-white, or dull grays for vibrant pass
+                        if (l < 0.12 || l > 0.90 || s < 0.14)
+                        {
+                            continue;
+                        }
+
+                        // Score saturation and balanced lightness
+                        double lightnessScore = 1.0 - Math.Abs(l - 0.52) * 1.3;
+                        if (lightnessScore <= 0) lightnessScore = 0.05;
+
+                        double weight = Math.Pow(s, 1.25) * lightnessScore;
+
+                        int bucketIndex = Math.Clamp((int)(h / (360.0 / HueBucketCount)), 0, HueBucketCount - 1);
+                        var bucket = buckets[bucketIndex];
+                        bucket.TotalWeight += weight;
+                        bucket.TotalR += r * weight;
+                        bucket.TotalG += g * weight;
+                        bucket.TotalB += b * weight;
+                        bucket.PixelCount++;
+                        qualifiedPixels++;
                     }
-
-                    // Score saturation and balanced lightness
-                    double lightnessScore = 1.0 - Math.Abs(l - 0.55) * 1.4;
-                    if (lightnessScore <= 0) lightnessScore = 0.05;
-
-                    double weight = Math.Pow(s, 1.25) * lightnessScore;
-
-                    int bucketIndex = Math.Clamp((int)(h / (360.0 / HueBucketCount)), 0, HueBucketCount - 1);
-                    var bucket = buckets[bucketIndex];
-                    bucket.TotalWeight += weight;
-                    bucket.TotalR += r * weight;
-                    bucket.TotalG += g * weight;
-                    bucket.TotalB += b * weight;
-                    bucket.PixelCount++;
-                    qualifiedPixels++;
                 }
 
-                if (qualifiedPixels < 6)
-                {
-                    // Too few colorful pixels (mostly monochrome or black/white)
-                    return null;
-                }
-
-                // Find bucket with highest weight
+                // Primary and secondary buckets
                 HueBucket? bestBucket = null;
+                HueBucket? secondBucket = null;
+                int bestBucketIndex = -1;
                 double maxWeight = -1;
-                foreach (var b in buckets)
+
+                for (int i = 0; i < HueBucketCount; i++)
                 {
+                    var b = buckets[i];
                     if (b.TotalWeight > maxWeight)
                     {
                         maxWeight = b.TotalWeight;
                         bestBucket = b;
+                        bestBucketIndex = i;
                     }
                 }
 
-                if (bestBucket == null || bestBucket.TotalWeight <= 0)
+                Color primaryColor;
+                Color secondaryColor;
+
+                if (bestBucket == null || qualifiedPixels < 4 || bestBucket.TotalWeight <= 0)
                 {
-                    return null;
+                    if (fallbackCount > 0)
+                    {
+                        byte avgR = (byte)Math.Clamp((int)(fallbackTotalR / fallbackCount), 0, 255);
+                        byte avgG = (byte)Math.Clamp((int)(fallbackTotalG / fallbackCount), 0, 255);
+                        byte avgB = (byte)Math.Clamp((int)(fallbackTotalB / fallbackCount), 0, 255);
+
+                        RgbToHsl(avgR, avgG, avgB, out double fH, out double fS, out double fL);
+                        // Boost saturation slightly so it's not a dead gray
+                        fS = Math.Clamp(fS * 1.5 + 0.25, 0.35, 0.70);
+                        fL = Math.Clamp(fL, 0.44, 0.60);
+
+                        HslToRgb(fH, fS, fL, out byte fR, out byte fG, out byte fB);
+                        primaryColor = Color.FromRgb(fR, fG, fB);
+
+                        HslToRgb((fH + 35.0) % 360.0, fS * 0.85, fL, out byte sR, out byte sG, out byte sB);
+                        secondaryColor = Color.FromRgb(sR, sG, sB);
+                    }
+                    else
+                    {
+                        // Default elegant violet/cyan fallback
+                        primaryColor = Color.FromRgb(0x4E, 0x75, 0xFF);
+                        secondaryColor = Color.FromRgb(0x8B, 0x5C, 0xF6);
+                    }
+                }
+                else
+                {
+                    byte avgR = (byte)Math.Clamp((int)(bestBucket.TotalR / bestBucket.TotalWeight), 0, 255);
+                    byte avgG = (byte)Math.Clamp((int)(bestBucket.TotalG / bestBucket.TotalWeight), 0, 255);
+                    byte avgB = (byte)Math.Clamp((int)(bestBucket.TotalB / bestBucket.TotalWeight), 0, 255);
+
+                    RgbToHsl(avgR, avgG, avgB, out double resH, out double resS, out double resL);
+                    // Boost saturation if slightly muted
+                    if (resS < 0.65) resS = Math.Min(1.0, resS * 1.35);
+                    // Clamp lightness so accent pops well on dark cards
+                    resL = Math.Clamp(resL, 0.44, 0.62);
+                    HslToRgb(resH, resS, resL, out byte finalR, out byte finalG, out byte finalB);
+                    primaryColor = Color.FromRgb(finalR, finalG, finalB);
+
+                    // Find secondary distinct bucket (at least 3 buckets / 45 degrees away)
+                    double secondMaxWeight = -1;
+                    for (int i = 0; i < HueBucketCount; i++)
+                    {
+                        int diff = Math.Abs(i - bestBucketIndex);
+                        if (diff > HueBucketCount / 2) diff = HueBucketCount - diff;
+                        if (diff < 3) continue; // Skip buckets too close in hue
+
+                        if (buckets[i].TotalWeight > secondMaxWeight)
+                        {
+                            secondMaxWeight = buckets[i].TotalWeight;
+                            secondBucket = buckets[i];
+                        }
+                    }
+
+                    if (secondBucket != null && secondBucket.TotalWeight > 0.1 * bestBucket.TotalWeight)
+                    {
+                        byte sR = (byte)Math.Clamp((int)(secondBucket.TotalR / secondBucket.TotalWeight), 0, 255);
+                        byte sG = (byte)Math.Clamp((int)(secondBucket.TotalG / secondBucket.TotalWeight), 0, 255);
+                        byte sB = (byte)Math.Clamp((int)(secondBucket.TotalB / secondBucket.TotalWeight), 0, 255);
+                        RgbToHsl(sR, sG, sB, out double sH, out double sS, out double sL);
+                        if (sS < 0.60) sS = Math.Min(1.0, sS * 1.3);
+                        sL = Math.Clamp(sL, 0.42, 0.60);
+                        HslToRgb(sH, sS, sL, out byte fSR, out byte fSG, out byte fSB);
+                        secondaryColor = Color.FromRgb(fSR, fSG, fSB);
+                    }
+                    else
+                    {
+                        // Harmonized analogous hue (+35 degrees)
+                        HslToRgb((resH + 35.0) % 360.0, resS * 0.9, resL, out byte fSR, out byte fSG, out byte fSB);
+                        secondaryColor = Color.FromRgb(fSR, fSG, fSB);
+                    }
                 }
 
-                byte avgR = (byte)Math.Clamp((int)(bestBucket.TotalR / bestBucket.TotalWeight), 0, 255);
-                byte avgG = (byte)Math.Clamp((int)(bestBucket.TotalG / bestBucket.TotalWeight), 0, 255);
-                byte avgB = (byte)Math.Clamp((int)(bestBucket.TotalB / bestBucket.TotalWeight), 0, 255);
-
-                // Polish color for UI elegance (boost saturation and clamp lightness)
-                RgbToHsl(avgR, avgG, avgB, out double resH, out double resS, out double resL);
-
-                // Boost saturation if slightly muted
-                if (resS < 0.65) resS = Math.Min(1.0, resS * 1.35);
-
-                // Clamp lightness so accent pops well on dark cards
-                resL = Math.Clamp(resL, 0.44, 0.62);
-
-                HslToRgb(resH, resS, resL, out byte finalR, out byte finalG, out byte finalB);
-
-                return Color.FromRgb(finalR, finalG, finalB);
+                return new ExtractedPalette
+                {
+                    PrimaryAccent = primaryColor,
+                    SecondaryAccent = secondaryColor,
+                    AmbientShimmer1 = Color.FromArgb(0x40, primaryColor.R, primaryColor.G, primaryColor.B),
+                    AmbientShimmer2 = Color.FromArgb(0x28, secondaryColor.R, secondaryColor.G, secondaryColor.B),
+                    AmbientShimmer3 = Color.FromArgb(0x18, primaryColor.R, primaryColor.G, primaryColor.B)
+                };
             }
-            catch
+            catch (Exception ex)
             {
+                System.Diagnostics.Debug.WriteLine($"[ColorExtractor Exception] {ex.Message}");
                 return null;
             }
         }

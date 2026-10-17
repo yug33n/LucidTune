@@ -13,8 +13,9 @@
 
 ## ✨ Features in v2.0.0
 
-### 🌈 Adaptive Palette (Cover Art Dynamic Color)
-- **Automatic Color Extraction**: Dynamically samples the dominant and vibrant hues from current album art and applies them in real time across widget accents, buttons, and badges.
+### 🌈 Adaptive Palette & Ambient Cover Shimmer
+- **Automatic Color Extraction**: Dynamically samples the dominant and vibrant hues from current album art and applies them in real time across widget accents, progress bar, borders, and badges.
+- **Ambient Background Shimmer**: An optional live gradient shimmer that softly breathes across the widget background in the hues of the current album cover. Can be independently toggled in Settings.
 - **Graceful Fallback**: Automatically reverts to user's chosen static accent theme when cover art is missing or feature is disabled. Enabled by default.
 
 ### 🧲 Screen Edge & Center Snapping

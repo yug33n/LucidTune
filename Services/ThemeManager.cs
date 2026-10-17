@@ -103,11 +103,13 @@ namespace LucidTune.Services
 
             if (IsDark)
             {
+                SetBrush("WidgetBorderBrush", Color.FromArgb(0x45, accentColor.R, accentColor.G, accentColor.B));
                 SetBrush("SettingsBadgeBackgroundBrush", Color.FromArgb(0x40, accentColor.R, accentColor.G, accentColor.B));
                 SetBrush("SettingsBadgeTextBrush", hoverColor);
             }
             else
             {
+                SetBrush("WidgetBorderBrush", Color.FromArgb(0x35, accentColor.R, accentColor.G, accentColor.B));
                 SetBrush("SettingsBadgeBackgroundBrush", Color.FromArgb(0x30, accentColor.R, accentColor.G, accentColor.B));
                 SetBrush("SettingsBadgeTextBrush", accentColor);
             }
@@ -121,6 +123,15 @@ namespace LucidTune.Services
 
             IsDynamicAccentActive = false;
             CurrentDynamicAccentColor = null;
+
+            if (IsDark)
+            {
+                SetBrush("WidgetBorderBrush", Color.FromArgb(0x26, 0xFF, 0xFF, 0xFF));
+            }
+            else
+            {
+                SetBrush("WidgetBorderBrush", Color.FromArgb(0x18, 0x00, 0x00, 0x00));
+            }
 
             ApplyAccentPalette(CurrentAccent, IsDark);
             ThemeChanged?.Invoke(CurrentTheme, CurrentAccent);
