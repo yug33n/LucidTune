@@ -32,6 +32,8 @@ namespace LucidTune
         private bool _hiddenByFullscreen;
         private bool _isAnimating;
         private SettingsWindow? _settingsWindow;
+        private MediaTrackInfo? _lastTrackInfo;
+        private DoubleAnimation? _vinylAnim;
 
         public bool IsOverlayVisible => _isWindowVisible;
         public event Action<bool>? OverlayVisibilityChanged;
@@ -73,6 +75,8 @@ namespace LucidTune
                 SyncVolumeFromSystem();
 
                 var hwnd = new WindowInteropHelper(this).Handle;
+                ApplyCaptureAffinity(_configManager.CurrentConfig.ExcludeFromCapture);
+
                 _hotkeyService.Initialize(hwnd);
                 RegisterAllConfiguredHotkeys();
                 _hotkeyService.HotkeyTriggered += OnHotkeyTriggered;
@@ -120,14 +124,118 @@ namespace LucidTune
                 ArtBlock.Visibility = Visibility.Collapsed;
                 TrackInfoGrid.Margin = new Thickness(14, 0, 8, 0);
                 IslandContainer.Width = 248;
+                StopVinylAnimation();
             }
             else
             {
-                ArtColumn.Width = new GridLength(62);
                 ArtBlock.Visibility = Visibility.Visible;
                 TrackInfoGrid.Margin = new Thickness(10, 0, 8, 0);
-                IslandContainer.Width = 310;
+                ApplyVinylMode(_configManager.CurrentConfig.VinylModeEnabled);
             }
+        }
+
+        public void ApplyVinylMode(bool isEnabled)
+        {
+            if (_configManager.CurrentConfig.CompactMode)
+            {
+                VinylDiscContainer.Visibility = Visibility.Collapsed;
+                StopVinylAnimation();
+                return;
+            }
+
+            if (isEnabled)
+            {
+                VinylDiscContainer.Visibility = Visibility.Visible;
+                ArtColumn.Width = new GridLength(82);
+                IslandContainer.Width = 332;
+                Width = 380;
+
+                if (_lastTrackInfo?.Thumbnail != null)
+                {
+                    VinylCenterImage.Source = _lastTrackInfo.Thumbnail;
+                }
+
+                if (_lastTrackInfo?.IsPlaying == true)
+                {
+                    StartVinylAnimation();
+                }
+                else
+                {
+                    StopVinylAnimation();
+                }
+            }
+            else
+            {
+                VinylDiscContainer.Visibility = Visibility.Collapsed;
+                ArtColumn.Width = new GridLength(62);
+                IslandContainer.Width = 310;
+                Width = 360;
+                StopVinylAnimation();
+            }
+        }
+
+        private void StartVinylAnimation()
+        {
+            if (_vinylAnim != null) return;
+
+            _vinylAnim = new DoubleAnimation
+            {
+                From = VinylDiscRotation.Angle,
+                To = VinylDiscRotation.Angle + 360,
+                Duration = TimeSpan.FromSeconds(3.6),
+                RepeatBehavior = RepeatBehavior.Forever
+            };
+            VinylDiscRotation.BeginAnimation(RotateTransform.AngleProperty, _vinylAnim);
+        }
+
+        private void StopVinylAnimation()
+        {
+            if (_vinylAnim == null) return;
+
+            double currentAngle = VinylDiscRotation.Angle;
+            VinylDiscRotation.BeginAnimation(RotateTransform.AngleProperty, null);
+            VinylDiscRotation.Angle = currentAngle % 360;
+            _vinylAnim = null;
+        }
+
+        public void ApplyCaptureAffinity(bool exclude)
+        {
+            try
+            {
+                var hwnd = new WindowInteropHelper(this).Handle;
+                if (hwnd == IntPtr.Zero) return;
+
+                if (exclude)
+                {
+                    if (!SetWindowDisplayAffinity(hwnd, WDA_EXCLUDEFROMCAPTURE))
+                    {
+                        SetWindowDisplayAffinity(hwnd, WDA_MONITOR);
+                    }
+                }
+                else
+                {
+                    SetWindowDisplayAffinity(hwnd, WDA_NONE);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ApplyCaptureAffinity Exception] {ex.Message}");
+            }
+        }
+
+        public void ApplyAdaptiveColor(bool enabled)
+        {
+            if (enabled && _lastTrackInfo?.Thumbnail != null)
+            {
+                var accent = ColorExtractor.ExtractDominantAccentColor(_lastTrackInfo.Thumbnail);
+                if (accent.HasValue)
+                {
+                    ThemeManager.ApplyDynamicAccent(accent.Value);
+                    return;
+                }
+            }
+
+            ThemeManager.RestoreStaticAccent();
         }
 
         public void ApplyVolumeControl(bool showVolume)
@@ -340,6 +448,7 @@ namespace LucidTune
         {
             Dispatcher.Invoke(() =>
             {
+                _lastTrackInfo = track;
                 TitleText.Text = track.Title;
                 ArtistText.Text = track.Artist;
 
@@ -354,6 +463,45 @@ namespace LucidTune
                     AlbumArtImage.Source = null;
                     AlbumArtImage.Visibility = Visibility.Collapsed;
                     PlaceholderArt.Visibility = Visibility.Visible;
+                }
+
+                // Adaptive Accent Color
+                if (_configManager.CurrentConfig.AdaptiveColorEnabled)
+                {
+                    if (track.Thumbnail != null)
+                    {
+                        var dynamicAccent = ColorExtractor.ExtractDominantAccentColor(track.Thumbnail);
+                        if (dynamicAccent.HasValue)
+                        {
+                            ThemeManager.ApplyDynamicAccent(dynamicAccent.Value);
+                        }
+                        else
+                        {
+                            ThemeManager.RestoreStaticAccent();
+                        }
+                    }
+                    else
+                    {
+                        ThemeManager.RestoreStaticAccent();
+                    }
+                }
+
+                // Vinyl Disc Update
+                if (!_configManager.CurrentConfig.CompactMode && _configManager.CurrentConfig.VinylModeEnabled)
+                {
+                    VinylCenterImage.Source = track.Thumbnail;
+                    if (track.IsPlaying)
+                    {
+                        StartVinylAnimation();
+                    }
+                    else
+                    {
+                        StopVinylAnimation();
+                    }
+                }
+                else
+                {
+                    StopVinylAnimation();
                 }
 
                 ArtContainer.Opacity = track.IsPlaying ? 1.0 : 0.65;
@@ -393,6 +541,10 @@ namespace LucidTune
             if (e.ButtonState == MouseButtonState.Pressed)
             {
                 DragMove();
+                if (_configManager.CurrentConfig.SnapToScreenEdges)
+                {
+                    SnapToScreenEdges();
+                }
                 SaveCurrentPosition();
             }
         }
@@ -582,12 +734,129 @@ namespace LucidTune
             catch { }
         }
 
+        private void SnapToScreenEdges()
+        {
+            try
+            {
+                var hwnd = new WindowInteropHelper(this).Handle;
+                if (hwnd == IntPtr.Zero) return;
+
+                IntPtr hMonitor = MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST);
+                if (hMonitor == IntPtr.Zero) return;
+
+                var mi = new MONITORINFO { cbSize = Marshal.SizeOf<MONITORINFO>() };
+                if (!GetMonitorInfo(hMonitor, ref mi)) return;
+
+                var dpi = VisualTreeHelper.GetDpi(this);
+                double dpiX = dpi.DpiScaleX;
+                double dpiY = dpi.DpiScaleY;
+
+                double workLeft = mi.rcWork.Left / dpiX;
+                double workTop = mi.rcWork.Top / dpiY;
+                double workRight = mi.rcWork.Right / dpiX;
+                double workBottom = mi.rcWork.Bottom / dpiY;
+                double workWidth = workRight - workLeft;
+
+                double cardWidth = IslandContainer.ActualWidth > 0 ? IslandContainer.ActualWidth : IslandContainer.Width;
+                double cardHeight = IslandContainer.ActualHeight > 0 ? IslandContainer.ActualHeight : IslandContainer.Height;
+
+                double cardOffsetX = (Width - cardWidth) / 2.0;
+                double cardOffsetY = 20.0;
+
+                double visibleLeft = Left + cardOffsetX;
+                double visibleRight = visibleLeft + cardWidth;
+                double visibleTop = Top + cardOffsetY;
+                double visibleBottom = visibleTop + cardHeight;
+
+                const double snapThreshold = 24.0;
+                const double screenMargin = 12.0;
+
+                double newVisibleLeft = visibleLeft;
+                double newVisibleTop = visibleTop;
+
+                // Left Edge Snap
+                if (Math.Abs(visibleLeft - (workLeft + screenMargin)) <= snapThreshold ||
+                    (visibleLeft < workLeft + screenMargin && visibleLeft >= workLeft - 30))
+                {
+                    newVisibleLeft = workLeft + screenMargin;
+                }
+                // Right Edge Snap
+                else if (Math.Abs(visibleRight - (workRight - screenMargin)) <= snapThreshold ||
+                         (visibleRight > workRight - screenMargin && visibleRight <= workRight + 30))
+                {
+                    newVisibleLeft = workRight - screenMargin - cardWidth;
+                }
+                // Horizontal Center Snap
+                else
+                {
+                    double workCenterX = workLeft + workWidth / 2.0;
+                    double visibleCenterX = visibleLeft + cardWidth / 2.0;
+                    if (Math.Abs(visibleCenterX - workCenterX) <= snapThreshold)
+                    {
+                        newVisibleLeft = workCenterX - cardWidth / 2.0;
+                    }
+                }
+
+                // Top Edge Snap
+                if (Math.Abs(visibleTop - (workTop + screenMargin)) <= snapThreshold ||
+                    (visibleTop < workTop + screenMargin && visibleTop >= workTop - 30))
+                {
+                    newVisibleTop = workTop + screenMargin;
+                }
+                // Bottom Edge Snap
+                else if (Math.Abs(visibleBottom - (workBottom - screenMargin)) <= snapThreshold ||
+                         (visibleBottom > workBottom - screenMargin && visibleBottom <= workBottom + 30))
+                {
+                    newVisibleTop = workBottom - screenMargin - cardHeight;
+                }
+
+                Left = newVisibleLeft - cardOffsetX;
+                Top = newVisibleTop - cardOffsetY;
+            }
+            catch
+            {
+                // Ignore snapping exception
+            }
+        }
+
         private void SaveCurrentPosition()
         {
             var config = _configManager.CurrentConfig;
             config.WindowX = Left;
             config.WindowY = Top;
             _configManager.Save(config);
+        }
+
+        private const uint WDA_NONE = 0x00000000;
+        private const uint WDA_MONITOR = 0x00000001;
+        private const uint WDA_EXCLUDEFROMCAPTURE = 0x00000011;
+        private const uint MONITOR_DEFAULTTONEAREST = 0x00000002;
+
+        [DllImport("user32.dll", SetLastError = true)]
+        private static extern bool SetWindowDisplayAffinity(IntPtr hWnd, uint dwAffinity);
+
+        [DllImport("user32.dll")]
+        private static extern IntPtr MonitorFromWindow(IntPtr hwnd, uint dwFlags);
+
+        [DllImport("user32.dll", SetLastError = true)]
+        private static extern bool GetMonitorInfo(IntPtr hMonitor, ref MONITORINFO lpmi);
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct RECT
+        {
+            public int Left;
+            public int Top;
+            public int Right;
+            public int Bottom;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct MONITORINFO
+        {
+            public int cbSize;
+            public RECT rcMonitor;
+            public RECT rcWork;
+            public uint dwFlags;
         }
     }
 }

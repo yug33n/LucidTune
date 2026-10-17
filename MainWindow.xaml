@@ -281,12 +281,61 @@
                         </Grid.ColumnDefinitions>
 
                         <!-- Album Art Block -->
-                        <Grid x:Name="ArtBlock" Grid.Column="0" Margin="12,0,0,0" Width="50" Height="50" HorizontalAlignment="Left">
+                        <Grid x:Name="ArtBlock" Grid.Column="0" Margin="12,0,0,0" Width="50" Height="50" HorizontalAlignment="Left" ClipToBounds="False">
+                            <!-- Spinning Vinyl Disc (peeking out behind sleeve to the right) -->
+                            <Grid x:Name="VinylDiscContainer"
+                                  Width="48" Height="48"
+                                  HorizontalAlignment="Left"
+                                  VerticalAlignment="Center"
+                                  Margin="22,0,0,0"
+                                  Panel.ZIndex="1"
+                                  Visibility="Collapsed"
+                                  RenderTransformOrigin="0.5,0.5">
+                                <Grid.RenderTransform>
+                                    <RotateTransform x:Name="VinylDiscRotation" Angle="0"/>
+                                </Grid.RenderTransform>
+
+                                <!-- Outer Vinyl Body -->
+                                <Border Width="48" Height="48" CornerRadius="24" Background="#111113" BorderBrush="#28282D" BorderThickness="1">
+                                    <Border.Effect>
+                                        <DropShadowEffect BlurRadius="6" ShadowDepth="1" Opacity="0.35" Color="#000000"/>
+                                    </Border.Effect>
+                                </Border>
+
+                                <!-- Concentric Grooves -->
+                                <Border Width="42" Height="42" CornerRadius="21" BorderBrush="#1C1C20" BorderThickness="1" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                <Border Width="36" Height="36" CornerRadius="18" BorderBrush="#25252A" BorderThickness="1" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                <Border Width="30" Height="30" CornerRadius="15" BorderBrush="#1C1C20" BorderThickness="1" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                <Border Width="24" Height="24" CornerRadius="12" BorderBrush="#25252A" BorderThickness="1" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+
+                                <!-- Center Label -->
+                                <Border x:Name="VinylCenterLabel"
+                                        Width="18" Height="18"
+                                        CornerRadius="9"
+                                        Background="{DynamicResource AccentBrush}"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        ClipToBounds="True">
+                                    <Image x:Name="VinylCenterImage"
+                                           Stretch="UniformToFill"
+                                           RenderOptions.BitmapScalingMode="HighQuality"/>
+                                </Border>
+
+                                <!-- Spindle Hole -->
+                                <Border Width="4" Height="4"
+                                        CornerRadius="2"
+                                        Background="#0C0C0E"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"/>
+                            </Grid>
+
+                            <!-- Album Art Sleeve (Front) -->
                             <Border x:Name="ArtContainer"
                                     Width="50" Height="50"
                                     CornerRadius="10"
                                     Background="{DynamicResource WidgetNavHoverCircleBrush}"
-                                    ClipToBounds="True">
+                                    ClipToBounds="True"
+                                    Panel.ZIndex="2">
                                 <Grid>
                                     <!-- Note icon placeholder -->
                                     <Path x:Name="PlaceholderArt"

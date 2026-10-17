@@ -213,12 +213,78 @@
             </Setter>
         </Style>
 
-        <!-- Custom CheckBox Style -->
+        <!-- Custom Modern Dark CheckBox Style -->
         <Style x:Key="DarkCheckBoxStyle" TargetType="CheckBox">
             <Setter Property="Foreground" Value="{DynamicResource SettingsTextPrimaryBrush}"/>
             <Setter Property="FontSize" Value="12.5"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Margin" Value="0,4,0,8"/>
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="CheckBox">
+                        <Grid Background="Transparent">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Custom Box with rounded corners and smooth borders -->
+                            <Border x:Name="BoxBorder"
+                                    Grid.Column="0"
+                                    Width="18" Height="18"
+                                    CornerRadius="5"
+                                    Background="{DynamicResource SettingsInputBackgroundBrush}"
+                                    BorderBrush="{DynamicResource SettingsInputBorderBrush}"
+                                    BorderThickness="1.5"
+                                    VerticalAlignment="Top"
+                                    Margin="0,1,0,0"
+                                    SnapsToDevicePixels="True">
+                                <!-- Modern Crisp Vector CheckMark -->
+                                <Path x:Name="CheckMark"
+                                      Width="10" Height="8"
+                                      Stretch="Uniform"
+                                      Stroke="{DynamicResource AccentTextBrush}"
+                                      StrokeThickness="2"
+                                      StrokeStartLineCap="Round"
+                                      StrokeEndLineCap="Round"
+                                      StrokeLineJoin="Round"
+                                      Data="M 1 4.5 L 3.8 7.5 L 9 1"
+                                      Opacity="0"
+                                      HorizontalAlignment="Center"
+                                      VerticalAlignment="Center"/>
+                            </Border>
+
+                            <!-- Content Presenter -->
+                            <ContentPresenter Grid.Column="1"
+                                              Margin="10,0,0,0"
+                                              VerticalAlignment="Center"
+                                              RecognizesAccessKey="True"/>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="BoxBorder" Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="BoxBorder" Property="Background" Value="{DynamicResource AccentBrush}"/>
+                                <Setter TargetName="BoxBorder" Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+                                <Setter TargetName="CheckMark" Property="Opacity" Value="1"/>
+                            </Trigger>
+                            <MultiTrigger>
+                                <MultiTrigger.Conditions>
+                                    <Condition Property="IsChecked" Value="True"/>
+                                    <Condition Property="IsMouseOver" Value="True"/>
+                                </MultiTrigger.Conditions>
+                                <Setter TargetName="BoxBorder" Property="Background" Value="{DynamicResource AccentHoverBrush}"/>
+                                <Setter TargetName="BoxBorder" Property="BorderBrush" Value="{DynamicResource AccentHoverBrush}"/>
+                            </MultiTrigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.45"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
 
         <!-- Modern Dark ComboBoxItem Style -->
@@ -460,6 +526,57 @@
                               PreviewMouseWheel="OnContentScrollViewerPreviewMouseWheel"
                               ScrollChanged="OnContentScrollViewerScrollChanged">
                     <StackPanel>
+                        <!-- GitHub Update Banner (Quiet Checker) -->
+                        <Border x:Name="UpdateBanner"
+                                Background="{DynamicResource SettingsSubCardBackgroundBrush}"
+                                CornerRadius="10"
+                                Padding="14,11"
+                                Margin="0,0,0,14"
+                                BorderBrush="{DynamicResource AccentBrush}"
+                                BorderThickness="1"
+                                Visibility="Collapsed">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <!-- Download Icon -->
+                                <Border Grid.Column="0" Width="30" Height="30" CornerRadius="8" Background="{DynamicResource AccentBrush}" Margin="0,0,12,0" VerticalAlignment="Center">
+                                    <Path Width="14" Height="14" Fill="{DynamicResource AccentTextBrush}" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                          Data="M5,20H19V18H5M19,9H15V3H9V9H5L12,16L19,9Z"/>
+                                </Border>
+
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="0,0,10,0">
+                                    <TextBlock x:Name="UpdateTitleText" Text="Доступно обновление LucidTune!" FontWeight="SemiBold" FontSize="12.5" Foreground="{DynamicResource SettingsTextPrimaryBrush}"/>
+                                    <TextBlock Text="Нажмите «Обновить», чтобы загрузить новую версию с GitHub." FontSize="11" Foreground="{DynamicResource SettingsTextSecondaryBrush}" Margin="0,2,0,0"/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                                    <Button x:Name="DownloadUpdateButton"
+                                            Style="{StaticResource ActionButtonStyle}"
+                                            Background="{DynamicResource AccentBrush}"
+                                            Foreground="{DynamicResource AccentTextBrush}"
+                                            Padding="12,0"
+                                            Height="28"
+                                            Content="Обновить"
+                                            Click="OnDownloadUpdateClick"/>
+
+                                    <Button Style="{StaticResource WindowCloseButtonStyle}"
+                                            Width="24" Height="24"
+                                            Margin="8,0,0,0"
+                                            ToolTip="Скрыть уведомление"
+                                            Click="OnDismissUpdateClick">
+                                        <Path Width="8" Height="8" Stretch="Uniform"
+                                              Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                                              StrokeThickness="1.5"
+                                              Data="M0,0 L8,8 M8,0 L0,8"/>
+                                    </Button>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+
                         <!-- Status Banner -->
                         <Border Background="{DynamicResource SettingsCardBackgroundBrush}" CornerRadius="10" Padding="12,10" Margin="0,0,0,14" BorderBrush="{DynamicResource SettingsBorderBrush}" BorderThickness="1">
                             <Grid>
@@ -525,26 +642,39 @@
                                               MaxDropDownHeight="320"
                                               SelectionChanged="OnAccentSelectionChanged">
                                         <ComboBox.ItemTemplate>
-                                            <DataTemplate>
-                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                                    <Border Width="12" Height="12" CornerRadius="6"
-                                                            Background="{Binding ColorBrush}"
-                                                            BorderBrush="{DynamicResource SettingsBorderBrush}"
-                                                            BorderThickness="1"
-                                                            Margin="1,0,9,0"
-                                                            VerticalAlignment="Center"
-                                                            SnapsToDevicePixels="True"/>
-                                                    <TextBlock Text="{Binding Name}"
-                                                               FontSize="12"
-                                                               VerticalAlignment="Center"
-                                                               SnapsToDevicePixels="True"/>
-                                                </StackPanel>
-                                            </DataTemplate>
-                                        </ComboBox.ItemTemplate>
-                                    </ComboBox>
-                                </Grid>
+                                             <DataTemplate>
+                                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                     <Border Width="12" Height="12" CornerRadius="6"
+                                                             Background="{Binding ColorBrush}"
+                                                             BorderBrush="{DynamicResource SettingsBorderBrush}"
+                                                             BorderThickness="1"
+                                                             Margin="1,0,9,0"
+                                                             VerticalAlignment="Center"
+                                                             SnapsToDevicePixels="True"/>
+                                                     <TextBlock Text="{Binding Name}"
+                                                                FontSize="12"
+                                                                VerticalAlignment="Center"
+                                                                SnapsToDevicePixels="True"/>
+                                                 </StackPanel>
+                                             </DataTemplate>
+                                         </ComboBox.ItemTemplate>
+                                     </ComboBox>
+                                 </Grid>
 
                                 <Rectangle Height="1" Fill="{DynamicResource SettingsSeparatorBrush}" Margin="0,2,0,10"/>
+
+                                <!-- Adaptive Cover Art Color Checkbox -->
+                                <CheckBox x:Name="AdaptiveColorCheckBox"
+                                          Style="{StaticResource DarkCheckBoxStyle}"
+                                          Checked="OnAdaptiveColorChanged"
+                                          Unchecked="OnAdaptiveColorChanged">
+                                    <StackPanel>
+                                        <TextBlock Text="Адаптивный цвет под обложку" FontSize="12.5" FontWeight="Medium" Foreground="{DynamicResource SettingsTextPrimaryBrush}"/>
+                                        <TextBlock Text="Автоматически подбирает цвет акцента под цветовую гамму текущей обложки трека." FontSize="11" Foreground="{DynamicResource SettingsTextSecondaryBrush}" Margin="0,2,0,0"/>
+                                    </StackPanel>
+                                </CheckBox>
+
+                                <Rectangle Height="1" Fill="{DynamicResource SettingsSeparatorBrush}" Margin="0,6,0,10"/>
 
                                 <Grid Margin="0,0,0,10">
                                     <Grid.ColumnDefinitions>
@@ -581,12 +711,23 @@
 
                                 <Rectangle Height="1" Fill="{DynamicResource SettingsSeparatorBrush}" Margin="0,12,0,10"/>
 
+                                <!-- Vinyl Record Sleeve Mode Checkbox -->
+                                <CheckBox x:Name="VinylModeCheckBox"
+                                          Style="{StaticResource DarkCheckBoxStyle}"
+                                          Checked="OnVinylModeChanged"
+                                          Unchecked="OnVinylModeChanged">
+                                    <StackPanel>
+                                        <TextBlock Text="Режим «Виниловой пластинки»" FontSize="12.5" FontWeight="Medium" Foreground="{DynamicResource SettingsTextPrimaryBrush}"/>
+                                        <TextBlock Text="Виниловая пластинка плавно выглядывает из конверта альбома и вращается при воспроизведении." FontSize="11" Foreground="{DynamicResource SettingsTextSecondaryBrush}" Margin="0,2,0,0"/>
+                                    </StackPanel>
+                                </CheckBox>
+
                                 <!-- Compact Mode Checkbox -->
                                 <CheckBox x:Name="CompactModeCheckBox"
                                           Style="{StaticResource DarkCheckBoxStyle}"
                                           Checked="OnCompactModeChanged"
                                           Unchecked="OnCompactModeChanged">
-                                    <StackPanel Margin="6,0,0,0">
+                                    <StackPanel>
                                         <TextBlock Text="Компактный виджет" FontSize="12.5" FontWeight="Medium" Foreground="{DynamicResource SettingsTextPrimaryBrush}"/>
                                         <TextBlock Text="Скрывает изображение альбома, делая оверлей меньше и компактнее." FontSize="11" Foreground="{DynamicResource SettingsTextSecondaryBrush}" Margin="0,2,0,0"/>
                                     </StackPanel>
@@ -597,7 +738,7 @@
                                           Style="{StaticResource DarkCheckBoxStyle}"
                                           Checked="OnShowVolumeChanged"
                                           Unchecked="OnShowVolumeChanged">
-                                    <StackPanel Margin="6,0,0,0">
+                                    <StackPanel>
                                         <TextBlock Text="Показывать регулировку громкости" FontSize="12.5" FontWeight="Medium" Foreground="{DynamicResource SettingsTextPrimaryBrush}"/>
                                         <TextBlock Text="Отображает иконку и полоску управления громкостью внизу виджета." FontSize="11" Foreground="{DynamicResource SettingsTextSecondaryBrush}" Margin="0,2,0,0"/>
                                     </StackPanel>
@@ -768,6 +909,24 @@
                         <Border Background="{DynamicResource SettingsCardBackgroundBrush}" CornerRadius="10" Padding="14,12" Margin="0,0,0,14" BorderBrush="{DynamicResource SettingsBorderBrush}" BorderThickness="1">
                             <StackPanel>
                                 <TextBlock Text="Параметры работы" FontWeight="SemiBold" FontSize="13" Foreground="{DynamicResource SettingsTextPrimaryBrush}" Margin="0,0,0,8"/>
+
+                                <CheckBox x:Name="SnapToEdgesCheckBox"
+                                          Style="{StaticResource DarkCheckBoxStyle}">
+                                    <StackPanel>
+                                        <TextBlock Text="Примагничивание к краям экрана" FontSize="12.5" FontWeight="Medium" Foreground="{DynamicResource SettingsTextPrimaryBrush}"/>
+                                        <TextBlock Text="Удобно фиксирует виджет у границ экрана и по центру при перемещении мышью." FontSize="11" Foreground="{DynamicResource SettingsTextSecondaryBrush}" Margin="0,2,0,0"/>
+                                    </StackPanel>
+                                </CheckBox>
+
+                                <CheckBox x:Name="ExcludeFromCaptureCheckBox"
+                                          Style="{StaticResource DarkCheckBoxStyle}">
+                                    <StackPanel>
+                                        <TextBlock Text="Режим невидимки для стримов (OBS)" FontSize="12.5" FontWeight="Medium" Foreground="{DynamicResource SettingsTextPrimaryBrush}"/>
+                                        <TextBlock Text="Скрывает виджет на стримах, записях экрана OBS и в Discord (виден только вам)." FontSize="11" Foreground="{DynamicResource SettingsTextSecondaryBrush}" Margin="0,2,0,0"/>
+                                    </StackPanel>
+                                </CheckBox>
+
+                                <Rectangle Height="1" Fill="{DynamicResource SettingsSeparatorBrush}" Margin="0,4,0,10"/>
 
                                 <CheckBox x:Name="AutoStartCheckBox"
                                           Style="{StaticResource DarkCheckBoxStyle}"

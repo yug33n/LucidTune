@@ -31,6 +31,12 @@ namespace LucidTune.Config
         public bool ShowVolumeControl { get; set; } = true;
         public string Theme { get; set; } = "Dark";
         public string AccentColor { get; set; } = "Yellow";
+        public bool AdaptiveColorEnabled { get; set; } = true;
+        public bool VinylModeEnabled { get; set; } = false;
+
+        // Snapping and Capture
+        public bool SnapToScreenEdges { get; set; } = true;
+        public bool ExcludeFromCapture { get; set; } = false;
 
         // Discord Rich Presence
         public bool DiscordRpcEnabled { get; set; } = true;

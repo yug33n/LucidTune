@@ -17,6 +17,7 @@ namespace LucidTune.UI
         private bool _isInitializing = true;
         private double _targetVerticalOffset;
         private bool _isSmoothScrolling;
+        private string? _latestReleaseUrl;
 
         private static readonly string[] ModifiersList = ["Alt", "Ctrl", "Shift", "Ctrl+Alt", "Win", "None"];
         private static readonly List<string> CommonKeys = ["None", "Space", "Right", "Left", "Up", "Down", "M", "P", "L", "J", "Tab", "Enter"];
@@ -53,9 +54,30 @@ namespace LucidTune.UI
                 _mainWindow.ApplyWidgetOpacity(_configManager.CurrentConfig.WidgetOpacity);
                 _mainWindow.ApplyCompactMode(_configManager.CurrentConfig.CompactMode);
                 _mainWindow.ApplyVolumeControl(_configManager.CurrentConfig.ShowVolumeControl);
+                _mainWindow.ApplyVinylMode(_configManager.CurrentConfig.VinylModeEnabled);
+                _mainWindow.ApplyCaptureAffinity(_configManager.CurrentConfig.ExcludeFromCapture);
+                _mainWindow.ApplyAdaptiveColor(_configManager.CurrentConfig.AdaptiveColorEnabled);
                 ThemeManager.ApplyTheme(_configManager.CurrentConfig.Theme, _configManager.CurrentConfig.AccentColor);
             };
             UpdateOverlayStatus(_mainWindow.IsOverlayVisible);
+
+            Loaded += async (s, e) =>
+            {
+                try
+                {
+                    var result = await UpdateCheckService.CheckForUpdatesAsync();
+                    if (result.IsUpdateAvailable && !string.IsNullOrEmpty(result.ReleaseUrl))
+                    {
+                        _latestReleaseUrl = result.ReleaseUrl;
+                        UpdateTitleText.Text = $"Доступна новая версия LucidTune v{result.LatestVersion}!";
+                        UpdateBanner.Visibility = Visibility.Visible;
+                    }
+                }
+                catch
+                {
+                    // Ignore background update check failures
+                }
+            };
         }
 
         private void PopulateAllBoxes()
@@ -118,6 +140,12 @@ namespace LucidTune.UI
 
             CompactModeCheckBox.IsChecked = cfg.CompactMode;
             ShowVolumeCheckBox.IsChecked = cfg.ShowVolumeControl;
+
+            AdaptiveColorCheckBox.IsChecked = cfg.AdaptiveColorEnabled;
+            VinylModeCheckBox.IsChecked = cfg.VinylModeEnabled;
+
+            SnapToEdgesCheckBox.IsChecked = cfg.SnapToScreenEdges;
+            ExcludeFromCaptureCheckBox.IsChecked = cfg.ExcludeFromCapture;
 
             EnableDiscordRpcCheckBox.IsChecked = cfg.DiscordRpcEnabled;
             IgnoreBrowserVideosCheckBox.IsChecked = cfg.DiscordIgnoreBrowserVideos;
@@ -498,6 +526,42 @@ namespace LucidTune.UI
             _configManager.Save(cfg);
         }
 
+        private void OnAdaptiveColorChanged(object sender, RoutedEventArgs e)
+        {
+            if (_isInitializing) return;
+            _mainWindow.ApplyAdaptiveColor(AdaptiveColorCheckBox.IsChecked == true);
+        }
+
+        private void OnVinylModeChanged(object sender, RoutedEventArgs e)
+        {
+            if (_isInitializing) return;
+            _mainWindow.ApplyVinylMode(VinylModeCheckBox.IsChecked == true);
+        }
+
+        private void OnDownloadUpdateClick(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                if (!string.IsNullOrEmpty(_latestReleaseUrl))
+                {
+                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                    {
+                        FileName = _latestReleaseUrl,
+                        UseShellExecute = true
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[OnDownloadUpdateClick Exception] {ex.Message}");
+            }
+        }
+
+        private void OnDismissUpdateClick(object sender, RoutedEventArgs e)
+        {
+            UpdateBanner.Visibility = Visibility.Collapsed;
+        }
+
         private void OnSaveClick(object sender, RoutedEventArgs e)
         {
             var cfg = _configManager.CurrentConfig;
@@ -526,6 +590,17 @@ namespace LucidTune.UI
 
             cfg.ShowVolumeControl = ShowVolumeCheckBox.IsChecked == true;
             _mainWindow.ApplyVolumeControl(cfg.ShowVolumeControl);
+
+            cfg.AdaptiveColorEnabled = AdaptiveColorCheckBox.IsChecked == true;
+            _mainWindow.ApplyAdaptiveColor(cfg.AdaptiveColorEnabled);
+
+            cfg.VinylModeEnabled = VinylModeCheckBox.IsChecked == true;
+            _mainWindow.ApplyVinylMode(cfg.VinylModeEnabled);
+
+            cfg.SnapToScreenEdges = SnapToEdgesCheckBox.IsChecked == true;
+
+            cfg.ExcludeFromCapture = ExcludeFromCaptureCheckBox.IsChecked == true;
+            _mainWindow.ApplyCaptureAffinity(cfg.ExcludeFromCapture);
 
             cfg.Theme = (ThemeComboBox.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? ThemeManager.DarkTheme;
             cfg.AccentColor = (AccentComboBox.SelectedItem as ThemeManager.AccentOption)?.Key ?? ThemeManager.AccentYellow;
@@ -556,6 +631,9 @@ namespace LucidTune.UI
             _mainWindow.ApplyWidgetOpacity(_configManager.CurrentConfig.WidgetOpacity);
             _mainWindow.ApplyCompactMode(_configManager.CurrentConfig.CompactMode);
             _mainWindow.ApplyVolumeControl(_configManager.CurrentConfig.ShowVolumeControl);
+            _mainWindow.ApplyVinylMode(_configManager.CurrentConfig.VinylModeEnabled);
+            _mainWindow.ApplyCaptureAffinity(_configManager.CurrentConfig.ExcludeFromCapture);
+            _mainWindow.ApplyAdaptiveColor(_configManager.CurrentConfig.AdaptiveColorEnabled);
             ThemeManager.ApplyTheme(_configManager.CurrentConfig.Theme, _configManager.CurrentConfig.AccentColor);
             Close();
         }
