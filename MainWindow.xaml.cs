@@ -120,40 +120,45 @@ namespace LucidTune
         {
             if (isCompact)
             {
+                StopVinylAnimation();
+                VinylDiscContainer.Visibility = Visibility.Collapsed;
                 ArtColumn.Width = new GridLength(0);
                 ArtBlock.Visibility = Visibility.Collapsed;
                 TrackInfoGrid.Margin = new Thickness(14, 0, 8, 0);
                 IslandContainer.Width = 248;
-                StopVinylAnimation();
+                Width = 360;
             }
             else
             {
                 ArtBlock.Visibility = Visibility.Visible;
                 TrackInfoGrid.Margin = new Thickness(10, 0, 8, 0);
-                ApplyVinylMode(_configManager.CurrentConfig.VinylModeEnabled);
+
+                if (_configManager.CurrentConfig.VinylModeEnabled)
+                {
+                    ApplyVinylMode(true);
+                }
+                else
+                {
+                    VinylDiscContainer.Visibility = Visibility.Collapsed;
+                    ArtColumn.Width = new GridLength(62);
+                    IslandContainer.Width = 310;
+                    Width = 360;
+                }
             }
         }
 
         public void ApplyVinylMode(bool isEnabled)
         {
-            if (_configManager.CurrentConfig.CompactMode)
-            {
-                VinylDiscContainer.Visibility = Visibility.Collapsed;
-                StopVinylAnimation();
-                return;
-            }
-
             if (isEnabled)
             {
+                ArtBlock.Visibility = Visibility.Visible;
+                TrackInfoGrid.Margin = new Thickness(10, 0, 8, 0);
                 VinylDiscContainer.Visibility = Visibility.Visible;
-                ArtColumn.Width = new GridLength(82);
-                IslandContainer.Width = 332;
-                Width = 380;
+                ArtColumn.Width = new GridLength(106);
+                IslandContainer.Width = 356;
+                Width = 410;
 
-                if (_lastTrackInfo?.Thumbnail != null)
-                {
-                    VinylCenterImage.Source = _lastTrackInfo.Thumbnail;
-                }
+                UpdateVinylCenterArtwork(_lastTrackInfo?.Thumbnail);
 
                 if (_lastTrackInfo?.IsPlaying == true)
                 {
@@ -166,11 +171,31 @@ namespace LucidTune
             }
             else
             {
-                VinylDiscContainer.Visibility = Visibility.Collapsed;
-                ArtColumn.Width = new GridLength(62);
-                IslandContainer.Width = 310;
-                Width = 360;
                 StopVinylAnimation();
+                VinylDiscContainer.Visibility = Visibility.Collapsed;
+
+                if (!_configManager.CurrentConfig.CompactMode)
+                {
+                    ArtColumn.Width = new GridLength(62);
+                    IslandContainer.Width = 310;
+                    Width = 360;
+                }
+            }
+        }
+
+        private void UpdateVinylCenterArtwork(ImageSource? thumbnail)
+        {
+            if (VinylCenterEllipse == null) return;
+            if (thumbnail != null)
+            {
+                VinylCenterEllipse.Fill = new ImageBrush(thumbnail)
+                {
+                    Stretch = Stretch.UniformToFill
+                };
+            }
+            else
+            {
+                VinylCenterEllipse.Fill = (Brush)FindResource("AccentBrush");
             }
         }
 
@@ -489,7 +514,7 @@ namespace LucidTune
                 // Vinyl Disc Update
                 if (!_configManager.CurrentConfig.CompactMode && _configManager.CurrentConfig.VinylModeEnabled)
                 {
-                    VinylCenterImage.Source = track.Thumbnail;
+                    UpdateVinylCenterArtwork(track.Thumbnail);
                     if (track.IsPlaying)
                     {
                         StartVinylAnimation();

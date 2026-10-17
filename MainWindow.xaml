@@ -282,12 +282,12 @@
 
                         <!-- Album Art Block -->
                         <Grid x:Name="ArtBlock" Grid.Column="0" Margin="12,0,0,0" Width="50" Height="50" HorizontalAlignment="Left" ClipToBounds="False">
-                            <!-- Spinning Vinyl Disc (peeking out behind sleeve to the right) -->
+                            <!-- Spinning Vinyl Disc (Full complete disc emerging from sleeve) -->
                             <Grid x:Name="VinylDiscContainer"
-                                  Width="48" Height="48"
+                                  Width="50" Height="50"
                                   HorizontalAlignment="Left"
                                   VerticalAlignment="Center"
-                                  Margin="22,0,0,0"
+                                  Margin="40,0,0,0"
                                   Panel.ZIndex="1"
                                   Visibility="Collapsed"
                                   RenderTransformOrigin="0.5,0.5">
@@ -295,38 +295,51 @@
                                     <RotateTransform x:Name="VinylDiscRotation" Angle="0"/>
                                 </Grid.RenderTransform>
 
-                                <!-- Outer Vinyl Body -->
-                                <Border Width="48" Height="48" CornerRadius="24" Background="#111113" BorderBrush="#28282D" BorderThickness="1">
-                                    <Border.Effect>
-                                        <DropShadowEffect BlurRadius="6" ShadowDepth="1" Opacity="0.35" Color="#000000"/>
-                                    </Border.Effect>
-                                </Border>
+                                <!-- Outer Vinyl Body with Deep Realistic Sheen -->
+                                <Ellipse Width="50" Height="50" Stroke="#454550" StrokeThickness="1">
+                                    <Ellipse.Fill>
+                                        <RadialGradientBrush Center="0.5,0.5" RadiusX="0.5" RadiusY="0.5">
+                                            <GradientStop Color="#25252D" Offset="0.0"/>
+                                            <GradientStop Color="#141419" Offset="0.65"/>
+                                            <GradientStop Color="#1E1E26" Offset="0.94"/>
+                                            <GradientStop Color="#0D0D10" Offset="1.0"/>
+                                        </RadialGradientBrush>
+                                    </Ellipse.Fill>
+                                    <Ellipse.Effect>
+                                        <DropShadowEffect BlurRadius="8" ShadowDepth="2" Opacity="0.5" Color="#000000"/>
+                                    </Ellipse.Effect>
+                                </Ellipse>
 
-                                <!-- Concentric Grooves -->
-                                <Border Width="42" Height="42" CornerRadius="21" BorderBrush="#1C1C20" BorderThickness="1" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                <Border Width="36" Height="36" CornerRadius="18" BorderBrush="#25252A" BorderThickness="1" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                <Border Width="30" Height="30" CornerRadius="15" BorderBrush="#1C1C20" BorderThickness="1" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                <Border Width="24" Height="24" CornerRadius="12" BorderBrush="#25252A" BorderThickness="1" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                <!-- Concentric Grooves (Micro-tracks with realistic contrast) -->
+                                <Ellipse Width="44" Height="44" Stroke="#2E2E38" StrokeThickness="0.8"/>
+                                <Ellipse Width="39" Height="39" Stroke="#3C3C4A" StrokeThickness="0.6"/>
+                                <Ellipse Width="34" Height="34" Stroke="#282832" StrokeThickness="0.8"/>
+                                <Ellipse Width="29" Height="29" Stroke="#3C3C4A" StrokeThickness="0.6"/>
+                                <Ellipse Width="24" Height="24" Stroke="#2E2E38" StrokeThickness="0.8"/>
 
-                                <!-- Center Label -->
-                                <Border x:Name="VinylCenterLabel"
-                                        Width="18" Height="18"
-                                        CornerRadius="9"
-                                        Background="{DynamicResource AccentBrush}"
-                                        HorizontalAlignment="Center"
-                                        VerticalAlignment="Center"
-                                        ClipToBounds="True">
-                                    <Image x:Name="VinylCenterImage"
-                                           Stretch="UniformToFill"
-                                           RenderOptions.BitmapScalingMode="HighQuality"/>
-                                </Border>
+                                <!-- Specular Vinyl Sheen Cones -->
+                                <Path Data="M 25,25 L 3,11 A 25,25 0 0,1 11,3 Z" Fill="#15FFFFFF" IsHitTestVisible="False"/>
+                                <Path Data="M 25,25 L 47,39 A 25,25 0 0,1 39,47 Z" Fill="#15FFFFFF" IsHitTestVisible="False"/>
 
-                                <!-- Spindle Hole -->
-                                <Border Width="4" Height="4"
-                                        CornerRadius="2"
-                                        Background="#0C0C0E"
-                                        HorizontalAlignment="Center"
-                                        VerticalAlignment="Center"/>
+                                <!-- Circular Center Label (Guaranteed 100% circle) -->
+                                <Ellipse x:Name="VinylCenterEllipse"
+                                         Width="20" Height="20"
+                                         Stroke="#60FFFFFF"
+                                         StrokeThickness="1"
+                                         HorizontalAlignment="Center"
+                                         VerticalAlignment="Center">
+                                    <Ellipse.Fill>
+                                        <SolidColorBrush Color="#222228"/>
+                                    </Ellipse.Fill>
+                                </Ellipse>
+
+                                <!-- Spindle Center Hole with Metallic Ring -->
+                                <Ellipse Width="6" Height="6"
+                                         Fill="#0C0C0E"
+                                         Stroke="#80FFFFFF"
+                                         StrokeThickness="0.8"
+                                         HorizontalAlignment="Center"
+                                         VerticalAlignment="Center"/>
                             </Grid>
 
                             <!-- Album Art Sleeve (Front) -->
