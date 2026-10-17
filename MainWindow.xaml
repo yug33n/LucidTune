@@ -239,26 +239,19 @@
                 <Grid>
                     <!-- Ambient Dynamic Gradient Layer (Cover Art Shimmer) -->
                     <Border x:Name="AmbientShimmerLayer"
-                            CornerRadius="18"
-                            ClipToBounds="True"
+                            CornerRadius="17"
                             Opacity="0"
                             IsHitTestVisible="False">
-                        <Rectangle x:Name="ShimmerRect"
-                                   HorizontalAlignment="Stretch"
-                                   VerticalAlignment="Stretch"
-                                   Margin="-30,-15,-30,-15"
-                                   RenderTransformOrigin="0.5,0.5">
-                            <Rectangle.RenderTransform>
-                                <TranslateTransform x:Name="ShimmerTranslate" X="0" Y="0"/>
-                            </Rectangle.RenderTransform>
-                            <Rectangle.Fill>
-                                <LinearGradientBrush x:Name="ShimmerGradient" StartPoint="0.0,0.0" EndPoint="1.0,1.0">
-                                    <GradientStop x:Name="ShimmerStop1" Offset="0.0" Color="#00000000"/>
-                                    <GradientStop x:Name="ShimmerStop2" Offset="0.5" Color="#00000000"/>
-                                    <GradientStop x:Name="ShimmerStop3" Offset="1.0" Color="#00000000"/>
-                                </LinearGradientBrush>
-                            </Rectangle.Fill>
-                        </Rectangle>
+                        <Border.Background>
+                            <LinearGradientBrush x:Name="ShimmerGradient" StartPoint="0.0,0.0" EndPoint="1.0,1.0" SpreadMethod="Pad">
+                                <LinearGradientBrush.Transform>
+                                    <TranslateTransform x:Name="ShimmerTranslate" X="0" Y="0"/>
+                                </LinearGradientBrush.Transform>
+                                <GradientStop x:Name="ShimmerStop1" Offset="0.0" Color="#00000000"/>
+                                <GradientStop x:Name="ShimmerStop2" Offset="0.5" Color="#00000000"/>
+                                <GradientStop x:Name="ShimmerStop3" Offset="1.0" Color="#00000000"/>
+                            </LinearGradientBrush>
+                        </Border.Background>
                     </Border>
 
                     <!-- Minimize / Hide Button with Inverted Caret (Reveals smoothly on hover) -->

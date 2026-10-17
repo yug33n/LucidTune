@@ -34,6 +34,8 @@ namespace LucidTune
         private SettingsWindow? _settingsWindow;
         private MediaTrackInfo? _lastTrackInfo;
         private Storyboard? _shimmerStoryboard;
+        private string? _currentTrackKey;
+        private ExtractedPalette? _currentPalette;
 
         public bool IsOverlayVisible => _isWindowVisible;
         public event Action<bool>? OverlayVisibilityChanged;
@@ -165,13 +167,17 @@ namespace LucidTune
         {
             if (enabled && _lastTrackInfo?.Thumbnail != null)
             {
-                var palette = ColorExtractor.ExtractPalette(_lastTrackInfo.Thumbnail);
-                if (palette != null)
+                if (_currentPalette == null)
                 {
-                    ThemeManager.ApplyDynamicAccent(palette.PrimaryAccent);
+                    _currentPalette = ColorExtractor.ExtractPalette(_lastTrackInfo.Thumbnail);
+                }
+
+                if (_currentPalette != null)
+                {
+                    ThemeManager.ApplyDynamicAccent(_currentPalette.PrimaryAccent);
                     if (_configManager.CurrentConfig.AdaptiveBackgroundShimmer)
                     {
-                        ApplyShimmerPalette(palette);
+                        ApplyShimmerPalette(_currentPalette);
                     }
                     else
                     {
@@ -181,6 +187,7 @@ namespace LucidTune
                 }
             }
 
+            _currentPalette = null;
             ThemeManager.RestoreStaticAccent();
             ResetShimmerPalette();
         }
@@ -189,10 +196,14 @@ namespace LucidTune
         {
             if (enabled && _configManager.CurrentConfig.AdaptiveColorEnabled && _lastTrackInfo?.Thumbnail != null)
             {
-                var palette = ColorExtractor.ExtractPalette(_lastTrackInfo.Thumbnail);
-                if (palette != null)
+                if (_currentPalette == null)
                 {
-                    ApplyShimmerPalette(palette);
+                    _currentPalette = ColorExtractor.ExtractPalette(_lastTrackInfo.Thumbnail);
+                }
+
+                if (_currentPalette != null)
+                {
+                    ApplyShimmerPalette(_currentPalette);
                     return;
                 }
             }
@@ -240,14 +251,14 @@ namespace LucidTune
         {
             if (_shimmerStoryboard != null || ShimmerTranslate == null) return;
 
-            var animX = new DoubleAnimation(-22, 22, TimeSpan.FromSeconds(8))
+            var animX = new DoubleAnimation(-0.35, 0.35, TimeSpan.FromSeconds(8))
             {
                 AutoReverse = true,
                 RepeatBehavior = RepeatBehavior.Forever,
                 EasingFunction = new SineEase { EasingMode = EasingMode.EaseInOut }
             };
 
-            var animY = new DoubleAnimation(-8, 8, TimeSpan.FromSeconds(11))
+            var animY = new DoubleAnimation(-0.25, 0.25, TimeSpan.FromSeconds(11))
             {
                 AutoReverse = true,
                 RepeatBehavior = RepeatBehavior.Forever,
@@ -488,13 +499,28 @@ namespace LucidTune
         {
             Dispatcher.Invoke(() =>
             {
+                // Unique key to distinguish different songs
+                string newTrackKey = $"{track.SourceAppUserModelId}|{track.Artist}|{track.Title}".Trim();
+                bool isNewTrack = !string.Equals(newTrackKey, _currentTrackKey, StringComparison.OrdinalIgnoreCase);
+
+                // Prevent seeking/scrubbing glitches:
+                // If it is the SAME track and incoming thumbnail is null, retain previous valid thumbnail
+                if (!isNewTrack && track.Thumbnail == null && _lastTrackInfo?.Thumbnail != null)
+                {
+                    track.Thumbnail = _lastTrackInfo.Thumbnail;
+                    track.ThumbnailBytes = _lastTrackInfo.ThumbnailBytes;
+                }
+
                 _lastTrackInfo = track;
                 TitleText.Text = track.Title;
                 ArtistText.Text = track.Artist;
 
                 if (track.Thumbnail != null)
                 {
-                    AlbumArtImage.Source = track.Thumbnail;
+                    if (isNewTrack || AlbumArtImage.Source == null)
+                    {
+                        AlbumArtImage.Source = track.Thumbnail;
+                    }
                     AlbumArtImage.Visibility = Visibility.Visible;
                     PlaceholderArt.Visibility = Visibility.Collapsed;
                 }
@@ -505,51 +531,64 @@ namespace LucidTune
                     PlaceholderArt.Visibility = Visibility.Visible;
                 }
 
-                // Adaptive Accent Color & Background Shimmer
-                if (_configManager.CurrentConfig.AdaptiveColorEnabled)
+                // ONLY update Adaptive Accent & Palette if the song actually changed!
+                if (isNewTrack)
                 {
-                    if (track.Thumbnail != null)
+                    _currentTrackKey = newTrackKey;
+
+                    if (_configManager.CurrentConfig.AdaptiveColorEnabled)
                     {
-                        var palette = ColorExtractor.ExtractPalette(track.Thumbnail);
-                        if (palette != null)
+                        if (track.Thumbnail != null)
                         {
-                            ThemeManager.ApplyDynamicAccent(palette.PrimaryAccent);
-                            if (_configManager.CurrentConfig.AdaptiveBackgroundShimmer)
+                            _currentPalette = ColorExtractor.ExtractPalette(track.Thumbnail);
+                            if (_currentPalette != null)
                             {
-                                ApplyShimmerPalette(palette);
+                                ThemeManager.ApplyDynamicAccent(_currentPalette.PrimaryAccent);
+                                if (_configManager.CurrentConfig.AdaptiveBackgroundShimmer)
+                                {
+                                    ApplyShimmerPalette(_currentPalette);
+                                }
+                                else
+                                {
+                                    ResetShimmerPalette();
+                                }
                             }
                             else
                             {
+                                _currentPalette = null;
+                                ThemeManager.RestoreStaticAccent();
                                 ResetShimmerPalette();
                             }
                         }
                         else
                         {
+                            _currentPalette = null;
                             ThemeManager.RestoreStaticAccent();
                             ResetShimmerPalette();
                         }
                     }
                     else
                     {
+                        _currentPalette = null;
                         ThemeManager.RestoreStaticAccent();
                         ResetShimmerPalette();
                     }
                 }
                 else
                 {
-                    ThemeManager.RestoreStaticAccent();
-                    ResetShimmerPalette();
-                }
-
-                if (_configManager.CurrentConfig.AdaptiveColorEnabled && _configManager.CurrentConfig.AdaptiveBackgroundShimmer && AmbientShimmerLayer?.Opacity > 0.05)
-                {
-                    if (track.IsPlaying)
+                    // Same track: just sync shimmer play/pause state without flickering colors!
+                    if (_configManager.CurrentConfig.AdaptiveColorEnabled &&
+                        _configManager.CurrentConfig.AdaptiveBackgroundShimmer &&
+                        _currentPalette != null)
                     {
-                        StartShimmerAnimation();
-                    }
-                    else
-                    {
-                        StopShimmerAnimation();
+                        if (track.IsPlaying)
+                        {
+                            StartShimmerAnimation();
+                        }
+                        else
+                        {
+                            StopShimmerAnimation();
+                        }
                     }
                 }
 
