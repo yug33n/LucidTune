@@ -297,8 +297,8 @@
 
                                 <!-- Outer Vinyl Body with Distinct Realistic Vinyl Tone -->
                                 <Ellipse Width="48" Height="48"
-                                         Fill="#1E1E26"
-                                         Stroke="#4A4A5A"
+                                         Fill="#24252F"
+                                         Stroke="#5A5B6C"
                                          StrokeThickness="1">
                                     <Ellipse.Effect>
                                         <DropShadowEffect BlurRadius="6" ShadowDepth="1" Opacity="0.45" Color="#000000"/>
@@ -306,20 +306,16 @@
                                 </Ellipse>
 
                                 <!-- Concentric Grooves (Micro-tracks with realistic contrast) -->
-                                <Ellipse Width="42" Height="42" Stroke="#343442" StrokeThickness="0.8"/>
-                                <Ellipse Width="37" Height="37" Stroke="#48485C" StrokeThickness="0.6"/>
-                                <Ellipse Width="32" Height="32" Stroke="#343442" StrokeThickness="0.8"/>
-                                <Ellipse Width="27" Height="27" Stroke="#48485C" StrokeThickness="0.6"/>
-
-                                <!-- Specular Vinyl Sheen Cones -->
-                                <Path Data="M 24,24 L 3,11 A 24,24 0 0,1 11,3 Z" Fill="#18FFFFFF" IsHitTestVisible="False"/>
-                                <Path Data="M 24,24 L 45,37 A 24,24 0 0,1 37,45 Z" Fill="#18FFFFFF" IsHitTestVisible="False"/>
+                                <Ellipse Width="42" Height="42" Stroke="#424354" StrokeThickness="0.8"/>
+                                <Ellipse Width="37" Height="37" Stroke="#56576C" StrokeThickness="0.6"/>
+                                <Ellipse Width="32" Height="32" Stroke="#424354" StrokeThickness="0.8"/>
+                                <Ellipse Width="27" Height="27" Stroke="#56576C" StrokeThickness="0.6"/>
 
                                 <!-- Circular Center Label (Guaranteed 100% circle) -->
                                 <Ellipse x:Name="VinylCenterEllipse"
                                          Width="20" Height="20"
                                          Fill="{DynamicResource AccentBrush}"
-                                         Stroke="#80FFFFFF"
+                                         Stroke="#A0FFFFFF"
                                          StrokeThickness="1"
                                          HorizontalAlignment="Center"
                                          VerticalAlignment="Center"/>
@@ -327,7 +323,7 @@
                                 <!-- Spindle Center Hole with Metallic Ring -->
                                 <Ellipse Width="6" Height="6"
                                          Fill="#0E0E12"
-                                         Stroke="#90FFFFFF"
+                                         Stroke="#C0FFFFFF"
                                          StrokeThickness="0.8"
                                          HorizontalAlignment="Center"
                                          VerticalAlignment="Center"/>
