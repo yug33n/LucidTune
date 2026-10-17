@@ -577,18 +577,20 @@ namespace LucidTune.UI
                     _latestReleaseUrl = result.ReleaseUrl;
                     UpdateTitleText.Text = $"Доступна новая версия LucidTune v{result.LatestVersion}!";
                     UpdateBanner.Visibility = Visibility.Visible;
+                    CheckUpdatesButton.Content = "Обновление!";
                 }
                 else
                 {
-                    // Fallback to showcase test banner so the user can verify its layout anytime
-                    _latestReleaseUrl = UpdateCheckService.FallbackReleaseUrl;
-                    UpdateTitleText.Text = $"Тест: Доступна новая версия LucidTune v{UpdateCheckService.TargetReleaseVersion}!";
-                    UpdateBanner.Visibility = Visibility.Visible;
+                    UpdateBanner.Visibility = Visibility.Collapsed;
+                    CheckUpdatesButton.Content = "Актуально ✓";
+                    await Task.Delay(2500);
                 }
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"[OnCheckUpdatesClick Exception] {ex.Message}");
+                CheckUpdatesButton.Content = "Ошибка";
+                await Task.Delay(2000);
             }
             finally
             {
