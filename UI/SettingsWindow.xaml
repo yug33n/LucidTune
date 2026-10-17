@@ -614,6 +614,11 @@
                                 <CheckBox x:Name="EnableDiscordRpcCheckBox"
                                           Style="{StaticResource DarkCheckBoxStyle}"
                                           Content="Включить статус в Discord"/>
+
+                                <CheckBox x:Name="IgnoreBrowserVideosCheckBox"
+                                          Style="{StaticResource DarkCheckBoxStyle}"
+                                          Content="Игнорировать видео в браузере (YouTube, Twitch)"
+                                          Margin="0,8,0,0"/>
                             </StackPanel>
                         </Border>
 

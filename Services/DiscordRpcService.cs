@@ -123,6 +123,13 @@ namespace LucidTune.Services
                 return;
             }
 
+            // If configured to ignore browser videos (YouTube, Twitch, etc.), clear Discord presence
+            if (_configManager.CurrentConfig.DiscordIgnoreBrowserVideos && IsBrowserVideo(track))
+            {
+                try { _client?.ClearPresence(); } catch { }
+                return;
+            }
+
             var source = DetectMusicSource(track);
             var targetAppId = GetAppIdForSource(source);
 
@@ -221,6 +228,82 @@ namespace LucidTune.Services
             {
                 Debug.WriteLine($"[DiscordRpcService] SendPresencePayload error: {ex.Message}");
             }
+        }
+
+        public static bool IsBrowserApp(string? sourceAppUserModelId)
+        {
+            if (string.IsNullOrWhiteSpace(sourceAppUserModelId)) return false;
+            var id = sourceAppUserModelId.ToLowerInvariant();
+            return id.Contains("chrome") ||
+                   id.Contains("edge") ||
+                   id.Contains("msedge") ||
+                   id.Contains("firefox") ||
+                   id.Contains("opera") ||
+                   id.Contains("brave") ||
+                   id.Contains("vivaldi") ||
+                   id.Contains("browser");
+        }
+
+        public static bool IsBrowserVideo(MediaTrackInfo track)
+        {
+            if (!IsBrowserApp(track.SourceAppUserModelId))
+            {
+                return false;
+            }
+
+            // Check if active browser window is a music streaming service or a video player
+            try
+            {
+                foreach (var p in Process.GetProcesses())
+                {
+                    var pName = p.ProcessName.ToLowerInvariant();
+                    if (pName.Contains("chrome") || pName.Contains("msedge") || pName.Contains("firefox") || pName.Contains("opera") || pName.Contains("brave"))
+                    {
+                        var title = p.MainWindowTitle?.ToLowerInvariant() ?? "";
+                        if (string.IsNullOrWhiteSpace(title)) continue;
+
+                        // Dedicated music web players are never treated as videos:
+                        if (title.Contains("youtube music") ||
+                            title.Contains("яндекс музыка") ||
+                            title.Contains("yandex music") ||
+                            title.Contains("spotify") ||
+                            title.Contains("soundcloud") ||
+                            title.Contains("deezer") ||
+                            title.Contains("apple music") ||
+                            title.Contains("tidal") ||
+                            title.Contains("vk музыка") ||
+                            title.Contains("музыка вконтакте"))
+                        {
+                            return false;
+                        }
+
+                        // Explicit video platforms in browser
+                        if (title.Contains("- youtube") || title.EndsWith("youtube") ||
+                            title.Contains("twitch") || title.Contains("кинопоиск") ||
+                            title.Contains("kinopoisk") || title.Contains("rutube") ||
+                            title.Contains("netflix") || title.Contains("vk видео"))
+                        {
+                            return true;
+                        }
+                    }
+                }
+            }
+            catch { }
+
+            // If SMTC explicitly declared this media as Video:
+            if (string.Equals(track.PlaybackType, "Video", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            // Check track title suffix:
+            var lowerTitle = track.Title.ToLowerInvariant();
+            if (lowerTitle.EndsWith("- youtube") || lowerTitle.Contains("youtube.com"))
+            {
+                return true;
+            }
+
+            return false;
         }
 
         public static MusicSource DetectMusicSource(MediaTrackInfo track)

@@ -14,6 +14,7 @@ namespace LucidTune.Models
         public TimeSpan Position { get; set; } = TimeSpan.Zero;
         public TimeSpan Duration { get; set; } = TimeSpan.Zero;
         public string? SourceAppUserModelId { get; set; }
+        public string? PlaybackType { get; set; }
 
         public double Progress
         {

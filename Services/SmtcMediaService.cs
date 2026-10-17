@@ -148,7 +148,8 @@ namespace LucidTune.Services
                     HasActiveSession = playbackStatus != GlobalSystemMediaTransportControlsSessionPlaybackStatus.Closed,
                     Position = _lastReportedPosition,
                     Duration = _trackDuration,
-                    SourceAppUserModelId = session.SourceAppUserModelId
+                    SourceAppUserModelId = session.SourceAppUserModelId,
+                    PlaybackType = mediaProperties?.PlaybackType?.ToString()
                 };
 
                 CurrentTrack = trackInfo;

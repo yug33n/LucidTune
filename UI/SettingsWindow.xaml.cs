@@ -120,6 +120,7 @@ namespace LucidTune.UI
             ShowVolumeCheckBox.IsChecked = cfg.ShowVolumeControl;
 
             EnableDiscordRpcCheckBox.IsChecked = cfg.DiscordRpcEnabled;
+            IgnoreBrowserVideosCheckBox.IsChecked = cfg.DiscordIgnoreBrowserVideos;
 
             UpdateAllPreviews();
         }
@@ -531,6 +532,7 @@ namespace LucidTune.UI
             ThemeManager.ApplyTheme(cfg.Theme, cfg.AccentColor);
 
             cfg.DiscordRpcEnabled = EnableDiscordRpcCheckBox.IsChecked == true;
+            cfg.DiscordIgnoreBrowserVideos = IgnoreBrowserVideosCheckBox.IsChecked ?? true;
 
             _configManager.Save(cfg);
 
