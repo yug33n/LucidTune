@@ -711,17 +711,6 @@
 
                                 <Rectangle Height="1" Fill="{DynamicResource SettingsSeparatorBrush}" Margin="0,12,0,10"/>
 
-                                <!-- Vinyl Record Sleeve Mode Checkbox -->
-                                <CheckBox x:Name="VinylModeCheckBox"
-                                          Style="{StaticResource DarkCheckBoxStyle}"
-                                          Checked="OnVinylModeChanged"
-                                          Unchecked="OnVinylModeChanged">
-                                    <StackPanel>
-                                        <TextBlock Text="Режим «Виниловой пластинки»" FontSize="12.5" FontWeight="Medium" Foreground="{DynamicResource SettingsTextPrimaryBrush}"/>
-                                        <TextBlock Text="Виниловая пластинка плавно выглядывает из конверта альбома и вращается при воспроизведении." FontSize="11" Foreground="{DynamicResource SettingsTextSecondaryBrush}" Margin="0,2,0,0"/>
-                                    </StackPanel>
-                                </CheckBox>
-
                                 <!-- Compact Mode Checkbox -->
                                 <CheckBox x:Name="CompactModeCheckBox"
                                           Style="{StaticResource DarkCheckBoxStyle}"

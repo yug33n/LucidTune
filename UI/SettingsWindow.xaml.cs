@@ -52,21 +52,7 @@ namespace LucidTune.UI
                 StopSmoothScroll();
                 _mainWindow.OverlayVisibilityChanged -= OnOverlayVisibilityChanged;
                 _mainWindow.ApplyWidgetOpacity(_configManager.CurrentConfig.WidgetOpacity);
-                if (_configManager.CurrentConfig.CompactMode)
-                {
-                    _mainWindow.ApplyVinylMode(false);
-                    _mainWindow.ApplyCompactMode(true);
-                }
-                else if (_configManager.CurrentConfig.VinylModeEnabled)
-                {
-                    _mainWindow.ApplyCompactMode(false);
-                    _mainWindow.ApplyVinylMode(true);
-                }
-                else
-                {
-                    _mainWindow.ApplyCompactMode(false);
-                    _mainWindow.ApplyVinylMode(false);
-                }
+                _mainWindow.ApplyCompactMode(_configManager.CurrentConfig.CompactMode);
                 _mainWindow.ApplyVolumeControl(_configManager.CurrentConfig.ShowVolumeControl);
                 _mainWindow.ApplyCaptureAffinity(_configManager.CurrentConfig.ExcludeFromCapture);
                 _mainWindow.ApplyAdaptiveColor(_configManager.CurrentConfig.AdaptiveColorEnabled);
@@ -155,7 +141,6 @@ namespace LucidTune.UI
             ShowVolumeCheckBox.IsChecked = cfg.ShowVolumeControl;
 
             AdaptiveColorCheckBox.IsChecked = cfg.AdaptiveColorEnabled;
-            VinylModeCheckBox.IsChecked = cfg.VinylModeEnabled;
 
             SnapToEdgesCheckBox.IsChecked = cfg.SnapToScreenEdges;
             ExcludeFromCaptureCheckBox.IsChecked = cfg.ExcludeFromCapture;
@@ -475,14 +460,6 @@ namespace LucidTune.UI
         {
             if (_isInitializing) return;
             bool isCompact = CompactModeCheckBox.IsChecked == true;
-            if (isCompact)
-            {
-                if (VinylModeCheckBox.IsChecked == true)
-                {
-                    VinylModeCheckBox.IsChecked = false;
-                    _mainWindow.ApplyVinylMode(false);
-                }
-            }
             _mainWindow.ApplyCompactMode(isCompact);
         }
 
@@ -553,21 +530,6 @@ namespace LucidTune.UI
             _mainWindow.ApplyAdaptiveColor(AdaptiveColorCheckBox.IsChecked == true);
         }
 
-        private void OnVinylModeChanged(object sender, RoutedEventArgs e)
-        {
-            if (_isInitializing) return;
-            bool isVinyl = VinylModeCheckBox.IsChecked == true;
-            if (isVinyl)
-            {
-                if (CompactModeCheckBox.IsChecked == true)
-                {
-                    CompactModeCheckBox.IsChecked = false;
-                    _mainWindow.ApplyCompactMode(false);
-                }
-            }
-            _mainWindow.ApplyVinylMode(isVinyl);
-        }
-
         private void OnDownloadUpdateClick(object sender, RoutedEventArgs e)
         {
             try
@@ -616,30 +578,8 @@ namespace LucidTune.UI
             _mainWindow.ApplyWidgetOpacity(cfg.WidgetOpacity);
 
             bool compact = CompactModeCheckBox.IsChecked == true;
-            bool vinyl = VinylModeCheckBox.IsChecked == true;
-            if (compact && vinyl)
-            {
-                vinyl = false;
-            }
-
             cfg.CompactMode = compact;
-            cfg.VinylModeEnabled = vinyl;
-
-            if (compact)
-            {
-                _mainWindow.ApplyVinylMode(false);
-                _mainWindow.ApplyCompactMode(true);
-            }
-            else if (vinyl)
-            {
-                _mainWindow.ApplyCompactMode(false);
-                _mainWindow.ApplyVinylMode(true);
-            }
-            else
-            {
-                _mainWindow.ApplyCompactMode(false);
-                _mainWindow.ApplyVinylMode(false);
-            }
+            _mainWindow.ApplyCompactMode(compact);
 
             cfg.ShowVolumeControl = ShowVolumeCheckBox.IsChecked == true;
             _mainWindow.ApplyVolumeControl(cfg.ShowVolumeControl);
@@ -679,21 +619,7 @@ namespace LucidTune.UI
         private void OnCloseClick(object sender, RoutedEventArgs e)
         {
             _mainWindow.ApplyWidgetOpacity(_configManager.CurrentConfig.WidgetOpacity);
-            if (_configManager.CurrentConfig.CompactMode)
-            {
-                _mainWindow.ApplyVinylMode(false);
-                _mainWindow.ApplyCompactMode(true);
-            }
-            else if (_configManager.CurrentConfig.VinylModeEnabled)
-            {
-                _mainWindow.ApplyCompactMode(false);
-                _mainWindow.ApplyVinylMode(true);
-            }
-            else
-            {
-                _mainWindow.ApplyCompactMode(false);
-                _mainWindow.ApplyVinylMode(false);
-            }
+            _mainWindow.ApplyCompactMode(_configManager.CurrentConfig.CompactMode);
             _mainWindow.ApplyVolumeControl(_configManager.CurrentConfig.ShowVolumeControl);
             _mainWindow.ApplyCaptureAffinity(_configManager.CurrentConfig.ExcludeFromCapture);
             _mainWindow.ApplyAdaptiveColor(_configManager.CurrentConfig.AdaptiveColorEnabled);

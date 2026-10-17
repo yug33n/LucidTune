@@ -33,7 +33,6 @@ namespace LucidTune
         private bool _isAnimating;
         private SettingsWindow? _settingsWindow;
         private MediaTrackInfo? _lastTrackInfo;
-        private DoubleAnimation? _vinylAnim;
 
         public bool IsOverlayVisible => _isWindowVisible;
         public event Action<bool>? OverlayVisibilityChanged;
@@ -120,8 +119,6 @@ namespace LucidTune
         {
             if (isCompact)
             {
-                StopVinylAnimation();
-                VinylDiscContainer.Visibility = Visibility.Collapsed;
                 ArtColumn.Width = new GridLength(0);
                 ArtBlock.Visibility = Visibility.Collapsed;
                 TrackInfoGrid.Margin = new Thickness(14, 0, 8, 0);
@@ -132,96 +129,10 @@ namespace LucidTune
             {
                 ArtBlock.Visibility = Visibility.Visible;
                 TrackInfoGrid.Margin = new Thickness(10, 0, 8, 0);
-
-                if (_configManager.CurrentConfig.VinylModeEnabled)
-                {
-                    ApplyVinylMode(true);
-                }
-                else
-                {
-                    VinylDiscContainer.Visibility = Visibility.Collapsed;
-                    ArtColumn.Width = new GridLength(62);
-                    IslandContainer.Width = 310;
-                    Width = 360;
-                }
+                ArtColumn.Width = new GridLength(62);
+                IslandContainer.Width = 310;
+                Width = 360;
             }
-        }
-
-        public void ApplyVinylMode(bool isEnabled)
-        {
-            if (isEnabled)
-            {
-                ArtBlock.Visibility = Visibility.Visible;
-                TrackInfoGrid.Margin = new Thickness(10, 0, 8, 0);
-                VinylDiscContainer.Visibility = Visibility.Visible;
-                ArtColumn.Width = new GridLength(104);
-                IslandContainer.Width = 352;
-                Width = 402;
-
-                UpdateVinylCenterArtwork(_lastTrackInfo?.Thumbnail);
-
-                if (_lastTrackInfo?.IsPlaying == true)
-                {
-                    StartVinylAnimation();
-                }
-                else
-                {
-                    StopVinylAnimation();
-                }
-            }
-            else
-            {
-                StopVinylAnimation();
-                VinylDiscContainer.Visibility = Visibility.Collapsed;
-
-                if (!_configManager.CurrentConfig.CompactMode)
-                {
-                    ArtColumn.Width = new GridLength(62);
-                    IslandContainer.Width = 310;
-                    Width = 360;
-                }
-            }
-        }
-
-        private void UpdateVinylCenterArtwork(ImageSource? thumbnail)
-        {
-            if (VinylCenterEllipse == null) return;
-            var thumb = thumbnail ?? AlbumArtImage?.Source;
-            if (thumb != null)
-            {
-                VinylCenterEllipse.Fill = new ImageBrush(thumb)
-                {
-                    Stretch = Stretch.UniformToFill
-                };
-            }
-            else
-            {
-                VinylCenterEllipse.Fill = (Brush)FindResource("AccentBrush");
-            }
-        }
-
-        private void StartVinylAnimation()
-        {
-            if (_vinylAnim != null) return;
-
-            _vinylAnim = new DoubleAnimation
-            {
-                From = VinylDiscRotation.Angle,
-                To = VinylDiscRotation.Angle + 360,
-                Duration = TimeSpan.FromSeconds(3.6),
-                RepeatBehavior = RepeatBehavior.Forever
-            };
-            VinylDiscRotation.BeginAnimation(RotateTransform.AngleProperty, _vinylAnim);
-        }
-
-        private void StopVinylAnimation()
-        {
-            if (_vinylAnim == null) return;
-
-            double currentAngle = VinylDiscRotation.Angle;
-            VinylDiscRotation.BeginAnimation(RotateTransform.AngleProperty, null);
-            VinylDiscRotation.Angle = currentAngle % 360;
-            _vinylAnim = null;
         }
 
         public void ApplyCaptureAffinity(bool exclude)
@@ -510,24 +421,6 @@ namespace LucidTune
                     {
                         ThemeManager.RestoreStaticAccent();
                     }
-                }
-
-                // Vinyl Disc Update
-                if (!_configManager.CurrentConfig.CompactMode && _configManager.CurrentConfig.VinylModeEnabled)
-                {
-                    UpdateVinylCenterArtwork(track.Thumbnail);
-                    if (track.IsPlaying)
-                    {
-                        StartVinylAnimation();
-                    }
-                    else
-                    {
-                        StopVinylAnimation();
-                    }
-                }
-                else
-                {
-                    StopVinylAnimation();
                 }
 
                 ArtContainer.Opacity = track.IsPlaying ? 1.0 : 0.65;

@@ -17,10 +17,6 @@
 - **Automatic Color Extraction**: Dynamically samples the dominant and vibrant hues from current album art and applies them in real time across widget accents, buttons, and badges.
 - **Graceful Fallback**: Automatically reverts to user's chosen static accent theme when cover art is missing or feature is disabled. Enabled by default.
 
-### 💿 Vinyl Record Sleeve Mode
-- **Realistic Vinyl Disc**: Album cover acts as a stylish record sleeve; a micro-grooved vinyl record peeks out and spins smoothly during playback.
-- **Adaptive Width**: Expands widget width gracefully when active and pauses rotation on track pause. Fully toggleable in Settings.
-
 ### 🧲 Screen Edge & Center Snapping
 - **Magnetic Docking**: While dragging the widget across the screen, it gently snaps to monitor boundaries (with an aesthetic floating dock padding) and to the horizontal center.
 - Can be disabled in Settings for freeform pixel-level positioning.
