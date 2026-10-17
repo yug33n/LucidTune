@@ -15,6 +15,7 @@
     <Product>LucidTune</Product>
     <Description>Lightweight Windows Desktop Media Overlay Widget</Description>
     <Authors>LucidTune Team</Authors>
+    <IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>
   </PropertyGroup>
 
   <ItemGroup>
