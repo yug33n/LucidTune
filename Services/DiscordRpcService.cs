@@ -1,5 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using DiscordRPC;
@@ -230,6 +233,22 @@ namespace LucidTune.Services
             }
         }
 
+        private delegate bool EnumWindowsProc(IntPtr hWnd, IntPtr lParam);
+
+        [DllImport("user32.dll")]
+        private static extern bool EnumWindows(EnumWindowsProc lpEnumFunc, IntPtr lParam);
+
+        [DllImport("user32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+        private static extern int GetWindowText(IntPtr hWnd, StringBuilder lpString, int nMaxCount);
+
+        [DllImport("user32.dll")]
+        private static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint lpdwProcessId);
+
+        [DllImport("user32.dll")]
+        private static extern bool IsWindowVisible(IntPtr hWnd);
+
+        private static string? _lastIdentifiedVideoKey;
+
         public static bool IsBrowserApp(string? sourceAppUserModelId)
         {
             if (string.IsNullOrWhiteSpace(sourceAppUserModelId)) return false;
@@ -241,7 +260,87 @@ namespace LucidTune.Services
                    id.Contains("opera") ||
                    id.Contains("brave") ||
                    id.Contains("vivaldi") ||
-                   id.Contains("browser");
+                   id.Contains("browser") ||
+                   id.Contains("arc") ||
+                   (id.Contains("yandex") && !id.Contains("yandexmusic") && !id.Contains("music"));
+        }
+
+        private static bool IsBrowserProcessName(string? pName)
+        {
+            if (string.IsNullOrWhiteSpace(pName)) return false;
+            var name = pName.ToLowerInvariant();
+            return name.Contains("chrome") ||
+                   name.Contains("msedge") ||
+                   name.Contains("edge") ||
+                   name.Contains("firefox") ||
+                   name.Contains("opera") ||
+                   name.Contains("brave") ||
+                   name.Contains("vivaldi") ||
+                   name.Contains("browser") ||
+                   name.Contains("arc") ||
+                   name.Contains("yandex");
+        }
+
+        private static List<string> GetBrowserWindowTitles()
+        {
+            var titles = new List<string>();
+            var browserPids = new HashSet<uint>();
+
+            try
+            {
+                foreach (var p in Process.GetProcesses())
+                {
+                    try
+                    {
+                        if (IsBrowserProcessName(p.ProcessName))
+                        {
+                            browserPids.Add((uint)p.Id);
+                            var mainTitle = p.MainWindowTitle;
+                            if (!string.IsNullOrWhiteSpace(mainTitle))
+                            {
+                                titles.Add(mainTitle);
+                            }
+                        }
+                    }
+                    catch { }
+                    finally
+                    {
+                        p.Dispose();
+                    }
+                }
+            }
+            catch { }
+
+            try
+            {
+                EnumWindows((hWnd, lParam) =>
+                {
+                    try
+                    {
+                        if (IsWindowVisible(hWnd))
+                        {
+                            GetWindowThreadProcessId(hWnd, out var pid);
+                            if (pid > 0 && browserPids.Contains(pid))
+                            {
+                                var sb = new StringBuilder(512);
+                                if (GetWindowText(hWnd, sb, sb.Capacity) > 0)
+                                {
+                                    var text = sb.ToString();
+                                    if (!string.IsNullOrWhiteSpace(text))
+                                    {
+                                        titles.Add(text);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    catch { }
+                    return true;
+                }, IntPtr.Zero);
+            }
+            catch { }
+
+            return titles;
         }
 
         public static bool IsBrowserVideo(MediaTrackInfo track)
@@ -251,54 +350,138 @@ namespace LucidTune.Services
                 return false;
             }
 
-            // Check if active browser window is a music streaming service or a video player
+            var currentTrackKey = $"{track.SourceAppUserModelId}:{track.Title}:{track.Artist}";
+
+            // 1. If SMTC explicitly declared this media as Video:
+            if (string.Equals(track.PlaybackType, "Video", StringComparison.OrdinalIgnoreCase))
+            {
+                _lastIdentifiedVideoKey = currentTrackKey;
+                return true;
+            }
+
+            var lowerTitle = track.Title?.ToLowerInvariant() ?? "";
+            var lowerArtist = track.Artist?.ToLowerInvariant() ?? "";
+
+            // 2. Explicit video indicators in track metadata:
+            if (lowerArtist == "youtube" || lowerArtist == "twitch" || lowerArtist == "rutube" ||
+                lowerArtist.Contains("vk видео") || lowerArtist.Contains("vk video"))
+            {
+                _lastIdentifiedVideoKey = currentTrackKey;
+                return true;
+            }
+
+            if (lowerTitle.Contains("youtube.com") || lowerTitle.Contains("youtu.be") || lowerTitle.Contains("twitch.tv"))
+            {
+                _lastIdentifiedVideoKey = currentTrackKey;
+                return true;
+            }
+
+            // Check if track title itself contains YouTube indicators (e.g. "Video Title — YouTube", "Video - YouTube", "Video | YouTube"):
+            if ((lowerTitle.Contains("— youtube") || lowerTitle.Contains("– youtube") ||
+                 lowerTitle.Contains("- youtube") || lowerTitle.Contains("| youtube") ||
+                 lowerTitle.Contains("[youtube]") || lowerTitle.Contains("(youtube)")) &&
+                !lowerTitle.Contains("youtube music"))
+            {
+                _lastIdentifiedVideoKey = currentTrackKey;
+                return true;
+            }
+
+            // 3. Scan browser window titles (active tabs across all browser windows)
             try
             {
-                foreach (var p in Process.GetProcesses())
+                var titles = GetBrowserWindowTitles();
+
+                bool hasMusicService = false;
+                bool hasVideoService = false;
+
+                foreach (var rawTitle in titles)
                 {
-                    var pName = p.ProcessName.ToLowerInvariant();
-                    if (pName.Contains("chrome") || pName.Contains("msedge") || pName.Contains("firefox") || pName.Contains("opera") || pName.Contains("brave"))
+                    var t = rawTitle.ToLowerInvariant();
+
+                    // Dedicated music web players are never treated as videos:
+                    if (t.Contains("youtube music") ||
+                        t.Contains("яндекс музыка") ||
+                        t.Contains("yandex music") ||
+                        t.Contains("spotify") ||
+                        t.Contains("soundcloud") ||
+                        t.Contains("deezer") ||
+                        t.Contains("apple music") ||
+                        t.Contains("tidal") ||
+                        t.Contains("vk музыка") ||
+                        t.Contains("музыка вконтакте") ||
+                        t.Contains("bandcamp"))
                     {
-                        var title = p.MainWindowTitle?.ToLowerInvariant() ?? "";
-                        if (string.IsNullOrWhiteSpace(title)) continue;
+                        hasMusicService = true;
+                    }
 
-                        // Dedicated music web players are never treated as videos:
-                        if (title.Contains("youtube music") ||
-                            title.Contains("яндекс музыка") ||
-                            title.Contains("yandex music") ||
-                            title.Contains("spotify") ||
-                            title.Contains("soundcloud") ||
-                            title.Contains("deezer") ||
-                            title.Contains("apple music") ||
-                            title.Contains("tidal") ||
-                            title.Contains("vk музыка") ||
-                            title.Contains("музыка вконтакте"))
-                        {
-                            return false;
-                        }
+                    // Video platforms in browser (handling em-dash —, en-dash –, hyphen -, pipe |, and raw keywords):
+                    if ((t.Contains("youtube") && !t.Contains("youtube music")) ||
+                        t.Contains("youtu.be") ||
+                        t.Contains("twitch") ||
+                        t.Contains("кинопоиск") ||
+                        t.Contains("kinopoisk") ||
+                        t.Contains("rutube") ||
+                        t.Contains("netflix") ||
+                        t.Contains("vk видео") ||
+                        t.Contains("vk video") ||
+                        t.Contains("vimeo") ||
+                        t.Contains("dailymotion") ||
+                        t.Contains("coub") ||
+                        t.Contains("tiktok") ||
+                        t.Contains("jut.su") ||
+                        t.Contains("anilibria") ||
+                        t.Contains("shikimori") ||
+                        t.Contains("anime") ||
+                        t.Contains("hdrezka") ||
+                        t.Contains("filmix") ||
+                        t.Contains("lordfilm") ||
+                        t.Contains("kinogo") ||
+                        t.Contains("kick.com") ||
+                        t.Contains("bilibili"))
+                    {
+                        hasVideoService = true;
+                    }
+                }
 
-                        // Explicit video platforms in browser
-                        if (title.Contains("- youtube") || title.EndsWith("youtube") ||
-                            title.Contains("twitch") || title.Contains("кинопоиск") ||
-                            title.Contains("kinopoisk") || title.Contains("rutube") ||
-                            title.Contains("netflix") || title.Contains("vk видео"))
+                if (hasVideoService && !hasMusicService)
+                {
+                    _lastIdentifiedVideoKey = currentTrackKey;
+                    return true;
+                }
+
+                if (hasVideoService && hasMusicService)
+                {
+                    // If video window title contains the current track's title, it's definitely the video
+                    if (!string.IsNullOrWhiteSpace(lowerTitle))
+                    {
+                        foreach (var rawTitle in titles)
                         {
-                            return true;
+                            var t = rawTitle.ToLowerInvariant();
+                            if ((t.Contains("youtube") && !t.Contains("youtube music")) || t.Contains("twitch"))
+                            {
+                                if (t.Contains(lowerTitle))
+                                {
+                                    _lastIdentifiedVideoKey = currentTrackKey;
+                                    return true;
+                                }
+                            }
                         }
                     }
+
+                    _lastIdentifiedVideoKey = currentTrackKey;
+                    return true;
+                }
+
+                if (hasMusicService)
+                {
+                    _lastIdentifiedVideoKey = null;
+                    return false;
                 }
             }
             catch { }
 
-            // If SMTC explicitly declared this media as Video:
-            if (string.Equals(track.PlaybackType, "Video", StringComparison.OrdinalIgnoreCase))
-            {
-                return true;
-            }
-
-            // Check track title suffix:
-            var lowerTitle = track.Title.ToLowerInvariant();
-            if (lowerTitle.EndsWith("- youtube") || lowerTitle.Contains("youtube.com"))
+            // 4. If this track was already identified as a video during this playback session (e.g. user switched to another tab):
+            if (!string.IsNullOrEmpty(_lastIdentifiedVideoKey) && _lastIdentifiedVideoKey == currentTrackKey)
             {
                 return true;
             }
@@ -314,20 +497,17 @@ namespace LucidTune.Services
             if (appId.Contains("soundcloud")) return MusicSource.SoundCloud;
 
             // If audio is playing through a web browser, check window titles of browser processes
-            if (appId.Contains("chrome") || appId.Contains("edge") || appId.Contains("firefox") || appId.Contains("opera") || appId.Contains("brave") || appId.Contains("browser"))
+            if (IsBrowserApp(appId))
             {
                 try
                 {
-                    foreach (var p in Process.GetProcesses())
+                    var titles = GetBrowserWindowTitles();
+                    foreach (var rawTitle in titles)
                     {
-                        var pName = p.ProcessName.ToLowerInvariant();
-                        if (pName.Contains("chrome") || pName.Contains("msedge") || pName.Contains("firefox") || pName.Contains("opera") || pName.Contains("brave"))
-                        {
-                            var title = p.MainWindowTitle?.ToLowerInvariant() ?? "";
-                            if (title.Contains("яндекс музыка") || title.Contains("yandex music")) return MusicSource.YandexMusic;
-                            if (title.Contains("soundcloud")) return MusicSource.SoundCloud;
-                            if (title.Contains("spotify")) return MusicSource.Spotify;
-                        }
+                        var title = rawTitle.ToLowerInvariant();
+                        if (title.Contains("яндекс музыка") || title.Contains("yandex music")) return MusicSource.YandexMusic;
+                        if (title.Contains("soundcloud")) return MusicSource.SoundCloud;
+                        if (title.Contains("spotify")) return MusicSource.Spotify;
                     }
                 }
                 catch { }
