@@ -5,8 +5,8 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
         Title="LucidTune Taskbar"
-        Width="175" Height="34"
-        MinWidth="95" MaxWidth="180"
+        Width="150" Height="34"
+        MinWidth="70" MaxWidth="240"
         WindowStyle="None"
         AllowsTransparency="True"
         Background="Transparent"
@@ -17,19 +17,19 @@
         WindowStartupLocation="Manual">
 
     <Window.Resources>
-        <!-- Geometries for Controls -->
-        <!-- Play Triangle (Crisp vector) -->
-        <Geometry x:Key="PlayGeometry">M2.5,1 L9.5,5.5 L2.5,10 Z</Geometry>
-        <!-- Pause Bars (Crisp two bars) -->
-        <Geometry x:Key="PauseGeometry">M1.5,1 L4,1 L4,10 L1.5,10 Z M6.5,1 L9,1 L9,10 L6.5,10 Z</Geometry>
+        <!-- Crisp Vector Geometries for Controls -->
+        <!-- Play Triangle -->
+        <Geometry x:Key="PlayGeometry">M2,1.5 L8.5,5.5 L2,9.5 Z</Geometry>
+        <!-- Pause Bars -->
+        <Geometry x:Key="PauseGeometry">M2,1.5 L4,1.5 L4,9.5 L2,9.5 Z M6,1.5 L8,1.5 L8,9.5 L6,9.5 Z</Geometry>
         <!-- Previous Button |◀ -->
-        <Geometry x:Key="PrevGeometry">M8.5,1.5 L2.5,5.5 L8.5,9.5 Z M1.5,1.5 L0,1.5 L0,9.5 L1.5,9.5 Z</Geometry>
+        <Geometry x:Key="PrevGeometry">M8,1.5 L2.5,5.5 L8,9.5 Z M1.5,1.5 L0,1.5 L0,9.5 L1.5,9.5 Z</Geometry>
         <!-- Next Button ▶| -->
-        <Geometry x:Key="NextGeometry">M1,1.5 L7,5.5 L1,9.5 Z M7.5,1.5 L9,1.5 L9,9.5 L7.5,9.5 Z</Geometry>
+        <Geometry x:Key="NextGeometry">M1,1.5 L6.5,5.5 L1,9.5 Z M7.5,1.5 L9,1.5 L9,9.5 L7.5,9.5 Z</Geometry>
         <!-- Music Note fallback icon -->
         <Geometry x:Key="MusicNoteGeometry">M10,2v8.55c-.59-.34-1.27-.55-2-.55-2.21,0-4,1.79-4,4s1.79,4 4,4 4,-1.79 4,-4V5.5h3V2h-5z</Geometry>
 
-        <!-- Clean Control Button Style -->
+        <!-- Clean Modern Control Button Style -->
         <Style x:Key="TaskbarButtonStyle" TargetType="Button">
             <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
             <Setter Property="Background" Value="Transparent"/>
@@ -44,10 +44,10 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="BtnRoot" Property="Background" Value="#25FFFFFF"/>
+                                <Setter TargetName="BtnRoot" Property="Background" Value="#30FFFFFF"/>
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="BtnRoot" Property="Background" Value="#40FFFFFF"/>
+                                <Setter TargetName="BtnRoot" Property="Background" Value="#50FFFFFF"/>
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
                                 <Setter Property="Opacity" Value="0.25"/>
@@ -59,11 +59,11 @@
         </Style>
     </Window.Resources>
 
-    <!-- Main Container Card: Transparent background with light/white border -->
+    <!-- Main Container Card: Transparent background with light crisp border -->
     <Border x:Name="RootCard"
             CornerRadius="6"
             Background="#01000000"
-            BorderBrush="#55FFFFFF"
+            BorderBrush="#40FFFFFF"
             BorderThickness="1"
             SnapsToDevicePixels="True"
             MouseLeftButtonDown="OnRootCardMouseDown"
@@ -113,6 +113,7 @@
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
 
                 <!-- Row 0: Title & Time in compact layout -->
@@ -134,9 +135,19 @@
                                VerticalAlignment="Center"/>
                 </DockPanel>
 
-                <!-- Row 1: Thinner Progress Bar (2px height, click-to-seek) -->
+                <!-- Row 1: Artist (Visible in Left / Expanded mode) -->
+                <TextBlock x:Name="ArtistText"
+                           Grid.Row="1"
+                           Text="Запустите музыку"
+                           FontSize="8"
+                           Foreground="#8A90A2"
+                           TextTrimming="CharacterEllipsis"
+                           Margin="0,-1,0,1"
+                           Visibility="Collapsed"/>
+
+                <!-- Row 2: Thinner Progress Bar (2px height, click-to-seek) -->
                 <Border x:Name="ProgressBarTrack"
-                        Grid.Row="1"
+                        Grid.Row="2"
                         Height="2"
                         Margin="0,2,0,0"
                         CornerRadius="1"
@@ -161,19 +172,20 @@
                         Margin="0,0,2,0">
                 <!-- Previous Button -->
                 <Button x:Name="PrevButton"
-                        Width="16" Height="20"
+                        Width="16" Height="22"
                         Style="{StaticResource TaskbarButtonStyle}"
                         ToolTip="Предыдущий"
                         Click="OnPrevButtonClick">
                     <Path Data="{StaticResource PrevGeometry}"
                           Fill="#FFFFFF"
-                          Width="8" Height="8"
+                          Width="8.5" Height="8.5"
+                          Stretch="Uniform"
                           SnapsToDevicePixels="True"/>
                 </Button>
 
                 <!-- Play/Pause Button -->
                 <Button x:Name="PlayPauseButton"
-                        Width="18" Height="20"
+                        Width="18" Height="22"
                         Margin="1,0"
                         Style="{StaticResource TaskbarButtonStyle}"
                         ToolTip="Воспроизведение / Пауза"
@@ -181,20 +193,22 @@
                     <Path x:Name="PlayPauseIcon"
                           Data="{StaticResource PlayGeometry}"
                           Fill="#FFFFFF"
-                          Width="9" Height="9"
+                          Width="9.5" Height="9.5"
                           Margin="1,0,0,0"
+                          Stretch="Uniform"
                           SnapsToDevicePixels="True"/>
                 </Button>
 
                 <!-- Next Button -->
                 <Button x:Name="NextButton"
-                        Width="16" Height="20"
+                        Width="16" Height="22"
                         Style="{StaticResource TaskbarButtonStyle}"
                         ToolTip="Следующий"
                         Click="OnNextButtonClick">
                     <Path Data="{StaticResource NextGeometry}"
                           Fill="#FFFFFF"
-                          Width="8" Height="8"
+                          Width="8.5" Height="8.5"
+                          Stretch="Uniform"
                           SnapsToDevicePixels="True"/>
                 </Button>
             </StackPanel>

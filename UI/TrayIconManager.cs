@@ -187,13 +187,13 @@ namespace LucidTune.UI
 
             var hotkeyItem = new MenuItem
             {
-                Header = "Настройки виджета"
+                Header = LocalizationService.T("WidgetSettings")
             };
             hotkeyItem.Click += (s, e) => _hotkeySettingsAction();
 
             _taskbarModeItem = new MenuItem
             {
-                Header = "Виджет в панели задач",
+                Header = LocalizationService.T("TaskbarModeTitle"),
                 IsCheckable = true,
                 IsChecked = _configManager.CurrentConfig.TaskbarModeEnabled
             };
@@ -209,7 +209,7 @@ namespace LucidTune.UI
 
             _autoHideItem = new MenuItem
             {
-                Header = "Скрывать в полноэкранных играх",
+                Header = LocalizationService.T("AutoHideTitle"),
                 IsCheckable = true,
                 IsChecked = _configManager.CurrentConfig.AutoHideInFullscreen
             };
@@ -223,7 +223,7 @@ namespace LucidTune.UI
 
             _autoStartItem = new MenuItem
             {
-                Header = "Автозагрузка",
+                Header = LocalizationService.T("AutoStartTitle"),
                 IsCheckable = true,
                 IsChecked = AutoStartupService.IsAutoStartEnabled()
             };
@@ -240,7 +240,7 @@ namespace LucidTune.UI
 
             var exitItem = new MenuItem
             {
-                Header = "Выход",
+                Header = LocalizationService.T("Exit"),
                 Foreground = new SolidColorBrush(Color.FromRgb(0xFF, 0x6B, 0x6B))
             };
             exitItem.Click += (s, e) =>
@@ -264,7 +264,7 @@ namespace LucidTune.UI
         {
             if (_toggleItem != null && _isWidgetVisibleGetter != null)
             {
-                _toggleItem.Header = _isWidgetVisibleGetter() ? "Скрыть" : "Показать";
+                _toggleItem.Header = _isWidgetVisibleGetter() ? LocalizationService.T("Hide") : LocalizationService.T("Show");
             }
 
             if (_taskbarModeItem != null)

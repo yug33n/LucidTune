@@ -6,6 +6,7 @@ using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
+using System.Windows.Threading;
 using LucidTune.Config;
 using LucidTune.Models;
 using LucidTune.Services;
@@ -38,6 +39,9 @@ namespace LucidTune
         private string? _currentTrackKey;
         private ExtractedPalette? _currentPalette;
 
+        private DispatcherTimer? _spectrumTimer;
+        private DateTime _spectrumStartTime;
+
         public bool IsOverlayVisible => _isWindowVisible;
         public event Action<bool>? OverlayVisibilityChanged;
 
@@ -65,12 +69,20 @@ namespace LucidTune
             Loaded += OnMainWindowLoaded;
             Closing += OnMainWindowClosing;
             ProgressBarTrack.SizeChanged += (s, e) => UpdateProgressBarWidth();
+
+            _spectrumStartTime = DateTime.UtcNow;
+            _spectrumTimer = new DispatcherTimer(DispatcherPriority.Render)
+            {
+                Interval = TimeSpan.FromMilliseconds(45)
+            };
+            _spectrumTimer.Tick += OnSpectrumTimerTick;
         }
 
         private async void OnMainWindowLoaded(object sender, RoutedEventArgs e)
         {
             try
             {
+                LocalizationService.SetLanguage(_configManager.CurrentConfig.Language);
                 ApplySavedPosition();
                 ApplyWidgetOpacity(_configManager.CurrentConfig.WidgetOpacity);
                 ApplyCompactMode(_configManager.CurrentConfig.CompactMode);
@@ -182,6 +194,78 @@ namespace LucidTune
                 IslandContainer.Width = 310;
                 Width = 360;
             }
+
+            UpdateSpectrumVisibility();
+        }
+
+        public void ApplyAudioSpectrum(bool enabled)
+        {
+            _configManager.CurrentConfig.ShowAudioSpectrum = enabled;
+            UpdateSpectrumVisibility();
+        }
+
+        public void ApplyTaskbarPosition(string position)
+        {
+            _configManager.CurrentConfig.TaskbarPosition = position;
+            _taskbarWindow?.RepositionOnTaskbar();
+        }
+
+        public void ApplyLanguage(string language)
+        {
+            _configManager.CurrentConfig.Language = language;
+            LocalizationService.SetLanguage(language);
+            _trayManager?.UpdateState();
+            _taskbarWindow?.UpdateLocalization();
+            UpdateSpectrumVisibility();
+        }
+
+        public void UpdateSpectrumVisibility()
+        {
+            bool canShow = _configManager.CurrentConfig.ShowAudioSpectrum &&
+                           !_configManager.CurrentConfig.CompactMode &&
+                           _lastTrackInfo?.HasActiveSession == true;
+
+            if (canShow)
+            {
+                AudioSpectrumPanel.Visibility = Visibility.Visible;
+                if (_lastTrackInfo?.IsPlaying == true)
+                {
+                    if (_spectrumTimer?.IsEnabled != true) _spectrumTimer?.Start();
+                }
+                else
+                {
+                    _spectrumTimer?.Stop();
+                    ResetSpectrumBars();
+                }
+            }
+            else
+            {
+                AudioSpectrumPanel.Visibility = Visibility.Collapsed;
+                _spectrumTimer?.Stop();
+                ResetSpectrumBars();
+            }
+        }
+
+        private void OnSpectrumTimerTick(object? sender, EventArgs e)
+        {
+            if (_lastTrackInfo?.IsPlaying != true) return;
+            double t = (DateTime.UtcNow - _spectrumStartTime).TotalSeconds;
+
+            SpecBar1.Height = Math.Clamp(3 + 5 * Math.Abs(Math.Sin(t * 7.5 + 0.2)), 2, 14);
+            SpecBar2.Height = Math.Clamp(4 + 8 * Math.Abs(Math.Sin(t * 5.2 + 1.1)), 2, 14);
+            SpecBar3.Height = Math.Clamp(5 + 9 * Math.Abs(Math.Sin(t * 8.9 + 2.3)), 2, 14);
+            SpecBar4.Height = Math.Clamp(4 + 7 * Math.Abs(Math.Sin(t * 6.1 + 0.7)), 2, 14);
+            SpecBar5.Height = Math.Clamp(3 + 6 * Math.Abs(Math.Sin(t * 7.0 + 1.9)), 2, 14);
+        }
+
+        private void ResetSpectrumBars()
+        {
+            if (SpecBar1 == null) return;
+            SpecBar1.Height = 2;
+            SpecBar2.Height = 2;
+            SpecBar3.Height = 2;
+            SpecBar4.Height = 2;
+            SpecBar5.Height = 2;
         }
 
         public void ApplyCaptureAffinity(bool exclude)
@@ -686,6 +770,7 @@ namespace LucidTune
 
                 _volumeService.SetTargetApp(track.SourceAppUserModelId);
                 SyncVolumeFromSystem();
+                UpdateSpectrumVisibility();
 
                 _taskbarWindow?.UpdateTrackInfo(track);
                 _taskbarWindow?.UpdatePalette(_currentPalette);
@@ -863,6 +948,7 @@ namespace LucidTune
         private void OnMainWindowClosing(object? sender, System.ComponentModel.CancelEventArgs e)
         {
             SaveCurrentPosition();
+            _spectrumTimer?.Stop();
             _taskbarWindow?.Close();
             _taskbarWindow = null;
             _discordRpcService.Dispose();

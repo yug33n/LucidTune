@@ -25,11 +25,16 @@ namespace LucidTune.Config
         public bool AutoStart { get; set; } = false;
         public bool ShowSettingsOnStartup { get; set; } = true;
 
+        // Language
+        public string Language { get; set; } = "ru";
+
         // Appearance
         public double WidgetOpacity { get; set; } = 1.0;
         public bool CompactMode { get; set; } = false;
         public bool ShowVolumeControl { get; set; } = true;
+        public bool ShowAudioSpectrum { get; set; } = true;
         public bool TaskbarModeEnabled { get; set; } = false;
+        public string TaskbarPosition { get; set; } = "Right";
         public double TaskbarOffsetX { get; set; } = 0;
         public string Theme { get; set; } = "Dark";
         public string AccentColor { get; set; } = "Yellow";
@@ -43,6 +48,7 @@ namespace LucidTune.Config
         // Discord Rich Presence
         public bool DiscordRpcEnabled { get; set; } = true;
         public bool DiscordIgnoreBrowserVideos { get; set; } = true;
+        public bool DiscordIgnoreTelegramVoice { get; set; } = true;
         public string DiscordApplicationId { get; set; } = "1560410469112750100";
         public string? DiscordYandexMusicAppId { get; set; }
         public string? DiscordSpotifyAppId { get; set; }

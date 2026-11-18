@@ -330,16 +330,30 @@
                                 <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
 
-                            <!-- Title (13 pt) -->
-                            <TextBlock x:Name="TitleText"
-                                       Grid.Row="0"
-                                       Text="Нет активного трека"
-                                       FontSize="14"
-                                       FontWeight="SemiBold"
-                                       Foreground="{DynamicResource WidgetTitleBrush}"
-                                       TextTrimming="CharacterEllipsis"
-                                       TextWrapping="NoWrap"
-                                       Margin="0,0,0,1"/>
+                            <!-- Title (13 pt) with Spectrum Visualizer -->
+                            <DockPanel Grid.Row="0" Margin="0,0,0,1" LastChildFill="True">
+                                <StackPanel x:Name="AudioSpectrumPanel"
+                                            DockPanel.Dock="Right"
+                                            Orientation="Horizontal"
+                                            VerticalAlignment="Center"
+                                            Margin="8,0,0,0"
+                                            Visibility="Collapsed"
+                                            ToolTip="Аудио-спектр">
+                                    <Border x:Name="SpecBar1" Width="2.5" Height="3" CornerRadius="1.25" Background="{DynamicResource AccentBrush}" Margin="1,0" VerticalAlignment="Bottom" SnapsToDevicePixels="True"/>
+                                    <Border x:Name="SpecBar2" Width="2.5" Height="6" CornerRadius="1.25" Background="{DynamicResource AccentBrush}" Margin="1,0" VerticalAlignment="Bottom" SnapsToDevicePixels="True"/>
+                                    <Border x:Name="SpecBar3" Width="2.5" Height="10" CornerRadius="1.25" Background="{DynamicResource AccentBrush}" Margin="1,0" VerticalAlignment="Bottom" SnapsToDevicePixels="True"/>
+                                    <Border x:Name="SpecBar4" Width="2.5" Height="5" CornerRadius="1.25" Background="{DynamicResource AccentBrush}" Margin="1,0" VerticalAlignment="Bottom" SnapsToDevicePixels="True"/>
+                                    <Border x:Name="SpecBar5" Width="2.5" Height="8" CornerRadius="1.25" Background="{DynamicResource AccentBrush}" Margin="1,0" VerticalAlignment="Bottom" SnapsToDevicePixels="True"/>
+                                </StackPanel>
+                                <TextBlock x:Name="TitleText"
+                                           Text="Нет активного трека"
+                                           FontSize="14"
+                                           FontWeight="SemiBold"
+                                           Foreground="{DynamicResource WidgetTitleBrush}"
+                                           TextTrimming="CharacterEllipsis"
+                                           TextWrapping="NoWrap"
+                                           VerticalAlignment="Center"/>
+                            </DockPanel>
 
                             <!-- Artist (11 pt) -->
                             <TextBlock x:Name="ArtistText"
