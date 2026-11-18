@@ -7,16 +7,39 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Release: v2.1.0](https://img.shields.io/badge/Release-v2.1.0-4E75FF.svg)](https://github.com/yug33n/LucidTune/releases)
 
-**LucidTune** is an ultra-lightweight, customizable desktop overlay widget (Dynamic Island style) for Windows 10 and 11. It brings real-time media metadata, album artwork, track playback progress, and media controls directly above your apps and games with a frosted glass aesthetic and customizable global hotkeys.
+**LucidTune** is an ultra-lightweight, customizable desktop overlay and taskbar media widget for Windows 10 and 11. Designed with a sleek frosted glass aesthetic inspired by Apple's Dynamic Island, LucidTune brings real-time media metadata, album cover artwork, track playback progress, volume adjustment, and responsive playback controls directly above your apps, games, or embedded into the Windows taskbar.
 
 ---
 
-## ✨ Features in v2.0.0
+## ✨ Features in v2.1.0
+
+### 📌 Windows Taskbar Dock Mini-Player
+- **Seamless Taskbar Integration**: Dock playback controls directly into the Windows taskbar without cluttering your desktop.
+- **Two Flexible Placement Modes**:
+  - **Right (System Tray Dock)**: Compact mini-player with intelligent, dynamic width clamping (54px to 150px) that automatically scales down when taskbar space is tight, guaranteeing it never overlaps running application icons.
+  - **Left (Start Menu Dock)**: Expanded presentation displaying album artwork, track title, artist, progress timeline, and controls.
+- **Windows 11 Weather / Widgets Avoidance**: Dynamically detects the Windows 11 Weather / Widgets board on the left side of the taskbar via UI Automation and registry signals, cleanly positioning itself with a comfortable margin without overlapping weather information.
+- **Mouse Wheel Volume Control**: Scroll your mouse wheel directly over the taskbar widget to smoothly adjust system or app volume.
+
+### 📊 Real Audio-Reactive Spectrum Visualizer
+- **Native WASAPI Peak Metering**: Real-time audio amplitude analysis powered by the Windows Core Audio `IAudioMeterInformation` API.
+- **Physically-Modeled Equalizer Dynamics**: Fast-attack response on beats and punchy bass drops, with smooth organic decay during melodic sections.
+- **Perceptual Loudness Scaling**: Utilizes logarithmic square-root curve mapping so bars dance vividly whether listening at whisper-quiet or high volume levels.
+- **Instant Silence Detection**: Automatically flattens bars down to a subtle 2px line during musical breakdowns, pauses, or silence. Can be toggled on or off in Settings.
+
+### 🌐 Bilingual Interface (English & Russian)
+- Instant, one-click language switching between **English (EN)** and **Russian (RU)**.
+- Every dialog, dropdown, hotkey label, status card, tooltip, and tray context menu updates dynamically on the fly without needing an application restart.
+
+### 🛡️ Discord Rich Presence & Smart External Media Filtering
+- **Live Status Profile**: Broadcasts current song title, artist, cover art, and real-time playback timeline to your Discord status.
+- **Multi-Engine Cover Resolution**: Automatically resolves cover art across Yandex Music, Deezer/Spotify, Apple Music, and SoundCloud/Genius.
+- **Unified External Media Filter**: Easily prevent browser videos (YouTube, Twitch) and Telegram voice notes/video circles from broadcasting as music tracks in Discord.
 
 ### 🌈 Adaptive Palette & Ambient Cover Shimmer
-- **Automatic Color Extraction**: Dynamically samples the dominant and vibrant hues from current album art and applies them in real time across widget accents, progress bar, borders, and badges.
-- **Ambient Background Shimmer**: An optional live gradient shimmer that softly breathes across the widget background in the hues of the current album cover. Can be independently toggled in Settings.
-- **Graceful Fallback**: Automatically reverts to user's chosen static accent theme when cover art is missing or feature is disabled. Enabled by default.
+- **Automatic Color Extraction**: Dynamically samples dominant and vibrant hues from current album art and applies them in real time across widget accents, progress bar, borders, and badges.
+- **Ambient Background Shimmer**: An optional live gradient shimmer that softly breathes across the widget background in the hues of the current album cover.
+- **Graceful Fallback**: Automatically reverts to user's chosen static accent theme when cover art is missing or feature is disabled.
 
 ### 🧲 Screen Edge & Center Snapping
 - **Magnetic Docking**: While dragging the widget across the screen, it gently snaps to monitor boundaries (with an aesthetic floating dock padding) and to the horizontal center.
@@ -26,31 +49,13 @@
 - **Invisible to Stream Captures**: Utilizes Win32 `WDA_EXCLUDEFROMCAPTURE` technology so the overlay is visible on your monitor but completely invisible to OBS Studio, Discord Screen Share, and screenshot capture tools.
 - Perfect for streamers, gamers, and content creators.
 
-### 🔔 Quiet GitHub Update Checker
-- **Unobtrusive Release Alerts**: Silently queries the GitHub Releases API and displays a banner inside Settings when a new version is available, complete with a one-click download button.
-
-### ✨ Redesigned UI Controls & Checkboxes
-- **Modern Dark Checkboxes**: Handcrafted dark frosted glass checkboxes with smooth rounded corners, vector checkmarks, and accent glow replacing standard Windows controls.
-
-### 🎶 Windows Media (SMTC) Integration
+### 🎶 Universal Windows Media (SMTC) Integration
 - Seamlessly synchronizes with Windows **System Media Transport Controls**.
-- Automatically captures media sessions from **Spotify, YouTube Music / Chrome, Edge, Firefox, Telegram, VLC, Yandex Music, AIMP**, and any other SMTC-compatible media player.
+- Automatically captures media sessions from **Spotify, YouTube Music / Chrome, Edge, Firefox, Telegram, VLC, Yandex Music, AIMP, Apple Music**, and any other SMTC-compatible media player.
 - Live track titles, artist details, dynamic progress bar, and crisp album art with an elegant vector fallback.
 - Rapid track switching safety guards (debounce protection preventing null-reference crashes).
 
-### 🎮 Discord Rich Presence Integration
-- **Live Status in Profile**: Broadcasts current listening status, track title, artist, cover art, and real-time timeline directly to your Discord profile.
-- **Universal Streaming & Local Artwork Support**: Multi-engine cover art resolution via Yandex Music, Spotify (Deezer), Apple Music (iTunes), SoundCloud (Genius), plus direct cloud upload for local audio files.
-- **Browser Video Filtering**: Automatically filters out video streaming sites (YouTube, Twitch, Netflix) from cluttering Discord status.
-- **Project Link Button**: Includes a direct "View App on Website" button linking to your portfolio project page.
-
-### 🎛️ Elegant Dynamic Island Overlay
-- **Frosted Glass Island Design**: Modern deep dark glass palette (`#D9111114`), smooth 18px corner radius, and dynamic accents.
-- **Balanced Playback Controls**: Pixel-perfect Previous, Play/Pause, and Next buttons with matching stroke weights and fluid hover states.
-- **Cinematic Taskbar Minimize Animation**: Smooth slide-down & scale transition when hiding into the taskbar, and an upward slide reveal when showing.
-- **Real-Time Opacity Slider**: Adjust widget transparency from 20% to 100% with live overlay feedback.
-
-### ⚙️ Rich Configuration Window
+### ⚙️ Rich Configuration Window & Hotkeys
 - **Center Reset**: One-click button to reset widget position to bottom-center.
 - **Global Hotkey Customization**:
   - Show / Hide widget (defaults to `Alt + M`).
@@ -58,14 +63,9 @@
   - Next Track.
   - Previous Track.
   - Full support for `Ctrl`, `Alt`, `Shift`, and `Win` modifiers.
-- **Custom Dark Controls**: Handcrafted dark dropdown menus (ComboBox), custom scrollbars, and focus rings.
 - **Fullscreen & Game Detection**: Optional automatic hiding when launching fullscreen games or applications.
 - **System Integration**: Toggle launch on Windows startup and startup window display.
-
-### 🔔 System Tray & Brand Icon
-- Mathematically centered vector music note inside a circular dark badge, packaged in multi-resolution ICO (16×16 to 256×256) for sharp rendering at all DPI scales.
-- Dark context menu without the default Windows white gutter, featuring accent checkmarks and a dynamic "Show / Hide" state.
-- Single-click toggle: click the tray icon to quickly show or hide the overlay.
+- **Single-Instance Mutex & Crash Logger**: Fast, crash-resilient process management with signal waking and automatic crash logging to `%APPDATA%\LucidTune\crash.log`.
 
 ---
 
@@ -73,14 +73,14 @@
 
 - **OS**: Windows 10 (Build 19041+) or Windows 11 (x64)
 - **Runtime**:
-  - **Standard Build**: [.NET 9.0 Desktop Runtime (x64)](https://dotnet.microsoft.com/download/dotnet/9.0)
   - **Standalone Build (Self-Contained)**: No external dependencies or runtime required.
+  - **Portable Build**: [.NET 9.0 Desktop Runtime (x64)](https://dotnet.microsoft.com/download/dotnet/9.0)
 
 ---
 
 ## 🚀 Installation & Running
 
-### Option 1. Standalone Single-File Executable
+### Option 1. Standalone Single-File Executable (Recommended)
 Runs out of the box on any compatible Windows PC without requiring .NET 9 pre-installed:
 ```powershell
 ./publish/standalone/LucidTune.exe
@@ -141,6 +141,16 @@ Settings are stored in `%APPDATA%\LucidTune\config.json`:
   "WindowY": 920.0,
   "PositionPreset": "BottomCenter",
   "WidgetOpacity": 1.0,
+  "CompactMode": false,
+  "ShowVolumeControl": false,
+  "SnapToScreenEdges": true,
+  "ExcludeFromCapture": false,
+  "AdaptiveColorEnabled": true,
+  "AdaptiveBackgroundShimmer": true,
+  "TaskbarModeEnabled": false,
+  "TaskbarPosition": "Right",
+  "ShowAudioSpectrum": true,
+  "Language": "en",
   "HotkeyModifiers": "Alt",
   "HotkeyKey": "M",
   "PlayPauseModifiers": "None",
@@ -151,7 +161,10 @@ Settings are stored in `%APPDATA%\LucidTune\config.json`:
   "PrevTrackKey": "None",
   "AutoHideInFullscreen": false,
   "AutoStart": false,
-  "ShowSettingsOnStartup": true
+  "ShowSettingsOnStartup": true,
+  "DiscordRpcEnabled": true,
+  "DiscordIgnoreBrowserVideos": true,
+  "DiscordIgnoreTelegramVoice": true
 }
 ```
 
