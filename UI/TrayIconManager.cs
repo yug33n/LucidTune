@@ -84,15 +84,23 @@ namespace LucidTune.UI
         private readonly Func<bool>? _isWidgetVisibleGetter;
         private ContextMenu? _trayContextMenu;
         private MenuItem? _toggleItem;
+        private MenuItem? _taskbarModeItem;
         private MenuItem? _autoHideItem;
         private MenuItem? _autoStartItem;
+        private readonly Action<bool>? _onTaskbarModeChanged;
 
-        public TrayIconManager(ConfigManager configManager, Action toggleVisibilityAction, Action hotkeySettingsAction, Func<bool>? isWidgetVisibleGetter = null)
+        public TrayIconManager(
+            ConfigManager configManager,
+            Action toggleVisibilityAction,
+            Action hotkeySettingsAction,
+            Func<bool>? isWidgetVisibleGetter = null,
+            Action<bool>? onTaskbarModeChanged = null)
         {
             _configManager = configManager;
             _toggleVisibilityAction = toggleVisibilityAction;
             _hotkeySettingsAction = hotkeySettingsAction;
             _isWidgetVisibleGetter = isWidgetVisibleGetter;
+            _onTaskbarModeChanged = onTaskbarModeChanged;
         }
 
         public void Initialize(IntPtr windowHandle)
@@ -183,6 +191,22 @@ namespace LucidTune.UI
             };
             hotkeyItem.Click += (s, e) => _hotkeySettingsAction();
 
+            _taskbarModeItem = new MenuItem
+            {
+                Header = "Виджет в панели задач",
+                IsCheckable = true,
+                IsChecked = _configManager.CurrentConfig.TaskbarModeEnabled
+            };
+            _taskbarModeItem.Click += (s, e) =>
+            {
+                var cfg = _configManager.CurrentConfig;
+                cfg.TaskbarModeEnabled = !cfg.TaskbarModeEnabled;
+                _taskbarModeItem.IsChecked = cfg.TaskbarModeEnabled;
+                _configManager.Save(cfg);
+                _onTaskbarModeChanged?.Invoke(cfg.TaskbarModeEnabled);
+                UpdateState();
+            };
+
             _autoHideItem = new MenuItem
             {
                 Header = "Скрывать в полноэкранных играх",
@@ -225,6 +249,7 @@ namespace LucidTune.UI
             };
 
             menu.Items.Add(_toggleItem);
+            menu.Items.Add(_taskbarModeItem);
             menu.Items.Add(hotkeyItem);
             menu.Items.Add(new Separator());
             menu.Items.Add(_autoHideItem);
@@ -235,11 +260,16 @@ namespace LucidTune.UI
             _trayContextMenu = menu;
         }
 
-        private void UpdateState()
+        public void UpdateState()
         {
             if (_toggleItem != null && _isWidgetVisibleGetter != null)
             {
                 _toggleItem.Header = _isWidgetVisibleGetter() ? "Скрыть" : "Показать";
+            }
+
+            if (_taskbarModeItem != null)
+            {
+                _taskbarModeItem.IsChecked = _configManager.CurrentConfig.TaskbarModeEnabled;
             }
 
             if (_autoHideItem != null)

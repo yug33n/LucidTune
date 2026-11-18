@@ -323,6 +323,20 @@ namespace LucidTune.Services
             }
         }
 
+        public async Task<bool> ChangePlaybackPositionAsync(TimeSpan position)
+        {
+            var session = _currentSession;
+            if (session == null) return false;
+            try
+            {
+                return await session.TryChangePlaybackPositionAsync(position.Ticks);
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
         public void Dispose()
         {
             if (_disposed) return;

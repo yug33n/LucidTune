@@ -757,6 +757,19 @@
                                         <TextBlock Text="Отображает иконку и полоску управления громкостью внизу виджета." FontSize="11" Foreground="{DynamicResource SettingsTextSecondaryBrush}" Margin="0,2,0,0" TextWrapping="Wrap"/>
                                     </StackPanel>
                                 </CheckBox>
+
+                                <Rectangle Height="1" Fill="{DynamicResource SettingsSeparatorBrush}" Margin="0,12,0,10"/>
+
+                                <!-- Taskbar Mode Checkbox -->
+                                <CheckBox x:Name="TaskbarModeCheckBox"
+                                          Style="{StaticResource DarkCheckBoxStyle}"
+                                          Checked="OnTaskbarModeChanged"
+                                          Unchecked="OnTaskbarModeChanged">
+                                    <StackPanel>
+                                        <TextBlock Text="Виджет в панели задач (Taskbar Dock)" FontSize="12.5" FontWeight="Medium" Foreground="{DynamicResource SettingsTextPrimaryBrush}"/>
+                                        <TextBlock Text="Переносит плеер в правую часть панели задач рядом с треем и часами вместо оверлея на рабочем столе." FontSize="11" Foreground="{DynamicResource SettingsTextSecondaryBrush}" Margin="0,2,0,0" TextWrapping="Wrap"/>
+                                    </StackPanel>
+                                </CheckBox>
                             </StackPanel>
                         </Border>
 

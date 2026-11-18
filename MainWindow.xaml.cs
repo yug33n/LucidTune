@@ -27,6 +27,7 @@ namespace LucidTune
         private bool _isUpdatingVolumeFromSystem;
 
         private TrayIconManager? _trayManager;
+        private TaskbarWidgetWindow? _taskbarWindow;
         private double _currentProgress;
         private bool _isWindowVisible = true;
         private bool _hiddenByFullscreen;
@@ -85,8 +86,15 @@ namespace LucidTune
 
                 _fullscreenService.Start(hwnd);
 
-                _trayManager = new TrayIconManager(_configManager, ToggleVisibility, OpenSettingsWindow, () => _isWindowVisible);
+                _taskbarWindow = new TaskbarWidgetWindow(_mediaService, _configManager, _volumeService, this);
+
+                _trayManager = new TrayIconManager(_configManager, ToggleVisibility, OpenSettingsWindow, () => _isWindowVisible, ApplyTaskbarMode);
                 _trayManager.Initialize(hwnd);
+
+                if (_configManager.CurrentConfig.TaskbarModeEnabled)
+                {
+                    ApplyTaskbarMode(true);
+                }
 
                 if (_configManager.CurrentConfig.AutoStart)
                 {
@@ -111,6 +119,44 @@ namespace LucidTune
             var targetPos = _configManager.GetValidatedPosition(Width, Height);
             Left = targetPos.X;
             Top = targetPos.Y;
+        }
+
+        public void ApplyTaskbarMode(bool enabled)
+        {
+            _configManager.CurrentConfig.TaskbarModeEnabled = enabled;
+
+            if (enabled)
+            {
+                Hide();
+                _isWindowVisible = false;
+                OverlayVisibilityChanged?.Invoke(false);
+
+                if (_taskbarWindow == null)
+                {
+                    _taskbarWindow = new TaskbarWidgetWindow(_mediaService, _configManager, _volumeService, this);
+                }
+
+                _taskbarWindow.Show();
+                if (_lastTrackInfo != null)
+                {
+                    _taskbarWindow.UpdateTrackInfo(_lastTrackInfo);
+                }
+                if (_currentPalette != null)
+                {
+                    _taskbarWindow.UpdatePalette(_currentPalette);
+                }
+                _taskbarWindow.RepositionOnTaskbar();
+            }
+            else
+            {
+                _taskbarWindow?.Hide();
+                Show();
+                _isWindowVisible = true;
+                OverlayVisibilityChanged?.Invoke(true);
+                ApplySavedPosition();
+            }
+
+            _trayManager?.UpdateState();
         }
 
         public void ApplyWidgetOpacity(double opacity)
@@ -183,6 +229,7 @@ namespace LucidTune
                     {
                         ResetShimmerPalette();
                     }
+                    _taskbarWindow?.UpdatePalette(_currentPalette);
                     return;
                 }
             }
@@ -190,6 +237,7 @@ namespace LucidTune
             _currentPalette = null;
             ThemeManager.RestoreStaticAccent();
             ResetShimmerPalette();
+            _taskbarWindow?.UpdatePalette(null);
         }
 
         public void ApplyBackgroundShimmer(bool enabled)
@@ -298,6 +346,26 @@ namespace LucidTune
 
         public void ToggleVisibility()
         {
+            if (_configManager.CurrentConfig.TaskbarModeEnabled)
+            {
+                if (_taskbarWindow != null)
+                {
+                    if (_taskbarWindow.IsVisible)
+                    {
+                        _taskbarWindow.Hide();
+                        _isWindowVisible = false;
+                    }
+                    else
+                    {
+                        _taskbarWindow.Show();
+                        _taskbarWindow.RepositionOnTaskbar();
+                        _isWindowVisible = true;
+                    }
+                    OverlayVisibilityChanged?.Invoke(_isWindowVisible);
+                }
+                return;
+            }
+
             _hiddenByFullscreen = false;
             if (_isWindowVisible)
             {
@@ -401,13 +469,15 @@ namespace LucidTune
 
         private void OnFullscreenStateChanged(bool isFullscreen)
         {
+            _taskbarWindow?.OnFullscreenChanged(isFullscreen);
+
             if (!_configManager.CurrentConfig.AutoHideInFullscreen) return;
 
             Dispatcher.Invoke(() =>
             {
                 if (isFullscreen)
                 {
-                    if (_isWindowVisible)
+                    if (_isWindowVisible && !_configManager.CurrentConfig.TaskbarModeEnabled)
                     {
                         _hiddenByFullscreen = true;
                         HideWithAnimation();
@@ -415,7 +485,7 @@ namespace LucidTune
                 }
                 else
                 {
-                    if (_hiddenByFullscreen)
+                    if (_hiddenByFullscreen && !_configManager.CurrentConfig.TaskbarModeEnabled)
                     {
                         _hiddenByFullscreen = false;
                         ShowWithAnimation();
@@ -616,6 +686,9 @@ namespace LucidTune
 
                 _volumeService.SetTargetApp(track.SourceAppUserModelId);
                 SyncVolumeFromSystem();
+
+                _taskbarWindow?.UpdateTrackInfo(track);
+                _taskbarWindow?.UpdatePalette(_currentPalette);
             });
         }
 
@@ -625,6 +698,7 @@ namespace LucidTune
             {
                 _currentProgress = progress;
                 UpdateProgressBarWidth();
+                _taskbarWindow?.UpdateProgress(current, duration, progress);
             });
         }
 
@@ -789,6 +863,8 @@ namespace LucidTune
         private void OnMainWindowClosing(object? sender, System.ComponentModel.CancelEventArgs e)
         {
             SaveCurrentPosition();
+            _taskbarWindow?.Close();
+            _taskbarWindow = null;
             _discordRpcService.Dispose();
             _hotkeyService.Dispose();
             _fullscreenService.Dispose();

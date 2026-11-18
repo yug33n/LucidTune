@@ -29,6 +29,8 @@ namespace LucidTune.Config
         public double WidgetOpacity { get; set; } = 1.0;
         public bool CompactMode { get; set; } = false;
         public bool ShowVolumeControl { get; set; } = true;
+        public bool TaskbarModeEnabled { get; set; } = false;
+        public double TaskbarOffsetX { get; set; } = 0;
         public string Theme { get; set; } = "Dark";
         public string AccentColor { get; set; } = "Yellow";
         public bool AdaptiveColorEnabled { get; set; } = true;

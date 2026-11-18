@@ -58,6 +58,7 @@ namespace LucidTune.UI
                 ThemeManager.ApplyTheme(_configManager.CurrentConfig.Theme, _configManager.CurrentConfig.AccentColor);
                 _mainWindow.ApplyAdaptiveColor(_configManager.CurrentConfig.AdaptiveColorEnabled);
                 _mainWindow.ApplyBackgroundShimmer(_configManager.CurrentConfig.AdaptiveBackgroundShimmer);
+                _mainWindow.ApplyTaskbarMode(_configManager.CurrentConfig.TaskbarModeEnabled);
             };
             UpdateOverlayStatus(_mainWindow.IsOverlayVisible);
 
@@ -140,6 +141,7 @@ namespace LucidTune.UI
 
             CompactModeCheckBox.IsChecked = cfg.CompactMode;
             ShowVolumeCheckBox.IsChecked = cfg.ShowVolumeControl;
+            TaskbarModeCheckBox.IsChecked = cfg.TaskbarModeEnabled;
 
             AdaptiveColorCheckBox.IsChecked = cfg.AdaptiveColorEnabled;
             AdaptiveShimmerCheckBox.IsChecked = cfg.AdaptiveBackgroundShimmer;
@@ -474,6 +476,13 @@ namespace LucidTune.UI
             _mainWindow.ApplyVolumeControl(showVolume);
         }
 
+        private void OnTaskbarModeChanged(object sender, RoutedEventArgs e)
+        {
+            if (_isInitializing) return;
+            bool isTaskbar = TaskbarModeCheckBox.IsChecked == true;
+            _mainWindow.ApplyTaskbarMode(isTaskbar);
+        }
+
         private void OnTitleBarMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
             if (e.ButtonState == MouseButtonState.Pressed)
@@ -634,6 +643,10 @@ namespace LucidTune.UI
             cfg.ShowVolumeControl = ShowVolumeCheckBox.IsChecked == true;
             _mainWindow.ApplyVolumeControl(cfg.ShowVolumeControl);
 
+            bool taskbarMode = TaskbarModeCheckBox.IsChecked == true;
+            cfg.TaskbarModeEnabled = taskbarMode;
+            _mainWindow.ApplyTaskbarMode(taskbarMode);
+
             cfg.AdaptiveColorEnabled = AdaptiveColorCheckBox.IsChecked == true;
             cfg.AdaptiveBackgroundShimmer = AdaptiveShimmerCheckBox.IsChecked == true;
 
@@ -677,6 +690,7 @@ namespace LucidTune.UI
             ThemeManager.ApplyTheme(_configManager.CurrentConfig.Theme, _configManager.CurrentConfig.AccentColor);
             _mainWindow.ApplyAdaptiveColor(_configManager.CurrentConfig.AdaptiveColorEnabled);
             _mainWindow.ApplyBackgroundShimmer(_configManager.CurrentConfig.AdaptiveBackgroundShimmer);
+            _mainWindow.ApplyTaskbarMode(_configManager.CurrentConfig.TaskbarModeEnabled);
             Close();
         }
     }
