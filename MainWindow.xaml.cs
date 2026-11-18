@@ -122,7 +122,13 @@ namespace LucidTune
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[OnMainWindowLoaded Exception] {ex}");
+                try
+                {
+                    var dir = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "LucidTune");
+                    System.IO.Directory.CreateDirectory(dir);
+                    System.IO.File.AppendAllText(System.IO.Path.Combine(dir, "crash.log"), $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] [OnMainWindowLoaded] {ex}\n");
+                }
+                catch { }
             }
         }
 
@@ -597,7 +603,13 @@ namespace LucidTune
                 }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine($"Failed to open settings window: {ex.Message}");
+                    try
+                    {
+                        var dir = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "LucidTune");
+                        System.IO.Directory.CreateDirectory(dir);
+                        System.IO.File.AppendAllText(System.IO.Path.Combine(dir, "crash.log"), $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] [OpenSettingsWindow] {ex}\n");
+                    }
+                    catch { }
                 }
             });
         }

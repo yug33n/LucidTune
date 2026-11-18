@@ -20,11 +20,23 @@ namespace LucidTune
         {
             DispatcherUnhandledException += (s, e) =>
             {
-                Debug.WriteLine($"[DispatcherUnhandledException] {e.Exception}");
+                try
+                {
+                    var dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "LucidTune");
+                    Directory.CreateDirectory(dir);
+                    File.AppendAllText(Path.Combine(dir, "crash.log"), $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] [Dispatcher] {e.Exception}\n");
+                }
+                catch { }
             };
             AppDomain.CurrentDomain.UnhandledException += (s, e) =>
             {
-                Debug.WriteLine($"[UnhandledException] {e.ExceptionObject}");
+                try
+                {
+                    var dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "LucidTune");
+                    Directory.CreateDirectory(dir);
+                    File.AppendAllText(Path.Combine(dir, "crash.log"), $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] [AppDomain] {e.ExceptionObject}\n");
+                }
+                catch { }
             };
         }
 
@@ -70,6 +82,12 @@ namespace LucidTune
                     return;
                 }
 
+                _showSettingsSignal = new EventWaitHandle(false, EventResetMode.AutoReset, @"Local\LucidTune_ShowSettings_Signal_v102");
+                StartSignalListener();
+            }
+            catch (AbandonedMutexException)
+            {
+                _ownsMutex = true;
                 _showSettingsSignal = new EventWaitHandle(false, EventResetMode.AutoReset, @"Local\LucidTune_ShowSettings_Signal_v102");
                 StartSignalListener();
             }

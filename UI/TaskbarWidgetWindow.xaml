@@ -6,7 +6,7 @@
         mc:Ignorable="d"
         Title="LucidTune Taskbar"
         Width="150" Height="34"
-        MinWidth="70" MaxWidth="240"
+        MinWidth="50" MaxWidth="240"
         WindowStyle="None"
         AllowsTransparency="True"
         Background="Transparent"

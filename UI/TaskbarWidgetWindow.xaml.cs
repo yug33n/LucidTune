@@ -54,7 +54,7 @@ namespace LucidTune.UI
         private const uint SWP_NOACTIVATE = 0x0010;
 
         private const double MAX_WIDGET_WIDTH = 150.0;
-        private const double MIN_WIDGET_WIDTH = 75.0;
+        private const double MIN_WIDGET_WIDTH = 54.0;
 
         private readonly SmtcMediaService _mediaService;
         private readonly ConfigManager _configManager;
@@ -343,13 +343,6 @@ namespace LucidTune.UI
                     double minAllowedLeft = appsRightDip > 0 ? (appsRightDip + 8) : 0;
                     double availableSpace = maxAllowedRight - minAllowedLeft;
 
-                    // If space is too narrow to even show controls without collision, hide gracefully
-                    if (appsRightDip > 0 && availableSpace < 65)
-                    {
-                        RootCard.Visibility = Visibility.Collapsed;
-                        return;
-                    }
-
                     RootCard.Visibility = Visibility.Visible;
 
                     // Clamp width between MIN_WIDGET_WIDTH and MAX_WIDGET_WIDTH
@@ -369,6 +362,20 @@ namespace LucidTune.UI
                     else
                     {
                         ArtworkBorder.Visibility = Visibility.Visible;
+                    }
+
+                    // If width is very constrained (< 85px), hide title and time so playback buttons remain
+                    if (targetWidth < 85)
+                    {
+                        TitleText.Visibility = Visibility.Collapsed;
+                        TimeText.Visibility = Visibility.Collapsed;
+                        ProgressBarTrack.Visibility = Visibility.Collapsed;
+                    }
+                    else
+                    {
+                        TitleText.Visibility = Visibility.Visible;
+                        TimeText.Visibility = Visibility.Visible;
+                        ProgressBarTrack.Visibility = Visibility.Visible;
                     }
 
                     // Dock right before the tray chevron
