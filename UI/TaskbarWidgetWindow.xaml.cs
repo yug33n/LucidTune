@@ -1,6 +1,8 @@
 using System;
 using System.Runtime.InteropServices;
+using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Automation;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Interop;
@@ -51,6 +53,9 @@ namespace LucidTune.UI
         private const uint SWP_NOSIZE = 0x0001;
         private const uint SWP_NOACTIVATE = 0x0010;
 
+        private const double MAX_WIDGET_WIDTH = 175.0;
+        private const double MIN_WIDGET_WIDTH = 95.0;
+
         private readonly SmtcMediaService _mediaService;
         private readonly ConfigManager _configManager;
         private readonly AudioVolumeService _volumeService;
@@ -65,6 +70,10 @@ namespace LucidTune.UI
         private bool _isDragging;
         private bool _isFullscreenHidden;
         private MediaTrackInfo? _lastTrack;
+
+        private double _detectedAppsRightEdge = 0;
+        private bool _isDetectingApps;
+        private DateTime _lastAppsDetectionUtc = DateTime.MinValue;
 
         public TaskbarWidgetWindow(
             SmtcMediaService mediaService,
@@ -84,9 +93,9 @@ namespace LucidTune.UI
 
             _repositionTimer = new DispatcherTimer(DispatcherPriority.Background)
             {
-                Interval = TimeSpan.FromSeconds(1.5)
+                Interval = TimeSpan.FromMilliseconds(1200)
             };
-            _repositionTimer.Tick += (s, e) => RepositionOnTaskbar();
+            _repositionTimer.Tick += OnRepositionTick;
 
             Loaded += OnWindowLoaded;
             Closing += OnWindowClosing;
@@ -122,6 +131,94 @@ namespace LucidTune.UI
             }
         }
 
+        private void OnRepositionTick(object? sender, EventArgs e)
+        {
+            RepositionOnTaskbar();
+
+            // Run app icons boundary detection in background to prevent UI lag
+            if (!_isDetectingApps && (DateTime.UtcNow - _lastAppsDetectionUtc).TotalSeconds >= 1.5)
+            {
+                _isDetectingApps = true;
+                _lastAppsDetectionUtc = DateTime.UtcNow;
+
+                IntPtr taskbarHwnd = FindWindow("Shell_TrayWnd", null);
+                IntPtr trayHwnd = taskbarHwnd != IntPtr.Zero
+                    ? FindWindowEx(taskbarHwnd, IntPtr.Zero, "TrayNotifyWnd", null)
+                    : IntPtr.Zero;
+
+                RECT trayRect = default;
+                if (trayHwnd != IntPtr.Zero)
+                {
+                    GetWindowRect(trayHwnd, out trayRect);
+                }
+
+                _ = Task.Run(() =>
+                {
+                    try
+                    {
+                        double maxRight = DetectTaskbarAppsRightEdge(taskbarHwnd, trayRect.Left);
+                        Dispatcher.Invoke(() =>
+                        {
+                            if (Math.Abs(_detectedAppsRightEdge - maxRight) > 2)
+                            {
+                                _detectedAppsRightEdge = maxRight;
+                                RepositionOnTaskbar();
+                            }
+                        });
+                    }
+                    catch { }
+                    finally
+                    {
+                        _isDetectingApps = false;
+                    }
+                });
+            }
+        }
+
+        private static double DetectTaskbarAppsRightEdge(IntPtr taskbarHwnd, int trayLeftPhysical)
+        {
+            if (taskbarHwnd == IntPtr.Zero) return 0;
+
+            try
+            {
+                var tbElement = AutomationElement.FromHandle(taskbarHwnd);
+                if (tbElement == null) return 0;
+
+                var condition = new OrCondition(
+                    new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.Button),
+                    new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.ListItem),
+                    new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.ToolBar)
+                );
+
+                var items = tbElement.FindAll(TreeScope.Descendants, condition);
+                double maxRight = 0;
+
+                for (int i = 0; i < items.Count; i++)
+                {
+                    try
+                    {
+                        var rect = items[i].Current.BoundingRectangle;
+                        if (rect.IsEmpty || rect.Width <= 0 || rect.Height <= 0) continue;
+                        if (trayLeftPhysical > 0 && rect.Left >= trayLeftPhysical - 15) continue;
+                        if (rect.Width > 600) continue;
+                        if (rect.Height < 15) continue;
+
+                        if (rect.Right > maxRight)
+                        {
+                            maxRight = rect.Right;
+                        }
+                    }
+                    catch { }
+                }
+
+                return maxRight;
+            }
+            catch
+            {
+                return 0;
+            }
+        }
+
         public void RepositionOnTaskbar()
         {
             if (_isDragging) return;
@@ -139,6 +236,8 @@ namespace LucidTune.UI
 
                 double targetLeft;
                 double targetTop;
+                double trayLeftDip;
+                double appsRightDip = _detectedAppsRightEdge > 0 ? (_detectedAppsRightEdge / dpiX) : 0;
 
                 if (taskbarHwnd != IntPtr.Zero && GetWindowRect(taskbarHwnd, out RECT tbRect))
                 {
@@ -150,23 +249,46 @@ namespace LucidTune.UI
 
                     if (trayHwnd != IntPtr.Zero && GetWindowRect(trayHwnd, out RECT trayRect) && trayRect.Left > 0)
                     {
-                        double trayLeftDip = trayRect.Left / dpiX;
-                        targetLeft = trayLeftDip - ActualWidth - 8 + _configManager.CurrentConfig.TaskbarOffsetX;
+                        trayLeftDip = trayRect.Left / dpiX;
                     }
                     else
                     {
-                        // Fallback estimate for tray width in Windows 11
-                        targetLeft = tbRightDip - 240 - ActualWidth + _configManager.CurrentConfig.TaskbarOffsetX;
+                        trayLeftDip = tbRightDip - 240;
                     }
                 }
                 else
                 {
-                    // Fallback using SystemParameters
                     double tbHeight = Math.Max(40, SystemParameters.PrimaryScreenHeight - SystemParameters.WorkArea.Height);
                     double tbTop = SystemParameters.WorkArea.Bottom;
                     targetTop = tbTop + (tbHeight - ActualHeight) / 2;
-                    targetLeft = SystemParameters.PrimaryScreenWidth - 260 - ActualWidth + _configManager.CurrentConfig.TaskbarOffsetX;
+                    trayLeftDip = SystemParameters.PrimaryScreenWidth - 240;
                 }
+
+                // Calculate available space between running taskbar apps and tray
+                double availableSpace = MAX_WIDGET_WIDTH;
+                if (appsRightDip > 0 && appsRightDip < trayLeftDip)
+                {
+                    // Leave 8px margin from tray, and 8px margin from the rightmost app icon
+                    availableSpace = (trayLeftDip - 8) - (appsRightDip + 8);
+                }
+
+                // Clamp width between MIN_WIDGET_WIDTH and MAX_WIDGET_WIDTH
+                double targetWidth = Math.Clamp(availableSpace, MIN_WIDGET_WIDTH, MAX_WIDGET_WIDTH);
+                Width = targetWidth;
+
+                // Responsive degradation:
+                // If width is constrained (< 125px), hide the cover art to preserve space for title & controls
+                if (targetWidth < 125)
+                {
+                    ArtworkBorder.Visibility = Visibility.Collapsed;
+                }
+                else
+                {
+                    ArtworkBorder.Visibility = Visibility.Visible;
+                }
+
+                // Dock right before the tray chevron
+                targetLeft = (trayLeftDip - 8) - targetWidth;
 
                 Left = targetLeft;
                 Top = targetTop;
@@ -194,11 +316,6 @@ namespace LucidTune.UI
                     ? "Нет трека"
                     : track.Title;
                 TitleText.ToolTip = track.Title;
-
-                ArtistText.Text = string.IsNullOrWhiteSpace(track.Artist) || track.Artist == "Запустите музыку"
-                    ? "Запустите музыку"
-                    : track.Artist;
-                ArtistText.ToolTip = track.Artist;
 
                 if (track.Thumbnail != null)
                 {
@@ -232,17 +349,7 @@ namespace LucidTune.UI
 
             Dispatcher.Invoke(() =>
             {
-                if (duration > TimeSpan.Zero)
-                {
-                    string posStr = FormatTime(position);
-                    string durStr = FormatTime(duration);
-                    TimeText.Text = $"{posStr} / {durStr}";
-                }
-                else
-                {
-                    TimeText.Text = position > TimeSpan.Zero ? FormatTime(position) : "0:00";
-                }
-
+                TimeText.Text = position > TimeSpan.Zero ? FormatTime(position) : "0:00";
                 UpdateProgressBarWidth();
             });
         }
@@ -345,39 +452,9 @@ namespace LucidTune.UI
                 finally
                 {
                     _isDragging = false;
-                    SaveDraggedOffset();
+                    RepositionOnTaskbar();
                 }
             }
-        }
-
-        private void SaveDraggedOffset()
-        {
-            try
-            {
-                var dpi = VisualTreeHelper.GetDpi(this);
-                double dpiX = dpi.DpiScaleX > 0 ? dpi.DpiScaleX : 1.0;
-                IntPtr taskbarHwnd = FindWindow("Shell_TrayWnd", null);
-                IntPtr trayHwnd = taskbarHwnd != IntPtr.Zero
-                    ? FindWindowEx(taskbarHwnd, IntPtr.Zero, "TrayNotifyWnd", null)
-                    : IntPtr.Zero;
-
-                double defaultLeft;
-                if (trayHwnd != IntPtr.Zero && GetWindowRect(trayHwnd, out RECT trayRect) && trayRect.Left > 0)
-                {
-                    defaultLeft = (trayRect.Left / dpiX) - ActualWidth - 8;
-                }
-                else
-                {
-                    defaultLeft = SystemParameters.PrimaryScreenWidth - 260 - ActualWidth;
-                }
-
-                double offset = Left - defaultLeft;
-                _configManager.CurrentConfig.TaskbarOffsetX = offset;
-                _configManager.Save(_configManager.CurrentConfig);
-
-                RepositionOnTaskbar();
-            }
-            catch { }
         }
 
         private void OnRootCardMouseWheel(object sender, MouseWheelEventArgs e)
