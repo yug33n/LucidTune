@@ -160,8 +160,7 @@ namespace LucidTune.UI
             ExcludeFromCaptureCheckBox.IsChecked = cfg.ExcludeFromCapture;
 
             EnableDiscordRpcCheckBox.IsChecked = cfg.DiscordRpcEnabled;
-            IgnoreBrowserVideosCheckBox.IsChecked = cfg.DiscordIgnoreBrowserVideos;
-            IgnoreTelegramVoiceCheckBox.IsChecked = cfg.DiscordIgnoreTelegramVoice;
+            IgnoreExternalMediaCheckBox.IsChecked = cfg.DiscordIgnoreBrowserVideos || cfg.DiscordIgnoreTelegramVoice;
 
             UpdateAllPreviews();
         }
@@ -635,9 +634,8 @@ namespace LucidTune.UI
             DiscordTitleText.Text = LocalizationService.T("DiscordSectionTitle");
             DiscordDescText.Text = LocalizationService.T("DiscordEnableDesc");
             EnableDiscordRpcCheckBox.Content = LocalizationService.T("DiscordEnableTitle");
-            IgnoreBrowserVideosCheckBox.Content = LocalizationService.T("DiscordIgnoreBrowserVideosTitle");
-            IgnoreTelegramVoiceTitleText.Text = LocalizationService.T("DiscordIgnoreTelegramVoiceTitle");
-            IgnoreTelegramVoiceDescText.Text = LocalizationService.T("DiscordIgnoreTelegramVoiceDesc");
+            IgnoreExternalMediaTitleText.Text = LocalizationService.T("DiscordIgnoreExternalMediaTitle");
+            IgnoreExternalMediaDescText.Text = LocalizationService.T("DiscordIgnoreExternalMediaDesc");
 
             EnableMediaHotkeysCheckBox.Content = LocalizationService.T("HotkeyMediaTitle");
             AutoStartCheckBox.Content = LocalizationService.T("AutoStartTitle");
@@ -804,8 +802,9 @@ namespace LucidTune.UI
             _mainWindow.ApplyLanguage(cfg.Language);
 
             cfg.DiscordRpcEnabled = EnableDiscordRpcCheckBox.IsChecked == true;
-            cfg.DiscordIgnoreBrowserVideos = IgnoreBrowserVideosCheckBox.IsChecked ?? true;
-            cfg.DiscordIgnoreTelegramVoice = IgnoreTelegramVoiceCheckBox.IsChecked == true;
+            bool ignoreExternalMedia = IgnoreExternalMediaCheckBox.IsChecked ?? true;
+            cfg.DiscordIgnoreBrowserVideos = ignoreExternalMedia;
+            cfg.DiscordIgnoreTelegramVoice = ignoreExternalMedia;
 
             _configManager.Save(cfg);
 

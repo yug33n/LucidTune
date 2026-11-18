@@ -41,6 +41,7 @@ namespace LucidTune
 
         private DispatcherTimer? _spectrumTimer;
         private DateTime _spectrumStartTime;
+        private readonly double[] _specBarCurrentHeights = [2.0, 2.0, 2.0, 2.0, 2.0];
 
         public bool IsOverlayVisible => _isWindowVisible;
         public event Action<bool>? OverlayVisibilityChanged;
@@ -73,7 +74,7 @@ namespace LucidTune
             _spectrumStartTime = DateTime.UtcNow;
             _spectrumTimer = new DispatcherTimer(DispatcherPriority.Render)
             {
-                Interval = TimeSpan.FromMilliseconds(45)
+                Interval = TimeSpan.FromMilliseconds(35)
             };
             _spectrumTimer.Tick += OnSpectrumTimerTick;
         }
@@ -254,19 +255,61 @@ namespace LucidTune
 
         private void OnSpectrumTimerTick(object? sender, EventArgs e)
         {
-            if (_lastTrackInfo?.IsPlaying != true) return;
-            double t = (DateTime.UtcNow - _spectrumStartTime).TotalSeconds;
+            if (SpecBar1 == null) return;
 
-            SpecBar1.Height = Math.Clamp(3 + 5 * Math.Abs(Math.Sin(t * 7.5 + 0.2)), 2, 14);
-            SpecBar2.Height = Math.Clamp(4 + 8 * Math.Abs(Math.Sin(t * 5.2 + 1.1)), 2, 14);
-            SpecBar3.Height = Math.Clamp(5 + 9 * Math.Abs(Math.Sin(t * 8.9 + 2.3)), 2, 14);
-            SpecBar4.Height = Math.Clamp(4 + 7 * Math.Abs(Math.Sin(t * 6.1 + 0.7)), 2, 14);
-            SpecBar5.Height = Math.Clamp(3 + 6 * Math.Abs(Math.Sin(t * 7.0 + 1.9)), 2, 14);
+            bool isPlaying = _lastTrackInfo?.IsPlaying == true;
+            float peak = isPlaying ? _volumeService.GetAudioPeakSample() : 0f;
+
+            // If music is paused, silenced, or in a quiet break (peak near 0)
+            if (!isPlaying || peak < 0.008f)
+            {
+                for (int i = 0; i < 5; i++)
+                {
+                    _specBarCurrentHeights[i] = Math.Max(2.0, _specBarCurrentHeights[i] * 0.78);
+                }
+            }
+            else
+            {
+                double t = (DateTime.UtcNow - _spectrumStartTime).TotalSeconds;
+                // Non-linear amplitude response: expands dynamic range for lively movement
+                double intensity = Math.Pow(Math.Clamp(peak, 0.0, 1.0), 0.65);
+
+                // Targets for 5 frequency bands (Bass, Low-Mid, Mid, High-Mid, Treble)
+                double[] targets = [
+                    2.0 + intensity * 12.0 * (0.80 + 0.20 * Math.Sin(t * 11.0 + 0.3)),
+                    2.0 + intensity * 12.0 * (0.95 + 0.18 * Math.Sin(t * 14.5 + 1.2)),
+                    2.0 + intensity * 12.0 * (1.00 + 0.22 * Math.Sin(t * 17.0 + 2.5)),
+                    2.0 + intensity * 12.0 * (0.90 + 0.19 * Math.Sin(t * 13.5 + 3.8)),
+                    2.0 + intensity * 12.0 * (0.75 + 0.16 * Math.Sin(t * 15.5 + 5.0))
+                ];
+
+                for (int i = 0; i < 5; i++)
+                {
+                    double target = Math.Clamp(targets[i], 2.0, 14.0);
+                    if (target > _specBarCurrentHeights[i])
+                    {
+                        // Fast attack for beats and transients
+                        _specBarCurrentHeights[i] = _specBarCurrentHeights[i] * 0.25 + target * 0.75;
+                    }
+                    else
+                    {
+                        // Smooth decay
+                        _specBarCurrentHeights[i] = Math.Max(2.0, _specBarCurrentHeights[i] * 0.82);
+                    }
+                }
+            }
+
+            SpecBar1.Height = _specBarCurrentHeights[0];
+            SpecBar2.Height = _specBarCurrentHeights[1];
+            SpecBar3.Height = _specBarCurrentHeights[2];
+            SpecBar4.Height = _specBarCurrentHeights[3];
+            SpecBar5.Height = _specBarCurrentHeights[4];
         }
 
         private void ResetSpectrumBars()
         {
             if (SpecBar1 == null) return;
+            for (int i = 0; i < 5; i++) _specBarCurrentHeights[i] = 2.0;
             SpecBar1.Height = 2;
             SpecBar2.Height = 2;
             SpecBar3.Height = 2;

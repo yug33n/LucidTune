@@ -73,6 +73,7 @@ namespace LucidTune.UI
 
         private double _detectedAppsRightEdge = 0;
         private double _detectedTrayLeftEdge = 0;
+        private double _detectedWidgetsRightEdge = 0;
         private bool _isDetectingBoundaries;
         private DateTime _lastBoundariesDetectionUtc = DateTime.MinValue;
 
@@ -150,16 +151,18 @@ namespace LucidTune.UI
                 {
                     try
                     {
-                        var (appsRight, trayLeft) = DetectTaskbarBoundaries(taskbarHwnd, dpiX);
+                        var (appsRight, trayLeft, widgetsRight) = DetectTaskbarBoundaries(taskbarHwnd, dpiX);
                         Dispatcher.Invoke(() =>
                         {
                             bool changed = Math.Abs(_detectedAppsRightEdge - appsRight) > 2 ||
-                                           Math.Abs(_detectedTrayLeftEdge - trayLeft) > 2;
+                                           Math.Abs(_detectedTrayLeftEdge - trayLeft) > 2 ||
+                                           Math.Abs(_detectedWidgetsRightEdge - widgetsRight) > 2;
 
                             if (changed)
                             {
                                 _detectedAppsRightEdge = appsRight;
                                 _detectedTrayLeftEdge = trayLeft;
+                                _detectedWidgetsRightEdge = widgetsRight;
                                 RepositionOnTaskbar();
                             }
                         });
@@ -173,24 +176,29 @@ namespace LucidTune.UI
             }
         }
 
-        private static (double appsRight, double trayLeft) DetectTaskbarBoundaries(IntPtr taskbarHwnd, double dpiX)
+        private static (double appsRight, double trayLeft, double widgetsRight) DetectTaskbarBoundaries(IntPtr taskbarHwnd, double dpiX)
         {
-            if (taskbarHwnd == IntPtr.Zero) return (0, 0);
+            if (taskbarHwnd == IntPtr.Zero) return (0, 0, 0);
 
             try
             {
                 var tbElement = AutomationElement.FromHandle(taskbarHwnd);
-                if (tbElement == null) return (0, 0);
+                if (tbElement == null) return (0, 0, 0);
 
                 var condition = new OrCondition(
                     new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.Button),
                     new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.ListItem),
                     new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.ToolBar),
-                    new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.Pane)
+                    new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.Pane),
+                    new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.Custom),
+                    new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.Group)
                 );
 
                 var allItems = tbElement.FindAll(TreeScope.Descendants, condition);
-                if (allItems == null || allItems.Count == 0) return (0, 0);
+                if (allItems == null || allItems.Count == 0) return (0, 0, 0);
+
+                double tbLeft = tbElement.Current.BoundingRectangle.Left;
+                double tbRight = tbElement.Current.BoundingRectangle.Right;
 
                 // Step 1: Detect tray left boundary (Chevron or leftmost tray element)
                 double minTrayLeft = double.MaxValue;
@@ -224,10 +232,44 @@ namespace LucidTune.UI
                     catch { }
                 }
 
-                double tbRight = tbElement.Current.BoundingRectangle.Right;
                 double effectiveTrayLeft = minTrayLeft < double.MaxValue ? minTrayLeft : (tbRight - (240 * dpiX));
 
-                // Step 2: Detect rightmost taskbar app button (buttons strictly to the left of the tray)
+                // Step 2: Detect Windows 11 Weather / Widgets button on the left
+                double maxWidgetsRight = 0;
+                for (int i = 0; i < allItems.Count; i++)
+                {
+                    try
+                    {
+                        var it = allItems[i];
+                        var rect = it.Current.BoundingRectangle;
+                        if (rect.IsEmpty || rect.Width <= 0 || rect.Height <= 0) continue;
+
+                        if (rect.Left >= tbLeft - 10 && rect.Left < tbLeft + 250 && rect.Width > 20 && rect.Width < 300)
+                        {
+                            var autoId = it.Current.AutomationId ?? "";
+                            var name = it.Current.Name ?? "";
+                            var cls = it.Current.ClassName ?? "";
+
+                            bool isWidgetsOrWeather =
+                                autoId.IndexOf("Widget", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                                autoId.IndexOf("Feeds", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                                cls.IndexOf("Widget", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                                name.IndexOf("Погода", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                                name.IndexOf("Weather", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                                name.IndexOf("Мини-прилож", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                                name.IndexOf("Виджет", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                                name.Contains('°');
+
+                            if (isWidgetsOrWeather && rect.Right > maxWidgetsRight)
+                            {
+                                maxWidgetsRight = rect.Right;
+                            }
+                        }
+                    }
+                    catch { }
+                }
+
+                // Step 3: Detect rightmost taskbar app button (buttons strictly to the left of the tray)
                 double maxAppRight = 0;
                 for (int i = 0; i < allItems.Count; i++)
                 {
@@ -258,11 +300,11 @@ namespace LucidTune.UI
                     catch { }
                 }
 
-                return (maxAppRight, effectiveTrayLeft);
+                return (maxAppRight, effectiveTrayLeft, maxWidgetsRight);
             }
             catch
             {
-                return (0, 0);
+                return (0, 0, 0);
             }
         }
 
@@ -319,17 +361,46 @@ namespace LucidTune.UI
                     ArtworkBorder.Height = 24;
                     Width = 225;
 
+                    double tbLeftDip = (taskbarHwnd != IntPtr.Zero && GetWindowRect(taskbarHwnd, out RECT rectTb))
+                        ? rectTb.Left / dpiX
+                        : SystemParameters.WorkArea.Left;
+
+                    double widgetsRightDip = _detectedWidgetsRightEdge > 0 ? (_detectedWidgetsRightEdge / dpiX) : 0;
+
                     IntPtr startHwnd = FindWindowEx(taskbarHwnd, IntPtr.Zero, "Start", null);
                     if (startHwnd != IntPtr.Zero && GetWindowRect(startHwnd, out RECT startRect) && startRect.Left < 100)
                     {
+                        // Left-aligned taskbar: dock next to the Start button
                         targetLeft = (startRect.Right / dpiX) + 10;
+                    }
+                    else if (widgetsRightDip > tbLeftDip + 10)
+                    {
+                        // Windows 11 Weather / Widgets button detected on left
+                        targetLeft = widgetsRightDip + 10;
                     }
                     else
                     {
-                        double tbLeftDip = (taskbarHwnd != IntPtr.Zero && GetWindowRect(taskbarHwnd, out RECT rectTb))
-                            ? rectTb.Left / dpiX
-                            : SystemParameters.WorkArea.Left;
-                        targetLeft = tbLeftDip + 12;
+                        // Check if Windows 11 Widgets button is enabled in registry
+                        bool widgetsEnabledInRegistry = false;
+                        try
+                        {
+                            var val = Microsoft.Win32.Registry.GetValue(
+                                @"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced",
+                                "TaskbarDa", 0);
+                            if (val is int intVal && intVal == 1) widgetsEnabledInRegistry = true;
+                        }
+                        catch { }
+
+                        if (widgetsEnabledInRegistry)
+                        {
+                            // Standard weather widget on left occupies ~160px
+                            targetLeft = tbLeftDip + 170;
+                        }
+                        else
+                        {
+                            // Widgets disabled -> dock right at the left edge
+                            targetLeft = tbLeftDip + 12;
+                        }
                     }
                 }
                 else

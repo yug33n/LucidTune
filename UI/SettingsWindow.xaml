@@ -596,8 +596,9 @@
                                             Style="{StaticResource ActionButtonStyle}"
                                             Background="{DynamicResource SettingsButtonSecondaryBackgroundBrush}"
                                             Foreground="{DynamicResource SettingsButtonSecondaryTextBrush}"
-                                            Padding="10,0"
-                                            Height="28"
+                                            Padding="16,0"
+                                            Height="30"
+                                            FontSize="12"
                                             Margin="0,0,8,0"
                                             Content="Обновления"
                                             ToolTip="Проверить наличие обновлений на GitHub"
@@ -607,8 +608,9 @@
                                             Style="{StaticResource ActionButtonStyle}"
                                             Background="{DynamicResource SettingsButtonSecondaryBackgroundBrush}"
                                             Foreground="{DynamicResource SettingsButtonSecondaryTextBrush}"
-                                            Padding="14,0"
-                                            Height="28"
+                                            Padding="18,0"
+                                            Height="30"
+                                            FontSize="12"
                                             Content="Скрыть"
                                             Click="OnToggleOverlayClick"/>
                                 </StackPanel>
@@ -818,8 +820,8 @@
                                                   Grid.Column="1"
                                                   Height="28"
                                                   SelectionChanged="OnTaskbarPositionChanged">
-                                            <ComboBoxItem Content="Справа (у трея)" Tag="Right"/>
-                                            <ComboBoxItem Content="Слева (мини-плеер)" Tag="Left"/>
+                                            <ComboBoxItem Content="Справа" Tag="Right"/>
+                                            <ComboBoxItem Content="Слева" Tag="Left"/>
                                         </ComboBox>
                                     </Grid>
                                 </StackPanel>
@@ -836,17 +838,12 @@
                                           Style="{StaticResource DarkCheckBoxStyle}"
                                           Content="Включить статус в Discord"/>
 
-                                <CheckBox x:Name="IgnoreBrowserVideosCheckBox"
-                                          Style="{StaticResource DarkCheckBoxStyle}"
-                                          Content="Игнорировать видео в браузере (YouTube, Twitch)"
-                                          Margin="0,8,0,0"/>
-
-                                <CheckBox x:Name="IgnoreTelegramVoiceCheckBox"
+                                <CheckBox x:Name="IgnoreExternalMediaCheckBox"
                                           Style="{StaticResource DarkCheckBoxStyle}"
                                           Margin="0,8,0,0">
                                     <StackPanel>
-                                        <TextBlock x:Name="IgnoreTelegramVoiceTitleText" Text="Игнорировать голосовые сообщения Telegram" FontSize="12" FontWeight="Medium" Foreground="{DynamicResource SettingsTextPrimaryBrush}"/>
-                                        <TextBlock x:Name="IgnoreTelegramVoiceDescText" Text="Не транслировать голосовые заметки и аудиосообщения Telegram в статус Discord." FontSize="10.5" Foreground="{DynamicResource SettingsTextSecondaryBrush}" Margin="0,2,0,0" TextWrapping="Wrap"/>
+                                        <TextBlock x:Name="IgnoreExternalMediaTitleText" Text="Игнорировать сторонние медиа (YouTube, Twitch, Telegram)" FontSize="12" FontWeight="Medium" Foreground="{DynamicResource SettingsTextPrimaryBrush}"/>
+                                        <TextBlock x:Name="IgnoreExternalMediaDescText" Text="Не транслировать в статус Discord видеоролики из браузера и голосовые сообщения Telegram." FontSize="10.5" Foreground="{DynamicResource SettingsTextSecondaryBrush}" Margin="0,2,0,0" TextWrapping="Wrap"/>
                                     </StackPanel>
                                 </CheckBox>
                             </StackPanel>

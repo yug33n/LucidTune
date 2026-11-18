@@ -62,6 +62,10 @@ namespace LucidTune.Services
             ["StatusDesktopActive"] = "Оверлей рабочего стола активен",
             ["StatusTaskbarActive"] = "Виджет в панели задач активен",
             ["StatusReadyToCapture"] = "Готов к перехвату медиа (Spotify, браузеры, Telegram)",
+            ["OverlayActive"] = "Оверлей активен",
+            ["OverlayActiveDesc"] = "Оверлей отображается на экране и готов к воспроизведению.",
+            ["OverlayHidden"] = "Оверлей скрыт",
+            ["OverlayHiddenDesc"] = "Оверлей скрыт с экрана. Нажмите «Показать» или горячую клавишу.",
 
             // Language
             ["LanguageTitle"] = "Язык интерфейса",
@@ -96,9 +100,9 @@ namespace LucidTune.Services
             ["TaskbarModeTitle"] = "Виджет в панели задач (Taskbar Dock)",
             ["TaskbarModeDesc"] = "Переносит музыкальный плеер в панель задач Windows вместо оверлея на рабочем столе.",
             ["TaskbarPositionTitle"] = "Расположение в панели задач",
-            ["TaskbarPositionDesc"] = "Выбор расположения мини-плеера в панели задач.",
-            ["TaskbarPosRight"] = "Справа (рядом с треем)",
-            ["TaskbarPosLeft"] = "Слева (в левой части панели)",
+            ["TaskbarPositionDesc"] = "Справа или слева в панели задач.",
+            ["TaskbarPosRight"] = "Справа",
+            ["TaskbarPosLeft"] = "Слева",
 
             // Snapping & Capture
             ["SnapToEdgesTitle"] = "Прилипание к краям экрана",
@@ -118,6 +122,8 @@ namespace LucidTune.Services
             ["DiscordSectionTitle"] = "Discord Rich Presence",
             ["DiscordEnableTitle"] = "Отображать статус в Discord",
             ["DiscordEnableDesc"] = "Показывать название песни, исполнителя, обложку и кнопку перехода на сайт приложения.",
+            ["DiscordIgnoreExternalMediaTitle"] = "Игнорировать сторонние медиа (YouTube, Twitch, Telegram)",
+            ["DiscordIgnoreExternalMediaDesc"] = "Не транслировать в статус Discord видеоролики из браузера и голосовые сообщения Telegram.",
             ["DiscordIgnoreBrowserVideosTitle"] = "Игнорировать видео в браузере (YouTube, Twitch)",
             ["DiscordIgnoreBrowserVideosDesc"] = "Не транслировать видеоролики из YouTube и Twitch как музыку в статус Discord.",
             ["DiscordIgnoreTelegramVoiceTitle"] = "Игнорировать голосовые сообщения Telegram",
@@ -170,6 +176,10 @@ namespace LucidTune.Services
             ["StatusDesktopActive"] = "Desktop overlay is active",
             ["StatusTaskbarActive"] = "Taskbar dock is active",
             ["StatusReadyToCapture"] = "Ready to capture media (Spotify, browsers, Telegram)",
+            ["OverlayActive"] = "Overlay is active",
+            ["OverlayActiveDesc"] = "Overlay is visible on screen and ready to capture media.",
+            ["OverlayHidden"] = "Overlay is hidden",
+            ["OverlayHiddenDesc"] = "Overlay is hidden. Click 'Show' or use the hotkey to restore.",
 
             // Language
             ["LanguageTitle"] = "Interface Language",
@@ -204,9 +214,9 @@ namespace LucidTune.Services
             ["TaskbarModeTitle"] = "Taskbar Dock Widget",
             ["TaskbarModeDesc"] = "Docks the media player into the Windows taskbar instead of the desktop overlay.",
             ["TaskbarPositionTitle"] = "Taskbar Widget Position",
-            ["TaskbarPositionDesc"] = "Select placement of the mini player on the taskbar.",
-            ["TaskbarPosRight"] = "Right (next to system tray)",
-            ["TaskbarPosLeft"] = "Left (on the left side)",
+            ["TaskbarPositionDesc"] = "Select placement on the taskbar (Right or Left).",
+            ["TaskbarPosRight"] = "Right",
+            ["TaskbarPosLeft"] = "Left",
 
             // Snapping & Capture
             ["SnapToEdgesTitle"] = "Snap to Screen Edges",
@@ -226,6 +236,8 @@ namespace LucidTune.Services
             ["DiscordSectionTitle"] = "Discord Rich Presence",
             ["DiscordEnableTitle"] = "Enable Discord Rich Presence",
             ["DiscordEnableDesc"] = "Show current track title, artist, artwork and application button on your Discord profile.",
+            ["DiscordIgnoreExternalMediaTitle"] = "Ignore external media (YouTube, Twitch, Telegram)",
+            ["DiscordIgnoreExternalMediaDesc"] = "Prevent web browser videos and Telegram voice notes from showing in Discord status.",
             ["DiscordIgnoreBrowserVideosTitle"] = "Ignore Browser Videos (YouTube, Twitch)",
             ["DiscordIgnoreBrowserVideosDesc"] = "Prevent web videos on YouTube and Twitch from broadcasting as songs in Discord.",
             ["DiscordIgnoreTelegramVoiceTitle"] = "Ignore Telegram Voice Messages",
