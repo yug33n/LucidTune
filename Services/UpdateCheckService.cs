@@ -15,8 +15,8 @@ namespace LucidTune.Services
 
     public static class UpdateCheckService
     {
-        public const string CurrentVersion = "2.0.0";
-        public const string TargetReleaseVersion = "2.0.0";
+        public const string CurrentVersion = "2.1.0";
+        public const string TargetReleaseVersion = "2.1.0";
         private const string ReleasesApiUrl = "https://api.github.com/repos/yug33n/LucidTune/releases/latest";
         public const string FallbackReleaseUrl = "https://github.com/yug33n/LucidTune/releases";
         private static readonly HttpClient HttpClient = new()
