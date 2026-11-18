@@ -84,15 +84,23 @@ namespace LucidTune.UI
         private readonly Func<bool>? _isWidgetVisibleGetter;
         private ContextMenu? _trayContextMenu;
         private MenuItem? _toggleItem;
+        private MenuItem? _taskbarModeItem;
         private MenuItem? _autoHideItem;
         private MenuItem? _autoStartItem;
+        private readonly Action<bool>? _onTaskbarModeChanged;
 
-        public TrayIconManager(ConfigManager configManager, Action toggleVisibilityAction, Action hotkeySettingsAction, Func<bool>? isWidgetVisibleGetter = null)
+        public TrayIconManager(
+            ConfigManager configManager,
+            Action toggleVisibilityAction,
+            Action hotkeySettingsAction,
+            Func<bool>? isWidgetVisibleGetter = null,
+            Action<bool>? onTaskbarModeChanged = null)
         {
             _configManager = configManager;
             _toggleVisibilityAction = toggleVisibilityAction;
             _hotkeySettingsAction = hotkeySettingsAction;
             _isWidgetVisibleGetter = isWidgetVisibleGetter;
+            _onTaskbarModeChanged = onTaskbarModeChanged;
         }
 
         public void Initialize(IntPtr windowHandle)
@@ -179,13 +187,29 @@ namespace LucidTune.UI
 
             var hotkeyItem = new MenuItem
             {
-                Header = "Настройки виджета"
+                Header = LocalizationService.T("WidgetSettings")
             };
             hotkeyItem.Click += (s, e) => _hotkeySettingsAction();
 
+            _taskbarModeItem = new MenuItem
+            {
+                Header = LocalizationService.T("TaskbarModeTitle"),
+                IsCheckable = true,
+                IsChecked = _configManager.CurrentConfig.TaskbarModeEnabled
+            };
+            _taskbarModeItem.Click += (s, e) =>
+            {
+                var cfg = _configManager.CurrentConfig;
+                cfg.TaskbarModeEnabled = !cfg.TaskbarModeEnabled;
+                _taskbarModeItem.IsChecked = cfg.TaskbarModeEnabled;
+                _configManager.Save(cfg);
+                _onTaskbarModeChanged?.Invoke(cfg.TaskbarModeEnabled);
+                UpdateState();
+            };
+
             _autoHideItem = new MenuItem
             {
-                Header = "Скрывать в полноэкранных играх",
+                Header = LocalizationService.T("AutoHideTitle"),
                 IsCheckable = true,
                 IsChecked = _configManager.CurrentConfig.AutoHideInFullscreen
             };
@@ -199,7 +223,7 @@ namespace LucidTune.UI
 
             _autoStartItem = new MenuItem
             {
-                Header = "Автозагрузка",
+                Header = LocalizationService.T("AutoStartTitle"),
                 IsCheckable = true,
                 IsChecked = AutoStartupService.IsAutoStartEnabled()
             };
@@ -216,7 +240,7 @@ namespace LucidTune.UI
 
             var exitItem = new MenuItem
             {
-                Header = "Выход",
+                Header = LocalizationService.T("Exit"),
                 Foreground = new SolidColorBrush(Color.FromRgb(0xFF, 0x6B, 0x6B))
             };
             exitItem.Click += (s, e) =>
@@ -225,6 +249,7 @@ namespace LucidTune.UI
             };
 
             menu.Items.Add(_toggleItem);
+            menu.Items.Add(_taskbarModeItem);
             menu.Items.Add(hotkeyItem);
             menu.Items.Add(new Separator());
             menu.Items.Add(_autoHideItem);
@@ -235,11 +260,16 @@ namespace LucidTune.UI
             _trayContextMenu = menu;
         }
 
-        private void UpdateState()
+        public void UpdateState()
         {
             if (_toggleItem != null && _isWidgetVisibleGetter != null)
             {
-                _toggleItem.Header = _isWidgetVisibleGetter() ? "Скрыть" : "Показать";
+                _toggleItem.Header = _isWidgetVisibleGetter() ? LocalizationService.T("Hide") : LocalizationService.T("Show");
+            }
+
+            if (_taskbarModeItem != null)
+            {
+                _taskbarModeItem.IsChecked = _configManager.CurrentConfig.TaskbarModeEnabled;
             }
 
             if (_autoHideItem != null)

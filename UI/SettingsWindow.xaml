@@ -596,8 +596,9 @@
                                             Style="{StaticResource ActionButtonStyle}"
                                             Background="{DynamicResource SettingsButtonSecondaryBackgroundBrush}"
                                             Foreground="{DynamicResource SettingsButtonSecondaryTextBrush}"
-                                            Padding="10,0"
-                                            Height="28"
+                                            Padding="16,0"
+                                            Height="30"
+                                            FontSize="12"
                                             Margin="0,0,8,0"
                                             Content="Обновления"
                                             ToolTip="Проверить наличие обновлений на GitHub"
@@ -607,8 +608,9 @@
                                             Style="{StaticResource ActionButtonStyle}"
                                             Background="{DynamicResource SettingsButtonSecondaryBackgroundBrush}"
                                             Foreground="{DynamicResource SettingsButtonSecondaryTextBrush}"
-                                            Padding="14,0"
-                                            Height="28"
+                                            Padding="18,0"
+                                            Height="30"
+                                            FontSize="12"
                                             Content="Скрыть"
                                             Click="OnToggleOverlayClick"/>
                                 </StackPanel>
@@ -618,6 +620,27 @@
                         <!-- Appearance Section -->
                         <Border Background="{DynamicResource SettingsCardBackgroundBrush}" CornerRadius="10" Padding="14,12" Margin="0,0,0,14" BorderBrush="{DynamicResource SettingsBorderBrush}" BorderThickness="1">
                             <StackPanel>
+                                <!-- Interface Language Selection -->
+                                <Grid Margin="0,0,0,10">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="150"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,10,0">
+                                        <TextBlock x:Name="LanguageLabelTitle" Text="Язык интерфейса" FontWeight="SemiBold" FontSize="13" Foreground="{DynamicResource SettingsTextPrimaryBrush}"/>
+                                        <TextBlock x:Name="LanguageLabelDesc" Text="Выбор языка интерфейса и настроек." FontSize="11.5" Foreground="{DynamicResource SettingsTextSecondaryBrush}" Margin="0,2,0,0" TextWrapping="Wrap"/>
+                                    </StackPanel>
+                                    <ComboBox x:Name="LanguageComboBox"
+                                              Grid.Column="1"
+                                              Height="30"
+                                              SelectionChanged="OnLanguageSelectionChanged">
+                                        <ComboBoxItem Content="Русский (RU)" Tag="ru"/>
+                                        <ComboBoxItem Content="English (EN)" Tag="en"/>
+                                    </ComboBox>
+                                </Grid>
+
+                                <Rectangle Height="1" Fill="{DynamicResource SettingsSeparatorBrush}" Margin="0,2,0,10"/>
+
                                 <!-- Theme Selection -->
                                 <Grid Margin="0,0,0,10">
                                     <Grid.ColumnDefinitions>
@@ -625,8 +648,8 @@
                                         <ColumnDefinition Width="130"/>
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,10,0">
-                                        <TextBlock Text="Тема оформления" FontWeight="SemiBold" FontSize="13" Foreground="{DynamicResource SettingsTextPrimaryBrush}"/>
-                                        <TextBlock Text="Переключение между тёмным и светлым стилем." FontSize="11.5" Foreground="{DynamicResource SettingsTextSecondaryBrush}" Margin="0,2,0,0" TextWrapping="Wrap"/>
+                                        <TextBlock x:Name="ThemeLabelTitle" Text="Тема оформления" FontWeight="SemiBold" FontSize="13" Foreground="{DynamicResource SettingsTextPrimaryBrush}"/>
+                                        <TextBlock x:Name="ThemeLabelDesc" Text="Переключение между тёмным и светлым стилем." FontSize="11.5" Foreground="{DynamicResource SettingsTextSecondaryBrush}" Margin="0,2,0,0" TextWrapping="Wrap"/>
                                     </StackPanel>
                                     <ComboBox x:Name="ThemeComboBox"
                                               Grid.Column="1"
@@ -646,8 +669,8 @@
                                         <ColumnDefinition Width="140"/>
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,10,0">
-                                        <TextBlock Text="Основной цвет" FontWeight="SemiBold" FontSize="13" Foreground="{DynamicResource SettingsTextPrimaryBrush}"/>
-                                        <TextBlock Text="Цветовой акцент для кнопок, ползунков и бейджей." FontSize="11.5" Foreground="{DynamicResource SettingsTextSecondaryBrush}" Margin="0,2,0,0" TextWrapping="Wrap"/>
+                                        <TextBlock x:Name="AccentLabelTitle" Text="Основной цвет" FontWeight="SemiBold" FontSize="13" Foreground="{DynamicResource SettingsTextPrimaryBrush}"/>
+                                        <TextBlock x:Name="AccentLabelDesc" Text="Цветовой акцент для кнопок, ползунков и бейджей." FontSize="11.5" Foreground="{DynamicResource SettingsTextSecondaryBrush}" Margin="0,2,0,0" TextWrapping="Wrap"/>
                                     </StackPanel>
                                     <ComboBox x:Name="AccentComboBox"
                                               Grid.Column="1"
@@ -682,8 +705,8 @@
                                           Checked="OnAdaptiveColorChanged"
                                           Unchecked="OnAdaptiveColorChanged">
                                     <StackPanel>
-                                        <TextBlock Text="Адаптивный цвет под обложку" FontSize="12.5" FontWeight="Medium" Foreground="{DynamicResource SettingsTextPrimaryBrush}"/>
-                                        <TextBlock Text="Автоматически подбирает цвет акцента под цветовую гамму текущей обложки трека." FontSize="11" Foreground="{DynamicResource SettingsTextSecondaryBrush}" Margin="0,2,0,0" TextWrapping="Wrap"/>
+                                        <TextBlock x:Name="AdaptiveColorTitleText" Text="Адаптивный цвет под обложку" FontSize="12.5" FontWeight="Medium" Foreground="{DynamicResource SettingsTextPrimaryBrush}"/>
+                                        <TextBlock x:Name="AdaptiveColorDescText" Text="Автоматически подбирает цвет акцента под цветовую гамму текущей обложки трека." FontSize="11" Foreground="{DynamicResource SettingsTextSecondaryBrush}" Margin="0,2,0,0" TextWrapping="Wrap"/>
                                     </StackPanel>
                                 </CheckBox>
 
@@ -694,8 +717,8 @@
                                           Checked="OnAdaptiveShimmerChanged"
                                           Unchecked="OnAdaptiveShimmerChanged">
                                     <StackPanel>
-                                        <TextBlock Text="Перелив фона в цветах обложки" FontSize="12" FontWeight="Medium" Foreground="{DynamicResource SettingsTextPrimaryBrush}"/>
-                                        <TextBlock Text="Фон оверлея плавно переливается живым градиентом в оттенках текущей обложки." FontSize="11" Foreground="{DynamicResource SettingsTextSecondaryBrush}" Margin="0,2,0,0" TextWrapping="Wrap"/>
+                                        <TextBlock x:Name="AdaptiveShimmerTitleText" Text="Перелив фона в цветах обложки" FontSize="12" FontWeight="Medium" Foreground="{DynamicResource SettingsTextPrimaryBrush}"/>
+                                        <TextBlock x:Name="AdaptiveShimmerDescText" Text="Фон оверлея плавно переливается живым градиентом в оттенках текущей обложки." FontSize="11" Foreground="{DynamicResource SettingsTextSecondaryBrush}" Margin="0,2,0,0" TextWrapping="Wrap"/>
                                     </StackPanel>
                                 </CheckBox>
 
@@ -707,8 +730,8 @@
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Grid.Column="0">
-                                        <TextBlock Text="Прозрачность виджета" FontWeight="SemiBold" FontSize="13" Foreground="{DynamicResource SettingsTextPrimaryBrush}"/>
-                                        <TextBlock Text="Настройка видимости оверлея поверх других окон." FontSize="11.5" Foreground="{DynamicResource SettingsTextSecondaryBrush}" Margin="0,2,0,0" TextWrapping="Wrap"/>
+                                        <TextBlock x:Name="OpacityLabelTitle" Text="Прозрачность виджета" FontWeight="SemiBold" FontSize="13" Foreground="{DynamicResource SettingsTextPrimaryBrush}"/>
+                                        <TextBlock x:Name="OpacityLabelDesc" Text="Настройка видимости оверлея поверх других окон." FontSize="11.5" Foreground="{DynamicResource SettingsTextSecondaryBrush}" Margin="0,2,0,0" TextWrapping="Wrap"/>
                                     </StackPanel>
                                     <Border Grid.Column="1" Background="{DynamicResource SettingsBadgeBackgroundBrush}" CornerRadius="6" Padding="8,4" VerticalAlignment="Center">
                                         <TextBlock x:Name="OpacityValueText" Text="100%" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource SettingsBadgeTextBrush}"/>
@@ -742,8 +765,19 @@
                                           Checked="OnCompactModeChanged"
                                           Unchecked="OnCompactModeChanged">
                                     <StackPanel>
-                                        <TextBlock Text="Компактный виджет" FontSize="12.5" FontWeight="Medium" Foreground="{DynamicResource SettingsTextPrimaryBrush}"/>
-                                        <TextBlock Text="Скрывает изображение альбома, делая оверлей меньше и компактнее." FontSize="11" Foreground="{DynamicResource SettingsTextSecondaryBrush}" Margin="0,2,0,0" TextWrapping="Wrap"/>
+                                        <TextBlock x:Name="CompactModeTitleText" Text="Компактный виджет" FontSize="12.5" FontWeight="Medium" Foreground="{DynamicResource SettingsTextPrimaryBrush}"/>
+                                        <TextBlock x:Name="CompactModeDescText" Text="Скрывает изображение альбома, делая оверлей меньше и компактнее." FontSize="11" Foreground="{DynamicResource SettingsTextSecondaryBrush}" Margin="0,2,0,0" TextWrapping="Wrap"/>
+                                    </StackPanel>
+                                </CheckBox>
+
+                                <!-- Audio Spectrum Visualizer Checkbox -->
+                                <CheckBox x:Name="ShowAudioSpectrumCheckBox"
+                                          Style="{StaticResource DarkCheckBoxStyle}"
+                                          Checked="OnAudioSpectrumChanged"
+                                          Unchecked="OnAudioSpectrumChanged">
+                                    <StackPanel>
+                                        <TextBlock x:Name="SpectrumTitleText" Text="Анимированный аудио-спектр" FontSize="12.5" FontWeight="Medium" Foreground="{DynamicResource SettingsTextPrimaryBrush}"/>
+                                        <TextBlock x:Name="SpectrumDescText" Text="Отображает стильный анимированный эквалайзер в полном оверлее во время игры трека." FontSize="11" Foreground="{DynamicResource SettingsTextSecondaryBrush}" Margin="0,2,0,0" TextWrapping="Wrap"/>
                                     </StackPanel>
                                 </CheckBox>
 
@@ -753,27 +787,65 @@
                                           Checked="OnShowVolumeChanged"
                                           Unchecked="OnShowVolumeChanged">
                                     <StackPanel>
-                                        <TextBlock Text="Показывать регулировку громкости" FontSize="12.5" FontWeight="Medium" Foreground="{DynamicResource SettingsTextPrimaryBrush}"/>
-                                        <TextBlock Text="Отображает иконку и полоску управления громкостью внизу виджета." FontSize="11" Foreground="{DynamicResource SettingsTextSecondaryBrush}" Margin="0,2,0,0" TextWrapping="Wrap"/>
+                                        <TextBlock x:Name="ShowVolumeTitleText" Text="Показывать регулировку громкости" FontSize="12.5" FontWeight="Medium" Foreground="{DynamicResource SettingsTextPrimaryBrush}"/>
+                                        <TextBlock x:Name="ShowVolumeDescText" Text="Отображает иконку и полоску управления громкостью внизу виджета." FontSize="11" Foreground="{DynamicResource SettingsTextSecondaryBrush}" Margin="0,2,0,0" TextWrapping="Wrap"/>
                                     </StackPanel>
                                 </CheckBox>
+
+                                <Rectangle Height="1" Fill="{DynamicResource SettingsSeparatorBrush}" Margin="0,12,0,10"/>
+
+                                <!-- Taskbar Mode Checkbox -->
+                                <CheckBox x:Name="TaskbarModeCheckBox"
+                                          Style="{StaticResource DarkCheckBoxStyle}"
+                                          Checked="OnTaskbarModeChanged"
+                                          Unchecked="OnTaskbarModeChanged">
+                                    <StackPanel>
+                                        <TextBlock x:Name="TaskbarModeTitleText" Text="Виджет в панели задач (Taskbar Dock)" FontSize="12.5" FontWeight="Medium" Foreground="{DynamicResource SettingsTextPrimaryBrush}"/>
+                                        <TextBlock x:Name="TaskbarModeDescText" Text="Переносит плеер в панель задач Windows вместо оверлея на рабочем столе." FontSize="11" Foreground="{DynamicResource SettingsTextSecondaryBrush}" Margin="0,2,0,0" TextWrapping="Wrap"/>
+                                    </StackPanel>
+                                </CheckBox>
+
+                                <!-- Sub-item: Taskbar Widget Placement (Left vs Right) -->
+                                <StackPanel x:Name="TaskbarOptionsPanel" Margin="24,0,0,6">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="165"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,10,0">
+                                            <TextBlock x:Name="TaskbarPosTitleText" Text="Расположение в панели" FontSize="12" FontWeight="Medium" Foreground="{DynamicResource SettingsTextPrimaryBrush}"/>
+                                            <TextBlock x:Name="TaskbarPosDescText" Text="Справа (у трея) или слева (мини-плеер)." FontSize="10.5" Foreground="{DynamicResource SettingsTextSecondaryBrush}" Margin="0,2,0,0" TextWrapping="Wrap"/>
+                                        </StackPanel>
+                                        <ComboBox x:Name="TaskbarPositionComboBox"
+                                                  Grid.Column="1"
+                                                  Height="28"
+                                                  SelectionChanged="OnTaskbarPositionChanged">
+                                            <ComboBoxItem Content="Справа" Tag="Right"/>
+                                            <ComboBoxItem Content="Слева" Tag="Left"/>
+                                        </ComboBox>
+                                    </Grid>
+                                </StackPanel>
                             </StackPanel>
                         </Border>
 
                         <!-- Discord Rich Presence Section -->
                         <Border Background="{DynamicResource SettingsCardBackgroundBrush}" CornerRadius="10" Padding="14,12" Margin="0,0,0,14" BorderBrush="{DynamicResource SettingsBorderBrush}" BorderThickness="1">
                             <StackPanel>
-                                <TextBlock Text="Интеграция с Discord" FontWeight="SemiBold" FontSize="13" Foreground="{DynamicResource SettingsTextPrimaryBrush}"/>
-                                <TextBlock Text="Отображение текущей песни, обложки и прогресса в профиле Discord." FontSize="11.5" Foreground="{DynamicResource SettingsTextSecondaryBrush}" Margin="0,2,0,8" TextWrapping="Wrap"/>
+                                <TextBlock x:Name="DiscordTitleText" Text="Интеграция с Discord" FontWeight="SemiBold" FontSize="13" Foreground="{DynamicResource SettingsTextPrimaryBrush}"/>
+                                <TextBlock x:Name="DiscordDescText" Text="Отображение текущей песни, обложки и прогресса в профиле Discord." FontSize="11.5" Foreground="{DynamicResource SettingsTextSecondaryBrush}" Margin="0,2,0,8" TextWrapping="Wrap"/>
 
                                 <CheckBox x:Name="EnableDiscordRpcCheckBox"
                                           Style="{StaticResource DarkCheckBoxStyle}"
                                           Content="Включить статус в Discord"/>
 
-                                <CheckBox x:Name="IgnoreBrowserVideosCheckBox"
+                                <CheckBox x:Name="IgnoreExternalMediaCheckBox"
                                           Style="{StaticResource DarkCheckBoxStyle}"
-                                          Content="Игнорировать видео в браузере (YouTube, Twitch)"
-                                          Margin="0,8,0,0"/>
+                                          Margin="0,8,0,0">
+                                    <StackPanel>
+                                        <TextBlock x:Name="IgnoreExternalMediaTitleText" Text="Игнорировать сторонние медиа (YouTube, Twitch, Telegram)" FontSize="12" FontWeight="Medium" Foreground="{DynamicResource SettingsTextPrimaryBrush}"/>
+                                        <TextBlock x:Name="IgnoreExternalMediaDescText" Text="Не транслировать в статус Discord видеоролики из браузера и голосовые сообщения Telegram." FontSize="10.5" Foreground="{DynamicResource SettingsTextSecondaryBrush}" Margin="0,2,0,0" TextWrapping="Wrap"/>
+                                    </StackPanel>
+                                </CheckBox>
                             </StackPanel>
                         </Border>
 
@@ -990,7 +1062,8 @@
                         BorderBrush="{DynamicResource SettingsBorderBrush}"
                         BorderThickness="0,1,0,0">
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,18,0">
-                        <Button Style="{StaticResource ActionButtonStyle}"
+                        <Button x:Name="CloseFooterButton"
+                                Style="{StaticResource ActionButtonStyle}"
                                 Width="85"
                                 Background="{DynamicResource SettingsButtonSecondaryBackgroundBrush}"
                                 Foreground="{DynamicResource SettingsButtonSecondaryTextBrush}"
@@ -998,7 +1071,8 @@
                                 Margin="0,0,10,0"
                                 Click="OnCloseClick"/>
 
-                        <Button Style="{StaticResource ActionButtonStyle}"
+                        <Button x:Name="SaveFooterButton"
+                                Style="{StaticResource ActionButtonStyle}"
                                 Width="150"
                                 Background="{DynamicResource AccentBrush}"
                                 Foreground="{DynamicResource AccentTextBrush}"

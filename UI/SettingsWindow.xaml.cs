@@ -44,6 +44,8 @@ namespace LucidTune.UI
 
             PopulateAllBoxes();
             LoadCurrentSettings();
+            LocalizationService.SetLanguage(_configManager.CurrentConfig.Language);
+            ApplyLocalization();
             _isInitializing = false;
 
             _mainWindow.OverlayVisibilityChanged += OnOverlayVisibilityChanged;
@@ -58,6 +60,9 @@ namespace LucidTune.UI
                 ThemeManager.ApplyTheme(_configManager.CurrentConfig.Theme, _configManager.CurrentConfig.AccentColor);
                 _mainWindow.ApplyAdaptiveColor(_configManager.CurrentConfig.AdaptiveColorEnabled);
                 _mainWindow.ApplyBackgroundShimmer(_configManager.CurrentConfig.AdaptiveBackgroundShimmer);
+                _mainWindow.ApplyTaskbarMode(_configManager.CurrentConfig.TaskbarModeEnabled);
+                _mainWindow.ApplyTaskbarPosition(_configManager.CurrentConfig.TaskbarPosition);
+                _mainWindow.ApplyAudioSpectrum(_configManager.CurrentConfig.ShowAudioSpectrum);
             };
             UpdateOverlayStatus(_mainWindow.IsOverlayVisible);
 
@@ -109,8 +114,10 @@ namespace LucidTune.UI
         {
             var cfg = _configManager.CurrentConfig;
 
+            SelectLanguageItem(cfg.Language);
             SelectThemeItem(cfg.Theme);
             SelectAccentItem(cfg.AccentColor);
+            SelectTaskbarPositionItem(cfg.TaskbarPosition);
 
             SelectBoxItem(ToggleModifierBox, cfg.HotkeyModifiers, "Alt");
             SelectBoxItem(ToggleKeyBox, cfg.HotkeyKey, "M");
@@ -139,7 +146,10 @@ namespace LucidTune.UI
             OpacityValueText.Text = $"{opacityPercent}%";
 
             CompactModeCheckBox.IsChecked = cfg.CompactMode;
+            ShowAudioSpectrumCheckBox.IsChecked = cfg.ShowAudioSpectrum;
             ShowVolumeCheckBox.IsChecked = cfg.ShowVolumeControl;
+            TaskbarModeCheckBox.IsChecked = cfg.TaskbarModeEnabled;
+            TaskbarOptionsPanel.Visibility = cfg.TaskbarModeEnabled ? Visibility.Visible : Visibility.Collapsed;
 
             AdaptiveColorCheckBox.IsChecked = cfg.AdaptiveColorEnabled;
             AdaptiveShimmerCheckBox.IsChecked = cfg.AdaptiveBackgroundShimmer;
@@ -150,9 +160,41 @@ namespace LucidTune.UI
             ExcludeFromCaptureCheckBox.IsChecked = cfg.ExcludeFromCapture;
 
             EnableDiscordRpcCheckBox.IsChecked = cfg.DiscordRpcEnabled;
-            IgnoreBrowserVideosCheckBox.IsChecked = cfg.DiscordIgnoreBrowserVideos;
+            IgnoreExternalMediaCheckBox.IsChecked = cfg.DiscordIgnoreBrowserVideos || cfg.DiscordIgnoreTelegramVoice;
 
             UpdateAllPreviews();
+        }
+
+        private void SelectLanguageItem(string lang)
+        {
+            foreach (ComboBoxItem item in LanguageComboBox.Items)
+            {
+                if (string.Equals(item.Tag?.ToString(), lang, StringComparison.OrdinalIgnoreCase))
+                {
+                    LanguageComboBox.SelectedItem = item;
+                    return;
+                }
+            }
+            if (LanguageComboBox.Items.Count > 0)
+            {
+                LanguageComboBox.SelectedIndex = 0;
+            }
+        }
+
+        private void SelectTaskbarPositionItem(string pos)
+        {
+            foreach (ComboBoxItem item in TaskbarPositionComboBox.Items)
+            {
+                if (string.Equals(item.Tag?.ToString(), pos, StringComparison.OrdinalIgnoreCase))
+                {
+                    TaskbarPositionComboBox.SelectedItem = item;
+                    return;
+                }
+            }
+            if (TaskbarPositionComboBox.Items.Count > 0)
+            {
+                TaskbarPositionComboBox.SelectedIndex = 0;
+            }
         }
 
         private void SelectThemeItem(string theme)
@@ -460,6 +502,29 @@ namespace LucidTune.UI
             }
         }
 
+        private void OnLanguageSelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (_isInitializing || LanguageComboBox.SelectedItem is not ComboBoxItem item) return;
+            string lang = item.Tag?.ToString() ?? "ru";
+            LocalizationService.SetLanguage(lang);
+            ApplyLocalization();
+            _mainWindow.ApplyLanguage(lang);
+        }
+
+        private void OnAudioSpectrumChanged(object sender, RoutedEventArgs e)
+        {
+            if (_isInitializing) return;
+            bool show = ShowAudioSpectrumCheckBox.IsChecked == true;
+            _mainWindow.ApplyAudioSpectrum(show);
+        }
+
+        private void OnTaskbarPositionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (_isInitializing || TaskbarPositionComboBox.SelectedItem is not ComboBoxItem item) return;
+            string pos = item.Tag?.ToString() ?? "Right";
+            _mainWindow.ApplyTaskbarPosition(pos);
+        }
+
         private void OnCompactModeChanged(object sender, RoutedEventArgs e)
         {
             if (_isInitializing) return;
@@ -472,6 +537,14 @@ namespace LucidTune.UI
             if (_isInitializing) return;
             bool showVolume = ShowVolumeCheckBox.IsChecked == true;
             _mainWindow.ApplyVolumeControl(showVolume);
+        }
+
+        private void OnTaskbarModeChanged(object sender, RoutedEventArgs e)
+        {
+            if (_isInitializing) return;
+            bool isTaskbar = TaskbarModeCheckBox.IsChecked == true;
+            TaskbarOptionsPanel.Visibility = isTaskbar ? Visibility.Visible : Visibility.Collapsed;
+            _mainWindow.ApplyTaskbarMode(isTaskbar);
         }
 
         private void OnTitleBarMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -496,16 +569,81 @@ namespace LucidTune.UI
 
             if (isVisible)
             {
-                ToggleOverlayButton.Content = "Скрыть";
-                OverlayStatusTitleText.Text = "Оверлей рабочего стола активен";
-                OverlayStatusDescText.Text = "Готов к перехвату медиа (Spotify, браузеры, Telegram)";
+                ToggleOverlayButton.Content = LocalizationService.T("Hide");
+                OverlayStatusTitleText.Text = LocalizationService.T("OverlayActive");
+                OverlayStatusDescText.Text = LocalizationService.T("OverlayActiveDesc");
             }
             else
             {
-                ToggleOverlayButton.Content = "Показать";
-                OverlayStatusTitleText.Text = "Оверлей скрыт";
-                OverlayStatusDescText.Text = "Нажмите «Показать» или используйте горячую клавишу для активации.";
+                ToggleOverlayButton.Content = LocalizationService.T("Show");
+                OverlayStatusTitleText.Text = LocalizationService.T("OverlayHidden");
+                OverlayStatusDescText.Text = LocalizationService.T("OverlayHiddenDesc");
             }
+        }
+
+        private void ApplyLocalization()
+        {
+            Title = LocalizationService.T("SettingsTitle");
+
+            UpdateOverlayStatus(_mainWindow.IsOverlayVisible);
+            CheckUpdatesButton.Content = LocalizationService.T("Updates");
+
+            LanguageLabelTitle.Text = LocalizationService.T("LanguageTitle");
+            LanguageLabelDesc.Text = LocalizationService.T("LanguageDesc");
+
+            ThemeLabelTitle.Text = LocalizationService.T("ThemeTitle");
+            ThemeLabelDesc.Text = LocalizationService.T("ThemeDesc");
+            if (ThemeComboBox.Items.Count >= 2)
+            {
+                ((ComboBoxItem)ThemeComboBox.Items[0]).Content = LocalizationService.T("ThemeDark");
+                ((ComboBoxItem)ThemeComboBox.Items[1]).Content = LocalizationService.T("ThemeLight");
+            }
+
+            AccentLabelTitle.Text = LocalizationService.T("AccentTitle");
+            AccentLabelDesc.Text = LocalizationService.T("AccentDesc");
+
+            AdaptiveColorTitleText.Text = LocalizationService.T("AdaptiveColorTitle");
+            AdaptiveColorDescText.Text = LocalizationService.T("AdaptiveColorDesc");
+
+            AdaptiveShimmerTitleText.Text = LocalizationService.T("AdaptiveShimmerTitle");
+            AdaptiveShimmerDescText.Text = LocalizationService.T("AdaptiveShimmerDesc");
+
+            OpacityLabelTitle.Text = LocalizationService.T("OpacityTitle");
+            OpacityLabelDesc.Text = LocalizationService.T("OpacityDesc");
+
+            CompactModeTitleText.Text = LocalizationService.T("CompactModeTitle");
+            CompactModeDescText.Text = LocalizationService.T("CompactModeDesc");
+
+            SpectrumTitleText.Text = LocalizationService.T("AudioSpectrumTitle");
+            SpectrumDescText.Text = LocalizationService.T("AudioSpectrumDesc");
+
+            ShowVolumeTitleText.Text = LocalizationService.T("ShowVolumeTitle");
+            ShowVolumeDescText.Text = LocalizationService.T("ShowVolumeDesc");
+
+            TaskbarModeTitleText.Text = LocalizationService.T("TaskbarModeTitle");
+            TaskbarModeDescText.Text = LocalizationService.T("TaskbarModeDesc");
+
+            TaskbarPosTitleText.Text = LocalizationService.T("TaskbarPositionTitle");
+            TaskbarPosDescText.Text = LocalizationService.T("TaskbarPositionDesc");
+            if (TaskbarPositionComboBox.Items.Count >= 2)
+            {
+                ((ComboBoxItem)TaskbarPositionComboBox.Items[0]).Content = LocalizationService.T("TaskbarPosRight");
+                ((ComboBoxItem)TaskbarPositionComboBox.Items[1]).Content = LocalizationService.T("TaskbarPosLeft");
+            }
+
+            DiscordTitleText.Text = LocalizationService.T("DiscordSectionTitle");
+            DiscordDescText.Text = LocalizationService.T("DiscordEnableDesc");
+            EnableDiscordRpcCheckBox.Content = LocalizationService.T("DiscordEnableTitle");
+            IgnoreExternalMediaTitleText.Text = LocalizationService.T("DiscordIgnoreExternalMediaTitle");
+            IgnoreExternalMediaDescText.Text = LocalizationService.T("DiscordIgnoreExternalMediaDesc");
+
+            EnableMediaHotkeysCheckBox.Content = LocalizationService.T("HotkeyMediaTitle");
+            AutoStartCheckBox.Content = LocalizationService.T("AutoStartTitle");
+            AutoHideInGamesCheckBox.Content = LocalizationService.T("AutoHideTitle");
+            ShowSettingsOnStartupCheckBox.Content = LocalizationService.T("ShowSettingsOnStartupTitle");
+
+            CloseFooterButton.Content = LocalizationService.T("Close");
+            SaveFooterButton.Content = LocalizationService.T("Save");
         }
 
         private void OnToggleOverlayClick(object sender, RoutedEventArgs e)
@@ -631,8 +769,20 @@ namespace LucidTune.UI
             cfg.CompactMode = compact;
             _mainWindow.ApplyCompactMode(compact);
 
+            bool showSpectrum = ShowAudioSpectrumCheckBox.IsChecked == true;
+            cfg.ShowAudioSpectrum = showSpectrum;
+            _mainWindow.ApplyAudioSpectrum(showSpectrum);
+
             cfg.ShowVolumeControl = ShowVolumeCheckBox.IsChecked == true;
             _mainWindow.ApplyVolumeControl(cfg.ShowVolumeControl);
+
+            bool taskbarMode = TaskbarModeCheckBox.IsChecked == true;
+            cfg.TaskbarModeEnabled = taskbarMode;
+            _mainWindow.ApplyTaskbarMode(taskbarMode);
+
+            string taskbarPos = (TaskbarPositionComboBox.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "Right";
+            cfg.TaskbarPosition = taskbarPos;
+            _mainWindow.ApplyTaskbarPosition(taskbarPos);
 
             cfg.AdaptiveColorEnabled = AdaptiveColorCheckBox.IsChecked == true;
             cfg.AdaptiveBackgroundShimmer = AdaptiveShimmerCheckBox.IsChecked == true;
@@ -648,8 +798,13 @@ namespace LucidTune.UI
             _mainWindow.ApplyAdaptiveColor(cfg.AdaptiveColorEnabled);
             _mainWindow.ApplyBackgroundShimmer(cfg.AdaptiveBackgroundShimmer);
 
+            cfg.Language = (LanguageComboBox.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "ru";
+            _mainWindow.ApplyLanguage(cfg.Language);
+
             cfg.DiscordRpcEnabled = EnableDiscordRpcCheckBox.IsChecked == true;
-            cfg.DiscordIgnoreBrowserVideos = IgnoreBrowserVideosCheckBox.IsChecked ?? true;
+            bool ignoreExternalMedia = IgnoreExternalMediaCheckBox.IsChecked ?? true;
+            cfg.DiscordIgnoreBrowserVideos = ignoreExternalMedia;
+            cfg.DiscordIgnoreTelegramVoice = ignoreExternalMedia;
 
             _configManager.Save(cfg);
 
@@ -670,13 +825,17 @@ namespace LucidTune.UI
 
         private void OnCloseClick(object sender, RoutedEventArgs e)
         {
+            _mainWindow.ApplyLanguage(_configManager.CurrentConfig.Language);
             _mainWindow.ApplyWidgetOpacity(_configManager.CurrentConfig.WidgetOpacity);
             _mainWindow.ApplyCompactMode(_configManager.CurrentConfig.CompactMode);
+            _mainWindow.ApplyAudioSpectrum(_configManager.CurrentConfig.ShowAudioSpectrum);
             _mainWindow.ApplyVolumeControl(_configManager.CurrentConfig.ShowVolumeControl);
             _mainWindow.ApplyCaptureAffinity(_configManager.CurrentConfig.ExcludeFromCapture);
             ThemeManager.ApplyTheme(_configManager.CurrentConfig.Theme, _configManager.CurrentConfig.AccentColor);
             _mainWindow.ApplyAdaptiveColor(_configManager.CurrentConfig.AdaptiveColorEnabled);
             _mainWindow.ApplyBackgroundShimmer(_configManager.CurrentConfig.AdaptiveBackgroundShimmer);
+            _mainWindow.ApplyTaskbarMode(_configManager.CurrentConfig.TaskbarModeEnabled);
+            _mainWindow.ApplyTaskbarPosition(_configManager.CurrentConfig.TaskbarPosition);
             Close();
         }
     }

@@ -109,6 +109,15 @@ namespace LucidTune.Services
         [PreserveSig] int GetMute([MarshalAs(UnmanagedType.Bool)] out bool pbMute);
     }
 
+    [Guid("C02216F6-8C67-4B5B-9D00-D008E73E0064"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    internal interface IAudioMeterInformation
+    {
+        [PreserveSig] int GetPeakValue(out float pfPeak);
+        [PreserveSig] int GetMeteringChannelCount(out uint pnChannelCount);
+        [PreserveSig] int GetChannelsPeakValues(uint u32ChannelCount, [In, Out] float[] afPeakValues);
+        [PreserveSig] int QueryHardwareSupport(out uint pdwHardwareSupportMask);
+    }
+
     [ComImport, Guid("BCDE0395-E52F-467C-8E3D-C4579291692E")]
     internal class MMDeviceEnumeratorComObject { }
 
@@ -119,6 +128,7 @@ namespace LucidTune.Services
         private const int CLSCTX_ALL = 23;
 
         private string? _targetAppId;
+        private IAudioMeterInformation? _cachedMeterInfo;
 
         public string? TargetAppDisplayName { get; private set; }
         public bool IsTargetingApplication => !string.IsNullOrEmpty(TargetAppDisplayName);
@@ -126,6 +136,62 @@ namespace LucidTune.Services
         public void SetTargetApp(string? appId)
         {
             _targetAppId = appId;
+        }
+
+        public float GetAudioPeakSample()
+        {
+            try
+            {
+                if (_cachedMeterInfo == null)
+                {
+                    var enumerator = (IMMDeviceEnumerator)new MMDeviceEnumeratorComObject();
+                    int hr = enumerator.GetDefaultAudioEndpoint(eRender, eMultimedia, out var device);
+                    if (hr != 0 || device == null)
+                    {
+                        hr = enumerator.GetDefaultAudioEndpoint(eRender, 0 /* eConsole */, out device);
+                    }
+
+                    if (hr == 0 && device != null)
+                    {
+                        Guid iid = typeof(IAudioMeterInformation).GUID;
+                        hr = device.Activate(ref iid, CLSCTX_ALL, IntPtr.Zero, out var meterObj);
+                        if (hr == 0 && meterObj is IAudioMeterInformation meter)
+                        {
+                            _cachedMeterInfo = meter;
+                        }
+                    }
+                }
+
+                if (_cachedMeterInfo != null)
+                {
+                    int hr = _cachedMeterInfo.GetPeakValue(out float peak);
+                    if (hr == 0) return Math.Clamp(peak, 0f, 1f);
+                    _cachedMeterInfo = null;
+                }
+            }
+            catch
+            {
+                _cachedMeterInfo = null;
+            }
+            return 0f;
+        }
+
+        public float GetNormalizedPeakSample()
+        {
+            float rawPeak = GetAudioPeakSample();
+            if (rawPeak <= 0.0001f) return 0f;
+
+            try
+            {
+                float masterVol = GetMasterVolume();
+                if (masterVol > 0.03f)
+                {
+                    return Math.Clamp(rawPeak / masterVol, 0f, 1f);
+                }
+            }
+            catch { }
+
+            return Math.Clamp(rawPeak * 2.5f, 0f, 1f);
         }
 
         private IAudioEndpointVolume? GetMasterVolumeEndpoint()

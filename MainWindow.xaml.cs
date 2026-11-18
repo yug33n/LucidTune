@@ -6,6 +6,7 @@ using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
+using System.Windows.Threading;
 using LucidTune.Config;
 using LucidTune.Models;
 using LucidTune.Services;
@@ -27,6 +28,7 @@ namespace LucidTune
         private bool _isUpdatingVolumeFromSystem;
 
         private TrayIconManager? _trayManager;
+        private TaskbarWidgetWindow? _taskbarWindow;
         private double _currentProgress;
         private bool _isWindowVisible = true;
         private bool _hiddenByFullscreen;
@@ -36,6 +38,10 @@ namespace LucidTune
         private Storyboard? _shimmerStoryboard;
         private string? _currentTrackKey;
         private ExtractedPalette? _currentPalette;
+
+        private DispatcherTimer? _spectrumTimer;
+        private DateTime _spectrumStartTime;
+        private readonly double[] _specBarCurrentHeights = [2.0, 2.0, 2.0, 2.0, 2.0];
 
         public bool IsOverlayVisible => _isWindowVisible;
         public event Action<bool>? OverlayVisibilityChanged;
@@ -64,12 +70,20 @@ namespace LucidTune
             Loaded += OnMainWindowLoaded;
             Closing += OnMainWindowClosing;
             ProgressBarTrack.SizeChanged += (s, e) => UpdateProgressBarWidth();
+
+            _spectrumStartTime = DateTime.UtcNow;
+            _spectrumTimer = new DispatcherTimer(DispatcherPriority.Render)
+            {
+                Interval = TimeSpan.FromMilliseconds(35)
+            };
+            _spectrumTimer.Tick += OnSpectrumTimerTick;
         }
 
         private async void OnMainWindowLoaded(object sender, RoutedEventArgs e)
         {
             try
             {
+                LocalizationService.SetLanguage(_configManager.CurrentConfig.Language);
                 ApplySavedPosition();
                 ApplyWidgetOpacity(_configManager.CurrentConfig.WidgetOpacity);
                 ApplyCompactMode(_configManager.CurrentConfig.CompactMode);
@@ -85,8 +99,15 @@ namespace LucidTune
 
                 _fullscreenService.Start(hwnd);
 
-                _trayManager = new TrayIconManager(_configManager, ToggleVisibility, OpenSettingsWindow, () => _isWindowVisible);
+                _taskbarWindow = new TaskbarWidgetWindow(_mediaService, _configManager, _volumeService, this);
+
+                _trayManager = new TrayIconManager(_configManager, ToggleVisibility, OpenSettingsWindow, () => _isWindowVisible, ApplyTaskbarMode);
                 _trayManager.Initialize(hwnd);
+
+                if (_configManager.CurrentConfig.TaskbarModeEnabled)
+                {
+                    ApplyTaskbarMode(true);
+                }
 
                 if (_configManager.CurrentConfig.AutoStart)
                 {
@@ -102,7 +123,13 @@ namespace LucidTune
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[OnMainWindowLoaded Exception] {ex}");
+                try
+                {
+                    var dir = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "LucidTune");
+                    System.IO.Directory.CreateDirectory(dir);
+                    System.IO.File.AppendAllText(System.IO.Path.Combine(dir, "crash.log"), $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] [OnMainWindowLoaded] {ex}\n");
+                }
+                catch { }
             }
         }
 
@@ -111,6 +138,44 @@ namespace LucidTune
             var targetPos = _configManager.GetValidatedPosition(Width, Height);
             Left = targetPos.X;
             Top = targetPos.Y;
+        }
+
+        public void ApplyTaskbarMode(bool enabled)
+        {
+            _configManager.CurrentConfig.TaskbarModeEnabled = enabled;
+
+            if (enabled)
+            {
+                Hide();
+                _isWindowVisible = false;
+                OverlayVisibilityChanged?.Invoke(false);
+
+                if (_taskbarWindow == null)
+                {
+                    _taskbarWindow = new TaskbarWidgetWindow(_mediaService, _configManager, _volumeService, this);
+                }
+
+                _taskbarWindow.Show();
+                if (_lastTrackInfo != null)
+                {
+                    _taskbarWindow.UpdateTrackInfo(_lastTrackInfo);
+                }
+                if (_currentPalette != null)
+                {
+                    _taskbarWindow.UpdatePalette(_currentPalette);
+                }
+                _taskbarWindow.RepositionOnTaskbar();
+            }
+            else
+            {
+                _taskbarWindow?.Hide();
+                Show();
+                _isWindowVisible = true;
+                OverlayVisibilityChanged?.Invoke(true);
+                ApplySavedPosition();
+            }
+
+            _trayManager?.UpdateState();
         }
 
         public void ApplyWidgetOpacity(double opacity)
@@ -136,6 +201,120 @@ namespace LucidTune
                 IslandContainer.Width = 310;
                 Width = 360;
             }
+
+            UpdateSpectrumVisibility();
+        }
+
+        public void ApplyAudioSpectrum(bool enabled)
+        {
+            _configManager.CurrentConfig.ShowAudioSpectrum = enabled;
+            UpdateSpectrumVisibility();
+        }
+
+        public void ApplyTaskbarPosition(string position)
+        {
+            _configManager.CurrentConfig.TaskbarPosition = position;
+            _taskbarWindow?.RepositionOnTaskbar();
+        }
+
+        public void ApplyLanguage(string language)
+        {
+            _configManager.CurrentConfig.Language = language;
+            LocalizationService.SetLanguage(language);
+            _trayManager?.UpdateState();
+            _taskbarWindow?.UpdateLocalization();
+            UpdateSpectrumVisibility();
+        }
+
+        public void UpdateSpectrumVisibility()
+        {
+            bool canShow = _configManager.CurrentConfig.ShowAudioSpectrum &&
+                           !_configManager.CurrentConfig.CompactMode &&
+                           _lastTrackInfo?.HasActiveSession == true;
+
+            if (canShow)
+            {
+                AudioSpectrumPanel.Visibility = Visibility.Visible;
+                if (_lastTrackInfo?.IsPlaying == true)
+                {
+                    if (_spectrumTimer?.IsEnabled != true) _spectrumTimer?.Start();
+                }
+                else
+                {
+                    _spectrumTimer?.Stop();
+                    ResetSpectrumBars();
+                }
+            }
+            else
+            {
+                AudioSpectrumPanel.Visibility = Visibility.Collapsed;
+                _spectrumTimer?.Stop();
+                ResetSpectrumBars();
+            }
+        }
+
+        private void OnSpectrumTimerTick(object? sender, EventArgs e)
+        {
+            if (SpecBar1 == null) return;
+
+            bool isPlaying = _lastTrackInfo?.IsPlaying == true;
+            float normPeak = isPlaying ? _volumeService.GetNormalizedPeakSample() : 0f;
+
+            // If music is paused, silenced, or in a quiet break (peak near 0)
+            if (!isPlaying || normPeak < 0.002f)
+            {
+                for (int i = 0; i < 5; i++)
+                {
+                    _specBarCurrentHeights[i] = Math.Max(2.0, _specBarCurrentHeights[i] * 0.78);
+                }
+            }
+            else
+            {
+                double t = (DateTime.UtcNow - _spectrumStartTime).TotalSeconds;
+                // Non-linear perceptual loudness response (square root)
+                double intensity = Math.Sqrt(Math.Clamp(normPeak, 0.0, 1.0));
+
+                // Targets for 5 frequency bands (Bass, Low-Mid, Mid, High-Mid, Treble)
+                double[] targets = [
+                    2.0 + intensity * 12.0 * (0.80 + 0.20 * Math.Sin(t * 11.0 + 0.3)),
+                    2.0 + intensity * 12.0 * (0.95 + 0.18 * Math.Sin(t * 14.5 + 1.2)),
+                    2.0 + intensity * 12.0 * (1.00 + 0.22 * Math.Sin(t * 17.0 + 2.5)),
+                    2.0 + intensity * 12.0 * (0.90 + 0.19 * Math.Sin(t * 13.5 + 3.8)),
+                    2.0 + intensity * 12.0 * (0.75 + 0.16 * Math.Sin(t * 15.5 + 5.0))
+                ];
+
+                for (int i = 0; i < 5; i++)
+                {
+                    double target = Math.Clamp(targets[i], 2.0, 14.0);
+                    if (target > _specBarCurrentHeights[i])
+                    {
+                        // Fast attack for beats and transients
+                        _specBarCurrentHeights[i] = _specBarCurrentHeights[i] * 0.20 + target * 0.80;
+                    }
+                    else
+                    {
+                        // Smooth decay
+                        _specBarCurrentHeights[i] = Math.Max(2.0, _specBarCurrentHeights[i] * 0.82);
+                    }
+                }
+            }
+
+            SpecBar1.Height = _specBarCurrentHeights[0];
+            SpecBar2.Height = _specBarCurrentHeights[1];
+            SpecBar3.Height = _specBarCurrentHeights[2];
+            SpecBar4.Height = _specBarCurrentHeights[3];
+            SpecBar5.Height = _specBarCurrentHeights[4];
+        }
+
+        private void ResetSpectrumBars()
+        {
+            if (SpecBar1 == null) return;
+            for (int i = 0; i < 5; i++) _specBarCurrentHeights[i] = 2.0;
+            SpecBar1.Height = 2;
+            SpecBar2.Height = 2;
+            SpecBar3.Height = 2;
+            SpecBar4.Height = 2;
+            SpecBar5.Height = 2;
         }
 
         public void ApplyCaptureAffinity(bool exclude)
@@ -183,6 +362,7 @@ namespace LucidTune
                     {
                         ResetShimmerPalette();
                     }
+                    _taskbarWindow?.UpdatePalette(_currentPalette);
                     return;
                 }
             }
@@ -190,6 +370,7 @@ namespace LucidTune
             _currentPalette = null;
             ThemeManager.RestoreStaticAccent();
             ResetShimmerPalette();
+            _taskbarWindow?.UpdatePalette(null);
         }
 
         public void ApplyBackgroundShimmer(bool enabled)
@@ -298,6 +479,26 @@ namespace LucidTune
 
         public void ToggleVisibility()
         {
+            if (_configManager.CurrentConfig.TaskbarModeEnabled)
+            {
+                if (_taskbarWindow != null)
+                {
+                    if (_taskbarWindow.IsVisible)
+                    {
+                        _taskbarWindow.Hide();
+                        _isWindowVisible = false;
+                    }
+                    else
+                    {
+                        _taskbarWindow.Show();
+                        _taskbarWindow.RepositionOnTaskbar();
+                        _isWindowVisible = true;
+                    }
+                    OverlayVisibilityChanged?.Invoke(_isWindowVisible);
+                }
+                return;
+            }
+
             _hiddenByFullscreen = false;
             if (_isWindowVisible)
             {
@@ -401,13 +602,15 @@ namespace LucidTune
 
         private void OnFullscreenStateChanged(bool isFullscreen)
         {
+            _taskbarWindow?.OnFullscreenChanged(isFullscreen);
+
             if (!_configManager.CurrentConfig.AutoHideInFullscreen) return;
 
             Dispatcher.Invoke(() =>
             {
                 if (isFullscreen)
                 {
-                    if (_isWindowVisible)
+                    if (_isWindowVisible && !_configManager.CurrentConfig.TaskbarModeEnabled)
                     {
                         _hiddenByFullscreen = true;
                         HideWithAnimation();
@@ -415,7 +618,7 @@ namespace LucidTune
                 }
                 else
                 {
-                    if (_hiddenByFullscreen)
+                    if (_hiddenByFullscreen && !_configManager.CurrentConfig.TaskbarModeEnabled)
                     {
                         _hiddenByFullscreen = false;
                         ShowWithAnimation();
@@ -443,7 +646,13 @@ namespace LucidTune
                 }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine($"Failed to open settings window: {ex.Message}");
+                    try
+                    {
+                        var dir = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "LucidTune");
+                        System.IO.Directory.CreateDirectory(dir);
+                        System.IO.File.AppendAllText(System.IO.Path.Combine(dir, "crash.log"), $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] [OpenSettingsWindow] {ex}\n");
+                    }
+                    catch { }
                 }
             });
         }
@@ -616,6 +825,10 @@ namespace LucidTune
 
                 _volumeService.SetTargetApp(track.SourceAppUserModelId);
                 SyncVolumeFromSystem();
+                UpdateSpectrumVisibility();
+
+                _taskbarWindow?.UpdateTrackInfo(track);
+                _taskbarWindow?.UpdatePalette(_currentPalette);
             });
         }
 
@@ -625,6 +838,7 @@ namespace LucidTune
             {
                 _currentProgress = progress;
                 UpdateProgressBarWidth();
+                _taskbarWindow?.UpdateProgress(current, duration, progress);
             });
         }
 
@@ -789,6 +1003,9 @@ namespace LucidTune
         private void OnMainWindowClosing(object? sender, System.ComponentModel.CancelEventArgs e)
         {
             SaveCurrentPosition();
+            _spectrumTimer?.Stop();
+            _taskbarWindow?.Close();
+            _taskbarWindow = null;
             _discordRpcService.Dispose();
             _hotkeyService.Dispose();
             _fullscreenService.Dispose();

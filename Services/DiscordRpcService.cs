@@ -133,6 +133,13 @@ namespace LucidTune.Services
                 return;
             }
 
+            // If configured to ignore Telegram voice messages / audio notes, clear Discord presence
+            if (_configManager.CurrentConfig.DiscordIgnoreTelegramVoice && IsTelegramVoiceMessage(track))
+            {
+                try { _client?.ClearPresence(); } catch { }
+                return;
+            }
+
             var source = DetectMusicSource(track);
             var targetAppId = GetAppIdForSource(source);
 
@@ -482,6 +489,44 @@ namespace LucidTune.Services
 
             // 4. If this track was already identified as a video during this playback session (e.g. user switched to another tab):
             if (!string.IsNullOrEmpty(_lastIdentifiedVideoKey) && _lastIdentifiedVideoKey == currentTrackKey)
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        public static bool IsTelegramVoiceMessage(MediaTrackInfo track)
+        {
+            var appId = track.SourceAppUserModelId?.ToLowerInvariant() ?? "";
+            if (!appId.Contains("telegram"))
+            {
+                return false;
+            }
+
+            var title = track.Title?.ToLowerInvariant() ?? "";
+            var artist = track.Artist?.ToLowerInvariant() ?? "";
+
+            // Explicit voice/video note terms (Russian and English):
+            if (title.Contains("голосовое сообщение") || title.Contains("voice message") ||
+                title.Contains("видеосообщение") || title.Contains("video message") ||
+                title.Contains("аудиосообщение") || title.Contains("audio message") ||
+                artist.Contains("голосовое сообщение") || artist.Contains("voice message"))
+            {
+                return true;
+            }
+
+            // Audio file formats and prefixes typical for Telegram voice notes:
+            if (title.EndsWith(".ogg") || title.EndsWith(".oga") || title.EndsWith(".opus") ||
+                title.StartsWith("audio_") || title.StartsWith("voice_") ||
+                title.StartsWith("audio ") || title.StartsWith("voice "))
+            {
+                return true;
+            }
+
+            // If Telegram reports no thumbnail and title is generic chat audio:
+            if ((artist == "telegram" || string.IsNullOrWhiteSpace(artist)) &&
+                track.Thumbnail == null && !title.Contains(" - ") && !title.EndsWith(".mp3") && !title.EndsWith(".flac"))
             {
                 return true;
             }
