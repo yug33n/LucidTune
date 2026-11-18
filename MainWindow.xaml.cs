@@ -258,10 +258,10 @@ namespace LucidTune
             if (SpecBar1 == null) return;
 
             bool isPlaying = _lastTrackInfo?.IsPlaying == true;
-            float peak = isPlaying ? _volumeService.GetAudioPeakSample() : 0f;
+            float normPeak = isPlaying ? _volumeService.GetNormalizedPeakSample() : 0f;
 
             // If music is paused, silenced, or in a quiet break (peak near 0)
-            if (!isPlaying || peak < 0.008f)
+            if (!isPlaying || normPeak < 0.002f)
             {
                 for (int i = 0; i < 5; i++)
                 {
@@ -271,8 +271,8 @@ namespace LucidTune
             else
             {
                 double t = (DateTime.UtcNow - _spectrumStartTime).TotalSeconds;
-                // Non-linear amplitude response: expands dynamic range for lively movement
-                double intensity = Math.Pow(Math.Clamp(peak, 0.0, 1.0), 0.65);
+                // Non-linear perceptual loudness response (square root)
+                double intensity = Math.Sqrt(Math.Clamp(normPeak, 0.0, 1.0));
 
                 // Targets for 5 frequency bands (Bass, Low-Mid, Mid, High-Mid, Treble)
                 double[] targets = [
@@ -289,7 +289,7 @@ namespace LucidTune
                     if (target > _specBarCurrentHeights[i])
                     {
                         // Fast attack for beats and transients
-                        _specBarCurrentHeights[i] = _specBarCurrentHeights[i] * 0.25 + target * 0.75;
+                        _specBarCurrentHeights[i] = _specBarCurrentHeights[i] * 0.20 + target * 0.80;
                     }
                     else
                     {
