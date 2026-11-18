@@ -5,7 +5,7 @@
 [![Platform: Windows](https://img.shields.io/badge/Platform-Windows%2010%20%7C%2011-0078D6.svg?logo=windows)](https://microsoft.com/windows)
 [![.NET 9.0](https://img.shields.io/badge/.NET-9.0%20WPF-512BD4.svg?logo=dotnet)](https://dotnet.microsoft.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Release: v2.0.0](https://img.shields.io/badge/Release-v2.0.0-4E75FF.svg)](https://github.com/yug33n/LucidTune/releases)
+[![Release: v2.1.0](https://img.shields.io/badge/Release-v2.1.0-4E75FF.svg)](https://github.com/yug33n/LucidTune/releases)
 
 **LucidTune** — это лёгкий, стильный и высокопроизводительный плавающий медиа-виджет (Dynamic Island) для Windows 10 и 11. Он отображает текущий трек, обложку альбома, автора и шкалу прогресса прямо поверх окон и игр, а также предоставляет удобное управление воспроизведением и гибкую настройку горячих клавиш.
 
