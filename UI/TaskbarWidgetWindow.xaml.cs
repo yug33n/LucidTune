@@ -45,6 +45,23 @@ namespace LucidTune.UI
         [DllImport("user32.dll")]
         private static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int X, int Y, int cx, int cy, uint uFlags);
 
+        [StructLayout(LayoutKind.Sequential)]
+        private struct MONITORINFO
+        {
+            public int cbSize;
+            public RECT rcMonitor;
+            public RECT rcWork;
+            public uint dwFlags;
+        }
+
+        [DllImport("user32.dll")]
+        private static extern IntPtr MonitorFromWindow(IntPtr hwnd, uint dwFlags);
+
+        [DllImport("user32.dll")]
+        private static extern bool GetMonitorInfo(IntPtr hMonitor, ref MONITORINFO lpmi);
+
+        private const uint MONITOR_DEFAULTTONEAREST = 2;
+
         private static readonly IntPtr HWND_TOPMOST = new IntPtr(-1);
         private const int GWL_EXSTYLE = -20;
         private const int WS_EX_NOACTIVATE = 0x08000000;
@@ -69,6 +86,7 @@ namespace LucidTune.UI
         private TimeSpan _lastDuration = TimeSpan.Zero;
         private bool _isDragging;
         private bool _isFullscreenHidden;
+        private bool _isFullscreenActive;
         private MediaTrackInfo? _lastTrack;
 
         private double _detectedAppsRightEdge = 0;
@@ -319,6 +337,61 @@ namespace LucidTune.UI
                 double dpiY = dpi.DpiScaleY > 0 ? dpi.DpiScaleY : 1.0;
 
                 IntPtr taskbarHwnd = FindWindow("Shell_TrayWnd", null);
+                IntPtr hwnd = new WindowInteropHelper(this).Handle;
+                IntPtr hMonitor = MonitorFromWindow(hwnd != IntPtr.Zero ? hwnd : taskbarHwnd, MONITOR_DEFAULTTONEAREST);
+                var mi = new MONITORINFO { cbSize = Marshal.SizeOf<MONITORINFO>() };
+                RECT monRect;
+                if (hMonitor != IntPtr.Zero && GetMonitorInfo(hMonitor, ref mi))
+                {
+                    monRect = mi.rcMonitor;
+                }
+                else
+                {
+                    monRect = new RECT { Left = 0, Top = 0, Right = (int)(SystemParameters.PrimaryScreenWidth * dpiX), Bottom = (int)(SystemParameters.PrimaryScreenHeight * dpiY) };
+                }
+
+                double monLeftDip = monRect.Left / dpiX;
+                double monRightDip = monRect.Right / dpiX;
+                double monBottomDip = monRect.Bottom / dpiY;
+
+                bool isLeftMode = string.Equals(_configManager.CurrentConfig.TaskbarPosition, "Left", StringComparison.OrdinalIgnoreCase);
+
+                // Handle Fullscreen Corner Snapping
+                if (_isFullscreenActive && string.Equals(_configManager.CurrentConfig.TaskbarFullscreenVideoBehavior, "SnapToCorner", StringComparison.OrdinalIgnoreCase))
+                {
+                    RootCard.Visibility = Visibility.Visible;
+                    ArtistText.Visibility = Visibility.Visible;
+                    ArtworkBorder.Visibility = Visibility.Visible;
+                    ArtworkBorder.Width = 24;
+                    ArtworkBorder.Height = 24;
+                    TitleText.Visibility = Visibility.Visible;
+                    TimeText.Visibility = Visibility.Visible;
+                    ProgressBarTrack.Visibility = Visibility.Visible;
+                    Width = MAX_WIDGET_WIDTH;
+
+                    double h = ActualHeight > 0 ? ActualHeight : 32.0;
+                    double targetTopFullscreen = monBottomDip - h - 8;
+
+                    double targetLeftFullscreen;
+                    if (isLeftMode)
+                    {
+                        targetLeftFullscreen = monLeftDip + 12;
+                    }
+                    else
+                    {
+                        targetLeftFullscreen = monRightDip - MAX_WIDGET_WIDTH - 12;
+                    }
+
+                    Left = targetLeftFullscreen;
+                    Top = targetTopFullscreen;
+
+                    if (hwnd != IntPtr.Zero)
+                    {
+                        SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+                    }
+                    return;
+                }
+
                 double targetLeft;
                 double targetTop;
                 double trayLeftDip;
@@ -350,7 +423,7 @@ namespace LucidTune.UI
                 }
 
                 // Check placement mode: Left (expanded) vs Right (compact & responsive)
-                bool isLeftMode = string.Equals(_configManager.CurrentConfig.TaskbarPosition, "Left", StringComparison.OrdinalIgnoreCase);
+                isLeftMode = string.Equals(_configManager.CurrentConfig.TaskbarPosition, "Left", StringComparison.OrdinalIgnoreCase);
 
                 if (isLeftMode)
                 {
@@ -469,7 +542,6 @@ namespace LucidTune.UI
                 Top = targetTop;
 
                 // Ensure it stays above taskbar without stealing focus
-                var hwnd = new WindowInteropHelper(this).Handle;
                 if (hwnd != IntPtr.Zero)
                 {
                     SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
@@ -569,16 +641,13 @@ namespace LucidTune.UI
 
         public void OnFullscreenChanged(FullscreenInfo info)
         {
+            _isFullscreenActive = info.IsFullscreen;
+            string behavior = _configManager.CurrentConfig.TaskbarFullscreenVideoBehavior ?? "SnapToCorner";
+
             bool shouldHide = false;
             if (info.IsFullscreen)
             {
-                if (_configManager.CurrentConfig.AutoHideTaskbarOnFullscreenVideo)
-                {
-                    // Widescreen & Ultrawide (aspectRatio >= 1.70, e.g. 16:9, 21:9): video covers bottom -> hide!
-                    // Letterboxed laptop screens (aspectRatio < 1.70, e.g. 16:10): black bar exists -> keep visible!
-                    shouldHide = !info.HasBottomLetterbox;
-                }
-                else if (_configManager.CurrentConfig.AutoHideInFullscreen)
+                if (behavior.Equals("Hide", StringComparison.OrdinalIgnoreCase))
                 {
                     shouldHide = true;
                 }
@@ -587,11 +656,17 @@ namespace LucidTune.UI
             _isFullscreenHidden = shouldHide;
             Dispatcher.Invoke(() =>
             {
+                if (!_configManager.CurrentConfig.TaskbarModeEnabled)
+                {
+                    Visibility = Visibility.Collapsed;
+                    return;
+                }
+
                 if (_isFullscreenHidden)
                 {
                     Visibility = Visibility.Collapsed;
                 }
-                else if (_configManager.CurrentConfig.TaskbarModeEnabled)
+                else
                 {
                     Visibility = Visibility.Visible;
                     RepositionOnTaskbar();

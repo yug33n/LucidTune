@@ -217,6 +217,12 @@ namespace LucidTune
             _taskbarWindow?.RepositionOnTaskbar();
         }
 
+        public void ApplyTaskbarVideoBehavior(string behavior)
+        {
+            _configManager.CurrentConfig.TaskbarFullscreenVideoBehavior = behavior;
+            _taskbarWindow?.RepositionOnTaskbar();
+        }
+
         public void ApplyLanguage(string language)
         {
             _configManager.CurrentConfig.Language = language;

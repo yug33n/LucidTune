@@ -62,6 +62,7 @@ namespace LucidTune.UI
                 _mainWindow.ApplyBackgroundShimmer(_configManager.CurrentConfig.AdaptiveBackgroundShimmer);
                 _mainWindow.ApplyTaskbarMode(_configManager.CurrentConfig.TaskbarModeEnabled);
                 _mainWindow.ApplyTaskbarPosition(_configManager.CurrentConfig.TaskbarPosition);
+                _mainWindow.ApplyTaskbarVideoBehavior(_configManager.CurrentConfig.TaskbarFullscreenVideoBehavior);
                 _mainWindow.ApplyAudioSpectrum(_configManager.CurrentConfig.ShowAudioSpectrum);
             };
             UpdateOverlayStatus(_mainWindow.IsOverlayVisible);
@@ -150,7 +151,7 @@ namespace LucidTune.UI
             ShowVolumeCheckBox.IsChecked = cfg.ShowVolumeControl;
             TaskbarModeCheckBox.IsChecked = cfg.TaskbarModeEnabled;
             TaskbarOptionsPanel.Visibility = cfg.TaskbarModeEnabled ? Visibility.Visible : Visibility.Collapsed;
-            AutoHideTaskbarOnFullscreenVideoCheckBox.IsChecked = cfg.AutoHideTaskbarOnFullscreenVideo;
+            SelectTaskbarVideoBehaviorItem(cfg.TaskbarFullscreenVideoBehavior);
 
             AdaptiveColorCheckBox.IsChecked = cfg.AdaptiveColorEnabled;
             AdaptiveShimmerCheckBox.IsChecked = cfg.AdaptiveBackgroundShimmer;
@@ -195,6 +196,22 @@ namespace LucidTune.UI
             if (TaskbarPositionComboBox.Items.Count > 0)
             {
                 TaskbarPositionComboBox.SelectedIndex = 0;
+            }
+        }
+
+        private void SelectTaskbarVideoBehaviorItem(string behavior)
+        {
+            foreach (ComboBoxItem item in TaskbarVideoBehaviorComboBox.Items)
+            {
+                if (string.Equals(item.Tag?.ToString(), behavior, StringComparison.OrdinalIgnoreCase))
+                {
+                    TaskbarVideoBehaviorComboBox.SelectedItem = item;
+                    return;
+                }
+            }
+            if (TaskbarVideoBehaviorComboBox.Items.Count > 0)
+            {
+                TaskbarVideoBehaviorComboBox.SelectedIndex = 0;
             }
         }
 
@@ -526,6 +543,13 @@ namespace LucidTune.UI
             _mainWindow.ApplyTaskbarPosition(pos);
         }
 
+        private void OnTaskbarVideoBehaviorChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (_isInitializing || TaskbarVideoBehaviorComboBox.SelectedItem is not ComboBoxItem item) return;
+            string behavior = item.Tag?.ToString() ?? "SnapToCorner";
+            _mainWindow.ApplyTaskbarVideoBehavior(behavior);
+        }
+
         private void OnCompactModeChanged(object sender, RoutedEventArgs e)
         {
             if (_isInitializing) return;
@@ -631,8 +655,14 @@ namespace LucidTune.UI
                 ((ComboBoxItem)TaskbarPositionComboBox.Items[0]).Content = LocalizationService.T("TaskbarPosRight");
                 ((ComboBoxItem)TaskbarPositionComboBox.Items[1]).Content = LocalizationService.T("TaskbarPosLeft");
             }
-            TaskbarAutoHideVideoTitleText.Text = LocalizationService.T("TaskbarAutoHideVideoTitle");
-            TaskbarAutoHideVideoDescText.Text = LocalizationService.T("TaskbarAutoHideVideoDesc");
+            TaskbarVideoBehaviorTitleText.Text = LocalizationService.T("TaskbarVideoBehaviorTitle");
+            TaskbarVideoBehaviorDescText.Text = LocalizationService.T("TaskbarVideoBehaviorDesc");
+            if (TaskbarVideoBehaviorComboBox.Items.Count >= 3)
+            {
+                ((ComboBoxItem)TaskbarVideoBehaviorComboBox.Items[0]).Content = LocalizationService.T("TaskbarVideoBehaviorSnap");
+                ((ComboBoxItem)TaskbarVideoBehaviorComboBox.Items[1]).Content = LocalizationService.T("TaskbarVideoBehaviorHide");
+                ((ComboBoxItem)TaskbarVideoBehaviorComboBox.Items[2]).Content = LocalizationService.T("TaskbarVideoBehaviorNone");
+            }
 
             DiscordTitleText.Text = LocalizationService.T("DiscordSectionTitle");
             DiscordDescText.Text = LocalizationService.T("DiscordEnableDesc");
@@ -785,8 +815,10 @@ namespace LucidTune.UI
 
             string taskbarPos = (TaskbarPositionComboBox.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "Right";
             cfg.TaskbarPosition = taskbarPos;
-            cfg.AutoHideTaskbarOnFullscreenVideo = AutoHideTaskbarOnFullscreenVideoCheckBox.IsChecked ?? true;
+            string videoBehavior = (TaskbarVideoBehaviorComboBox.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "SnapToCorner";
+            cfg.TaskbarFullscreenVideoBehavior = videoBehavior;
             _mainWindow.ApplyTaskbarPosition(taskbarPos);
+            _mainWindow.ApplyTaskbarVideoBehavior(videoBehavior);
 
             cfg.AdaptiveColorEnabled = AdaptiveColorCheckBox.IsChecked == true;
             cfg.AdaptiveBackgroundShimmer = AdaptiveShimmerCheckBox.IsChecked == true;
