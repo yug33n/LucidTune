@@ -53,7 +53,7 @@ namespace LucidTune.UI
         private const uint SWP_NOSIZE = 0x0001;
         private const uint SWP_NOACTIVATE = 0x0010;
 
-        private const double MAX_WIDGET_WIDTH = 150.0;
+        private const double MAX_WIDGET_WIDTH = 225.0;
         private const double MIN_WIDGET_WIDTH = 54.0;
 
         private readonly SmtcMediaService _mediaService;
@@ -405,9 +405,8 @@ namespace LucidTune.UI
                 }
                 else
                 {
-                    ArtistText.Visibility = Visibility.Collapsed;
-                    ArtworkBorder.Width = 20;
-                    ArtworkBorder.Height = 20;
+                    ArtworkBorder.Width = 24;
+                    ArtworkBorder.Height = 24;
 
                     // Margin between app buttons and widget = 8px; margin from tray = 6px
                     double maxAllowedRight = trayLeftDip - 6;
@@ -416,7 +415,7 @@ namespace LucidTune.UI
 
                     RootCard.Visibility = Visibility.Visible;
 
-                    // Clamp width between MIN_WIDGET_WIDTH and MAX_WIDGET_WIDTH
+                    // Clamp width between MIN_WIDGET_WIDTH and MAX_WIDGET_WIDTH (225px, same as Left mode)
                     double targetWidth = MAX_WIDGET_WIDTH;
                     if (appsRightDip > 0 && availableSpace < MAX_WIDGET_WIDTH)
                     {
@@ -425,28 +424,41 @@ namespace LucidTune.UI
                     Width = targetWidth;
 
                     // Responsive degradation:
-                    // If width is constrained (< 115px), hide the cover art to preserve space for title & controls
-                    if (targetWidth < 115)
+                    if (targetWidth >= 180)
                     {
-                        ArtworkBorder.Visibility = Visibility.Collapsed;
-                    }
-                    else
-                    {
+                        // Full fidelity (identical to Left mode)
+                        ArtistText.Visibility = Visibility.Visible;
                         ArtworkBorder.Visibility = Visibility.Visible;
+                        TitleText.Visibility = Visibility.Visible;
+                        TimeText.Visibility = Visibility.Visible;
+                        ProgressBarTrack.Visibility = Visibility.Visible;
                     }
-
-                    // If width is very constrained (< 85px), hide title and time so playback buttons remain
-                    if (targetWidth < 85)
+                    else if (targetWidth >= 125)
                     {
-                        TitleText.Visibility = Visibility.Collapsed;
+                        // Slightly constrained: hide artist name to preserve title, cover, and timeline
+                        ArtistText.Visibility = Visibility.Collapsed;
+                        ArtworkBorder.Visibility = Visibility.Visible;
+                        TitleText.Visibility = Visibility.Visible;
+                        TimeText.Visibility = Visibility.Visible;
+                        ProgressBarTrack.Visibility = Visibility.Visible;
+                    }
+                    else if (targetWidth >= 80)
+                    {
+                        // Constrained: hide artwork and timeline, keep title and buttons
+                        ArtistText.Visibility = Visibility.Collapsed;
+                        ArtworkBorder.Visibility = Visibility.Collapsed;
+                        TitleText.Visibility = Visibility.Visible;
                         TimeText.Visibility = Visibility.Collapsed;
                         ProgressBarTrack.Visibility = Visibility.Collapsed;
                     }
                     else
                     {
-                        TitleText.Visibility = Visibility.Visible;
-                        TimeText.Visibility = Visibility.Visible;
-                        ProgressBarTrack.Visibility = Visibility.Visible;
+                        // Highly constrained (< 80px): keep playback control buttons only
+                        ArtistText.Visibility = Visibility.Collapsed;
+                        ArtworkBorder.Visibility = Visibility.Collapsed;
+                        TitleText.Visibility = Visibility.Collapsed;
+                        TimeText.Visibility = Visibility.Collapsed;
+                        ProgressBarTrack.Visibility = Visibility.Collapsed;
                     }
 
                     // Dock right before the tray chevron
