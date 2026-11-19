@@ -1,8 +1,10 @@
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Windows;
+using System.Windows.Threading;
 using LucidTune.Config;
 using LucidTune.Services;
 
@@ -10,11 +12,29 @@ namespace LucidTune
 {
     public partial class App : Application
     {
+        [DllImport("psapi.dll")]
+        private static extern bool EmptyWorkingSet(IntPtr hProcess);
+
         private static Mutex? _singleInstanceMutex;
         private static EventWaitHandle? _showSettingsSignal;
         private static bool _ownsMutex;
+        private DispatcherTimer? _memoryTrimTimer;
 
         public static bool IsAutoStartLaunch { get; private set; }
+
+        public static void TrimWorkingSet()
+        {
+            ThreadPool.QueueUserWorkItem(_ =>
+            {
+                try
+                {
+                    GC.Collect(2, GCCollectionMode.Optimized, false);
+                    GC.WaitForPendingFinalizers();
+                    EmptyWorkingSet(Process.GetCurrentProcess().Handle);
+                }
+                catch { }
+            });
+        }
 
         public App()
         {
@@ -101,6 +121,13 @@ namespace LucidTune
                 var config = new ConfigManager().CurrentConfig;
                 ThemeManager.ApplyTheme(config.Theme, config.AccentColor);
                 base.OnStartup(e);
+
+                _memoryTrimTimer = new DispatcherTimer(DispatcherPriority.ApplicationIdle)
+                {
+                    Interval = TimeSpan.FromMinutes(2)
+                };
+                _memoryTrimTimer.Tick += (s, ev) => TrimWorkingSet();
+                _memoryTrimTimer.Start();
             }
             catch (Exception ex)
             {

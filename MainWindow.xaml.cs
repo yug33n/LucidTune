@@ -829,6 +829,11 @@ namespace LucidTune
 
                 _taskbarWindow?.UpdateTrackInfo(track);
                 _taskbarWindow?.UpdatePalette(_currentPalette);
+
+                if (isNewTrack)
+                {
+                    App.TrimWorkingSet();
+                }
             });
         }
 
