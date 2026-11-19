@@ -245,6 +245,7 @@ namespace LucidTune.Services
 
                 var bitmap = new BitmapImage();
                 bitmap.BeginInit();
+                bitmap.DecodePixelWidth = 128;
                 bitmap.CacheOption = BitmapCacheOption.OnLoad;
                 bitmap.StreamSource = new MemoryStream(bytes);
                 bitmap.EndInit();

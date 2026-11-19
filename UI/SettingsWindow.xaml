@@ -824,6 +824,26 @@
                                             <ComboBoxItem Content="Слева" Tag="Left"/>
                                         </ComboBox>
                                     </Grid>
+
+                                    <!-- Fullscreen Video Behavior ComboBox -->
+                                    <Grid Margin="0,10,0,0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="165"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,10,0">
+                                            <TextBlock x:Name="TaskbarVideoBehaviorTitleText" Text="При полноэкранном видео" FontSize="12" FontWeight="Medium" Foreground="{DynamicResource SettingsTextPrimaryBrush}"/>
+                                            <TextBlock x:Name="TaskbarVideoBehaviorDescText" Text="Поведение виджета при видео на весь экран." FontSize="10.5" Foreground="{DynamicResource SettingsTextSecondaryBrush}" Margin="0,2,0,0" TextWrapping="Wrap"/>
+                                        </StackPanel>
+                                        <ComboBox x:Name="TaskbarVideoBehaviorComboBox"
+                                                  Grid.Column="1"
+                                                  Height="28"
+                                                  SelectionChanged="OnTaskbarVideoBehaviorChanged">
+                                            <ComboBoxItem x:Name="VideoBehaviorSnapItem" Content="Смещать в угол" Tag="SnapToCorner"/>
+                                            <ComboBoxItem x:Name="VideoBehaviorHideItem" Content="Скрывать виджет" Tag="Hide"/>
+                                            <ComboBoxItem x:Name="VideoBehaviorNoneItem" Content="Не изменять" Tag="None"/>
+                                        </ComboBox>
+                                    </Grid>
                                 </StackPanel>
                             </StackPanel>
                         </Border>

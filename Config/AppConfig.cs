@@ -22,6 +22,15 @@ namespace LucidTune.Config
 
         // System preferences
         public bool AutoHideInFullscreen { get; set; } = false;
+        public string TaskbarFullscreenVideoBehavior { get; set; } = "SnapToCorner";
+
+        [JsonIgnore]
+        public bool AutoHideTaskbarOnFullscreenVideo
+        {
+            get => string.Equals(TaskbarFullscreenVideoBehavior, "Hide", StringComparison.OrdinalIgnoreCase);
+            set { if (value) TaskbarFullscreenVideoBehavior = "Hide"; }
+        }
+
         public bool AutoStart { get; set; } = false;
         public bool ShowSettingsOnStartup { get; set; } = true;
 

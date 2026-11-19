@@ -45,6 +45,23 @@ namespace LucidTune.UI
         [DllImport("user32.dll")]
         private static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int X, int Y, int cx, int cy, uint uFlags);
 
+        [StructLayout(LayoutKind.Sequential)]
+        private struct MONITORINFO
+        {
+            public int cbSize;
+            public RECT rcMonitor;
+            public RECT rcWork;
+            public uint dwFlags;
+        }
+
+        [DllImport("user32.dll")]
+        private static extern IntPtr MonitorFromWindow(IntPtr hwnd, uint dwFlags);
+
+        [DllImport("user32.dll")]
+        private static extern bool GetMonitorInfo(IntPtr hMonitor, ref MONITORINFO lpmi);
+
+        private const uint MONITOR_DEFAULTTONEAREST = 2;
+
         private static readonly IntPtr HWND_TOPMOST = new IntPtr(-1);
         private const int GWL_EXSTYLE = -20;
         private const int WS_EX_NOACTIVATE = 0x08000000;
@@ -53,7 +70,7 @@ namespace LucidTune.UI
         private const uint SWP_NOSIZE = 0x0001;
         private const uint SWP_NOACTIVATE = 0x0010;
 
-        private const double MAX_WIDGET_WIDTH = 150.0;
+        private const double MAX_WIDGET_WIDTH = 225.0;
         private const double MIN_WIDGET_WIDTH = 54.0;
 
         private readonly SmtcMediaService _mediaService;
@@ -69,6 +86,7 @@ namespace LucidTune.UI
         private TimeSpan _lastDuration = TimeSpan.Zero;
         private bool _isDragging;
         private bool _isFullscreenHidden;
+        private bool _isFullscreenActive;
         private MediaTrackInfo? _lastTrack;
 
         private double _detectedAppsRightEdge = 0;
@@ -319,6 +337,61 @@ namespace LucidTune.UI
                 double dpiY = dpi.DpiScaleY > 0 ? dpi.DpiScaleY : 1.0;
 
                 IntPtr taskbarHwnd = FindWindow("Shell_TrayWnd", null);
+                IntPtr hwnd = new WindowInteropHelper(this).Handle;
+                IntPtr hMonitor = MonitorFromWindow(hwnd != IntPtr.Zero ? hwnd : taskbarHwnd, MONITOR_DEFAULTTONEAREST);
+                var mi = new MONITORINFO { cbSize = Marshal.SizeOf<MONITORINFO>() };
+                RECT monRect;
+                if (hMonitor != IntPtr.Zero && GetMonitorInfo(hMonitor, ref mi))
+                {
+                    monRect = mi.rcMonitor;
+                }
+                else
+                {
+                    monRect = new RECT { Left = 0, Top = 0, Right = (int)(SystemParameters.PrimaryScreenWidth * dpiX), Bottom = (int)(SystemParameters.PrimaryScreenHeight * dpiY) };
+                }
+
+                double monLeftDip = monRect.Left / dpiX;
+                double monRightDip = monRect.Right / dpiX;
+                double monBottomDip = monRect.Bottom / dpiY;
+
+                bool isLeftMode = string.Equals(_configManager.CurrentConfig.TaskbarPosition, "Left", StringComparison.OrdinalIgnoreCase);
+
+                // Handle Fullscreen Corner Snapping
+                if (_isFullscreenActive && string.Equals(_configManager.CurrentConfig.TaskbarFullscreenVideoBehavior, "SnapToCorner", StringComparison.OrdinalIgnoreCase))
+                {
+                    RootCard.Visibility = Visibility.Visible;
+                    ArtistText.Visibility = Visibility.Visible;
+                    ArtworkBorder.Visibility = Visibility.Visible;
+                    ArtworkBorder.Width = 24;
+                    ArtworkBorder.Height = 24;
+                    TitleText.Visibility = Visibility.Visible;
+                    TimeText.Visibility = Visibility.Visible;
+                    ProgressBarTrack.Visibility = Visibility.Visible;
+                    Width = MAX_WIDGET_WIDTH;
+
+                    double h = ActualHeight > 0 ? ActualHeight : 32.0;
+                    double targetTopFullscreen = monBottomDip - h - 8;
+
+                    double targetLeftFullscreen;
+                    if (isLeftMode)
+                    {
+                        targetLeftFullscreen = monLeftDip + 12;
+                    }
+                    else
+                    {
+                        targetLeftFullscreen = monRightDip - MAX_WIDGET_WIDTH - 12;
+                    }
+
+                    Left = targetLeftFullscreen;
+                    Top = targetTopFullscreen;
+
+                    if (hwnd != IntPtr.Zero)
+                    {
+                        SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+                    }
+                    return;
+                }
+
                 double targetLeft;
                 double targetTop;
                 double trayLeftDip;
@@ -350,7 +423,7 @@ namespace LucidTune.UI
                 }
 
                 // Check placement mode: Left (expanded) vs Right (compact & responsive)
-                bool isLeftMode = string.Equals(_configManager.CurrentConfig.TaskbarPosition, "Left", StringComparison.OrdinalIgnoreCase);
+                isLeftMode = string.Equals(_configManager.CurrentConfig.TaskbarPosition, "Left", StringComparison.OrdinalIgnoreCase);
 
                 if (isLeftMode)
                 {
@@ -405,9 +478,8 @@ namespace LucidTune.UI
                 }
                 else
                 {
-                    ArtistText.Visibility = Visibility.Collapsed;
-                    ArtworkBorder.Width = 20;
-                    ArtworkBorder.Height = 20;
+                    ArtworkBorder.Width = 24;
+                    ArtworkBorder.Height = 24;
 
                     // Margin between app buttons and widget = 8px; margin from tray = 6px
                     double maxAllowedRight = trayLeftDip - 6;
@@ -416,7 +488,7 @@ namespace LucidTune.UI
 
                     RootCard.Visibility = Visibility.Visible;
 
-                    // Clamp width between MIN_WIDGET_WIDTH and MAX_WIDGET_WIDTH
+                    // Clamp width between MIN_WIDGET_WIDTH and MAX_WIDGET_WIDTH (225px, same as Left mode)
                     double targetWidth = MAX_WIDGET_WIDTH;
                     if (appsRightDip > 0 && availableSpace < MAX_WIDGET_WIDTH)
                     {
@@ -425,28 +497,41 @@ namespace LucidTune.UI
                     Width = targetWidth;
 
                     // Responsive degradation:
-                    // If width is constrained (< 115px), hide the cover art to preserve space for title & controls
-                    if (targetWidth < 115)
+                    if (targetWidth >= 180)
                     {
-                        ArtworkBorder.Visibility = Visibility.Collapsed;
-                    }
-                    else
-                    {
+                        // Full fidelity (identical to Left mode)
+                        ArtistText.Visibility = Visibility.Visible;
                         ArtworkBorder.Visibility = Visibility.Visible;
+                        TitleText.Visibility = Visibility.Visible;
+                        TimeText.Visibility = Visibility.Visible;
+                        ProgressBarTrack.Visibility = Visibility.Visible;
                     }
-
-                    // If width is very constrained (< 85px), hide title and time so playback buttons remain
-                    if (targetWidth < 85)
+                    else if (targetWidth >= 125)
                     {
-                        TitleText.Visibility = Visibility.Collapsed;
+                        // Slightly constrained: hide artist name to preserve title, cover, and timeline
+                        ArtistText.Visibility = Visibility.Collapsed;
+                        ArtworkBorder.Visibility = Visibility.Visible;
+                        TitleText.Visibility = Visibility.Visible;
+                        TimeText.Visibility = Visibility.Visible;
+                        ProgressBarTrack.Visibility = Visibility.Visible;
+                    }
+                    else if (targetWidth >= 80)
+                    {
+                        // Constrained: hide artwork and timeline, keep title and buttons
+                        ArtistText.Visibility = Visibility.Collapsed;
+                        ArtworkBorder.Visibility = Visibility.Collapsed;
+                        TitleText.Visibility = Visibility.Visible;
                         TimeText.Visibility = Visibility.Collapsed;
                         ProgressBarTrack.Visibility = Visibility.Collapsed;
                     }
                     else
                     {
-                        TitleText.Visibility = Visibility.Visible;
-                        TimeText.Visibility = Visibility.Visible;
-                        ProgressBarTrack.Visibility = Visibility.Visible;
+                        // Highly constrained (< 80px): keep playback control buttons only
+                        ArtistText.Visibility = Visibility.Collapsed;
+                        ArtworkBorder.Visibility = Visibility.Collapsed;
+                        TitleText.Visibility = Visibility.Collapsed;
+                        TimeText.Visibility = Visibility.Collapsed;
+                        ProgressBarTrack.Visibility = Visibility.Collapsed;
                     }
 
                     // Dock right before the tray chevron
@@ -457,7 +542,6 @@ namespace LucidTune.UI
                 Top = targetTop;
 
                 // Ensure it stays above taskbar without stealing focus
-                var hwnd = new WindowInteropHelper(this).Handle;
                 if (hwnd != IntPtr.Zero)
                 {
                     SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
@@ -555,16 +639,34 @@ namespace LucidTune.UI
             });
         }
 
-        public void OnFullscreenChanged(bool isFullscreen)
+        public void OnFullscreenChanged(FullscreenInfo info)
         {
-            _isFullscreenHidden = _configManager.CurrentConfig.AutoHideInFullscreen && isFullscreen;
+            _isFullscreenActive = info.IsFullscreen;
+            string behavior = _configManager.CurrentConfig.TaskbarFullscreenVideoBehavior ?? "SnapToCorner";
+
+            bool shouldHide = false;
+            if (info.IsFullscreen)
+            {
+                if (behavior.Equals("Hide", StringComparison.OrdinalIgnoreCase))
+                {
+                    shouldHide = true;
+                }
+            }
+
+            _isFullscreenHidden = shouldHide;
             Dispatcher.Invoke(() =>
             {
+                if (!_configManager.CurrentConfig.TaskbarModeEnabled)
+                {
+                    Visibility = Visibility.Collapsed;
+                    return;
+                }
+
                 if (_isFullscreenHidden)
                 {
                     Visibility = Visibility.Collapsed;
                 }
-                else if (_configManager.CurrentConfig.TaskbarModeEnabled)
+                else
                 {
                     Visibility = Visibility.Visible;
                     RepositionOnTaskbar();

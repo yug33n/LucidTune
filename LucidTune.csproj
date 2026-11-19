@@ -16,6 +16,9 @@
     <Description>Lightweight Windows Desktop Media Overlay Widget</Description>
     <Authors>LucidTune Team</Authors>
     <IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>
+    <ServerGarbageCollection>false</ServerGarbageCollection>
+    <ConcurrentGarbageCollection>true</ConcurrentGarbageCollection>
+    <RetainVMGarbageCollection>false</RetainVMGarbageCollection>
   </PropertyGroup>
 
   <ItemGroup>

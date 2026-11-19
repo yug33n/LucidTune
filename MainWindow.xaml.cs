@@ -217,6 +217,12 @@ namespace LucidTune
             _taskbarWindow?.RepositionOnTaskbar();
         }
 
+        public void ApplyTaskbarVideoBehavior(string behavior)
+        {
+            _configManager.CurrentConfig.TaskbarFullscreenVideoBehavior = behavior;
+            _taskbarWindow?.RepositionOnTaskbar();
+        }
+
         public void ApplyLanguage(string language)
         {
             _configManager.CurrentConfig.Language = language;
@@ -600,15 +606,15 @@ namespace LucidTune
             IslandContainer.BeginAnimation(UIElement.OpacityProperty, animOpacity);
         }
 
-        private void OnFullscreenStateChanged(bool isFullscreen)
+        private void OnFullscreenStateChanged(FullscreenInfo info)
         {
-            _taskbarWindow?.OnFullscreenChanged(isFullscreen);
+            _taskbarWindow?.OnFullscreenChanged(info);
 
             if (!_configManager.CurrentConfig.AutoHideInFullscreen) return;
 
             Dispatcher.Invoke(() =>
             {
-                if (isFullscreen)
+                if (info.IsFullscreen)
                 {
                     if (_isWindowVisible && !_configManager.CurrentConfig.TaskbarModeEnabled)
                     {
@@ -829,6 +835,11 @@ namespace LucidTune
 
                 _taskbarWindow?.UpdateTrackInfo(track);
                 _taskbarWindow?.UpdatePalette(_currentPalette);
+
+                if (isNewTrack)
+                {
+                    App.TrimWorkingSet();
+                }
             });
         }
 
