@@ -5,6 +5,13 @@ using System.Windows.Threading;
 
 namespace LucidTune.Services
 {
+    public struct FullscreenInfo
+    {
+        public bool IsFullscreen { get; set; }
+        public bool HasBottomLetterbox { get; set; }
+        public double AspectRatio { get; set; }
+    }
+
     public class FullscreenDetectorService : IDisposable
     {
         [StructLayout(LayoutKind.Sequential)]
@@ -14,6 +21,15 @@ namespace LucidTune.Services
             public int Top;
             public int Right;
             public int Bottom;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct MONITORINFO
+        {
+            public int cbSize;
+            public RECT rcMonitor;
+            public RECT rcWork;
+            public uint dwFlags;
         }
 
         [DllImport("user32.dll")]
@@ -32,23 +48,25 @@ namespace LucidTune.Services
         private static extern int GetClassName(IntPtr hWnd, StringBuilder lpClassName, int nMaxCount);
 
         [DllImport("user32.dll")]
-        private static extern int GetSystemMetrics(int nIndex);
+        private static extern IntPtr MonitorFromWindow(IntPtr hwnd, uint dwFlags);
 
-        private const int SM_CXSCREEN = 0;
-        private const int SM_CYSCREEN = 1;
+        [DllImport("user32.dll")]
+        private static extern bool GetMonitorInfo(IntPtr hMonitor, ref MONITORINFO lpmi);
+
+        private const uint MONITOR_DEFAULTTONEAREST = 2;
 
         private readonly DispatcherTimer _pollTimer;
         private IntPtr _ownHwnd;
-        private bool _isCurrentlyFullscreen;
+        private FullscreenInfo _currentInfo;
         private bool _disposed;
 
-        public event Action<bool>? FullscreenStateChanged;
+        public event Action<FullscreenInfo>? FullscreenStateChanged;
 
         public FullscreenDetectorService()
         {
             _pollTimer = new DispatcherTimer(DispatcherPriority.Background)
             {
-                Interval = TimeSpan.FromSeconds(1.5)
+                Interval = TimeSpan.FromSeconds(1.0)
             };
             _pollTimer.Tick += OnPollTick;
         }
@@ -66,43 +84,67 @@ namespace LucidTune.Services
 
         private void OnPollTick(object? sender, EventArgs e)
         {
-            bool isFullscreen = CheckIsForegroundFullscreen();
-            if (isFullscreen != _isCurrentlyFullscreen)
+            var info = CheckIsForegroundFullscreen();
+            if (info.IsFullscreen != _currentInfo.IsFullscreen ||
+                info.HasBottomLetterbox != _currentInfo.HasBottomLetterbox)
             {
-                _isCurrentlyFullscreen = isFullscreen;
-                FullscreenStateChanged?.Invoke(_isCurrentlyFullscreen);
+                _currentInfo = info;
+                FullscreenStateChanged?.Invoke(_currentInfo);
             }
         }
 
-        private bool CheckIsForegroundFullscreen()
+        private FullscreenInfo CheckIsForegroundFullscreen()
         {
             IntPtr foreground = GetForegroundWindow();
-            if (foreground == IntPtr.Zero || foreground == _ownHwnd) return false;
+            if (foreground == IntPtr.Zero || foreground == _ownHwnd)
+                return new FullscreenInfo { IsFullscreen = false };
 
             IntPtr shell = GetShellWindow();
             IntPtr desktop = GetDesktopWindow();
-            if (foreground == shell || foreground == desktop) return false;
+            if (foreground == shell || foreground == desktop)
+                return new FullscreenInfo { IsFullscreen = false };
 
             var className = new StringBuilder(256);
             GetClassName(foreground, className, className.Capacity);
             var cls = className.ToString();
-            if (cls == "Progman" || cls == "WorkerW" || cls == "Shell_TrayWnd") return false;
+            if (cls == "Progman" || cls == "WorkerW" || cls == "Shell_TrayWnd")
+                return new FullscreenInfo { IsFullscreen = false };
 
             if (GetWindowRect(foreground, out RECT rect))
             {
-                int screenWidth = GetSystemMetrics(SM_CXSCREEN);
-                int screenHeight = GetSystemMetrics(SM_CYSCREEN);
-
-                int width = rect.Right - rect.Left;
-                int height = rect.Bottom - rect.Top;
-
-                if (width >= screenWidth && height >= screenHeight && rect.Left <= 0 && rect.Top <= 0)
+                IntPtr hMonitor = MonitorFromWindow(foreground, MONITOR_DEFAULTTONEAREST);
+                if (hMonitor != IntPtr.Zero)
                 {
-                    return true;
+                    var mi = new MONITORINFO { cbSize = Marshal.SizeOf<MONITORINFO>() };
+                    if (GetMonitorInfo(hMonitor, ref mi))
+                    {
+                        int monWidth = mi.rcMonitor.Right - mi.rcMonitor.Left;
+                        int monHeight = mi.rcMonitor.Bottom - mi.rcMonitor.Top;
+
+                        // Check if window covers the entire monitor (allowing small margin for multi-monitor borders)
+                        if (rect.Left <= mi.rcMonitor.Left + 2 &&
+                            rect.Top <= mi.rcMonitor.Top + 2 &&
+                            rect.Right >= mi.rcMonitor.Right - 2 &&
+                            rect.Bottom >= mi.rcMonitor.Bottom - 2)
+                        {
+                            double aspectRatio = monHeight > 0 ? (double)monWidth / monHeight : 1.777;
+                            // On 16:10 or 3:2 displays (aspectRatio < 1.70), 16:9 video leaves vertical letterboxing
+                            // with a bottom black bar of ~50-100px where the taskbar widget safely fits.
+                            // On 16:9 or 21:9 ultrawide (aspectRatio >= 1.70), video touches the bottom of the screen.
+                            bool hasBottomLetterbox = aspectRatio < 1.70;
+
+                            return new FullscreenInfo
+                            {
+                                IsFullscreen = true,
+                                HasBottomLetterbox = hasBottomLetterbox,
+                                AspectRatio = aspectRatio
+                            };
+                        }
+                    }
                 }
             }
 
-            return false;
+            return new FullscreenInfo { IsFullscreen = false };
         }
 
         public void Dispose()

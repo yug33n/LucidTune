@@ -555,9 +555,24 @@ namespace LucidTune.UI
             });
         }
 
-        public void OnFullscreenChanged(bool isFullscreen)
+        public void OnFullscreenChanged(FullscreenInfo info)
         {
-            _isFullscreenHidden = _configManager.CurrentConfig.AutoHideInFullscreen && isFullscreen;
+            bool shouldHide = false;
+            if (info.IsFullscreen)
+            {
+                if (_configManager.CurrentConfig.AutoHideTaskbarOnFullscreenVideo)
+                {
+                    // Widescreen & Ultrawide (aspectRatio >= 1.70, e.g. 16:9, 21:9): video covers bottom -> hide!
+                    // Letterboxed laptop screens (aspectRatio < 1.70, e.g. 16:10): black bar exists -> keep visible!
+                    shouldHide = !info.HasBottomLetterbox;
+                }
+                else if (_configManager.CurrentConfig.AutoHideInFullscreen)
+                {
+                    shouldHide = true;
+                }
+            }
+
+            _isFullscreenHidden = shouldHide;
             Dispatcher.Invoke(() =>
             {
                 if (_isFullscreenHidden)

@@ -824,6 +824,16 @@
                                             <ComboBoxItem Content="Слева" Tag="Left"/>
                                         </ComboBox>
                                     </Grid>
+
+                                    <!-- Auto-hide on Fullscreen Video Checkbox -->
+                                    <CheckBox x:Name="AutoHideTaskbarOnFullscreenVideoCheckBox"
+                                              Style="{StaticResource DarkCheckBoxStyle}"
+                                              Margin="0,10,0,0">
+                                        <StackPanel>
+                                            <TextBlock x:Name="TaskbarAutoHideVideoTitleText" Text="Скрывать при полноэкранном видео (16:9, 21:9)" FontSize="12" FontWeight="Medium" Foreground="{DynamicResource SettingsTextPrimaryBrush}"/>
+                                            <TextBlock x:Name="TaskbarAutoHideVideoDescText" Text="Автоматически скрывает мини-плеер на широких экранах, чтобы не перекрывать кадр видео." FontSize="10.5" Foreground="{DynamicResource SettingsTextSecondaryBrush}" Margin="0,2,0,0" TextWrapping="Wrap"/>
+                                        </StackPanel>
+                                    </CheckBox>
                                 </StackPanel>
                             </StackPanel>
                         </Border>

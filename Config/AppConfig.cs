@@ -22,6 +22,7 @@ namespace LucidTune.Config
 
         // System preferences
         public bool AutoHideInFullscreen { get; set; } = false;
+        public bool AutoHideTaskbarOnFullscreenVideo { get; set; } = true;
         public bool AutoStart { get; set; } = false;
         public bool ShowSettingsOnStartup { get; set; } = true;
 

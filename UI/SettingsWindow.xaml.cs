@@ -150,6 +150,7 @@ namespace LucidTune.UI
             ShowVolumeCheckBox.IsChecked = cfg.ShowVolumeControl;
             TaskbarModeCheckBox.IsChecked = cfg.TaskbarModeEnabled;
             TaskbarOptionsPanel.Visibility = cfg.TaskbarModeEnabled ? Visibility.Visible : Visibility.Collapsed;
+            AutoHideTaskbarOnFullscreenVideoCheckBox.IsChecked = cfg.AutoHideTaskbarOnFullscreenVideo;
 
             AdaptiveColorCheckBox.IsChecked = cfg.AdaptiveColorEnabled;
             AdaptiveShimmerCheckBox.IsChecked = cfg.AdaptiveBackgroundShimmer;
@@ -630,6 +631,8 @@ namespace LucidTune.UI
                 ((ComboBoxItem)TaskbarPositionComboBox.Items[0]).Content = LocalizationService.T("TaskbarPosRight");
                 ((ComboBoxItem)TaskbarPositionComboBox.Items[1]).Content = LocalizationService.T("TaskbarPosLeft");
             }
+            TaskbarAutoHideVideoTitleText.Text = LocalizationService.T("TaskbarAutoHideVideoTitle");
+            TaskbarAutoHideVideoDescText.Text = LocalizationService.T("TaskbarAutoHideVideoDesc");
 
             DiscordTitleText.Text = LocalizationService.T("DiscordSectionTitle");
             DiscordDescText.Text = LocalizationService.T("DiscordEnableDesc");
@@ -782,6 +785,7 @@ namespace LucidTune.UI
 
             string taskbarPos = (TaskbarPositionComboBox.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "Right";
             cfg.TaskbarPosition = taskbarPos;
+            cfg.AutoHideTaskbarOnFullscreenVideo = AutoHideTaskbarOnFullscreenVideoCheckBox.IsChecked ?? true;
             _mainWindow.ApplyTaskbarPosition(taskbarPos);
 
             cfg.AdaptiveColorEnabled = AdaptiveColorCheckBox.IsChecked == true;

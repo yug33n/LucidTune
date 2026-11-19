@@ -103,6 +103,8 @@ namespace LucidTune.Services
             ["TaskbarPositionDesc"] = "Справа или слева в панели задач.",
             ["TaskbarPosRight"] = "Справа",
             ["TaskbarPosLeft"] = "Слева",
+            ["TaskbarAutoHideVideoTitle"] = "Скрывать при полноэкранном видео (16:9, 21:9)",
+            ["TaskbarAutoHideVideoDesc"] = "Автоматически скрывает мини-плеер на широких экранах, чтобы не перекрывать кадр видео.",
 
             // Snapping & Capture
             ["SnapToEdgesTitle"] = "Прилипание к краям экрана",
@@ -217,6 +219,8 @@ namespace LucidTune.Services
             ["TaskbarPositionDesc"] = "Select placement on the taskbar (Right or Left).",
             ["TaskbarPosRight"] = "Right",
             ["TaskbarPosLeft"] = "Left",
+            ["TaskbarAutoHideVideoTitle"] = "Auto-hide on fullscreen video (16:9, 21:9)",
+            ["TaskbarAutoHideVideoDesc"] = "Automatically hides taskbar widget on widescreen monitors to avoid overlapping the video.",
 
             // Snapping & Capture
             ["SnapToEdgesTitle"] = "Snap to Screen Edges",
